@@ -317,6 +317,8 @@
   if (icons[1]) icons[1].onclick = function() { location.href = '../checkout/cart.html'; };
   var searchBtn = document.querySelector('.nav-search-btn');
   if (searchBtn) searchBtn.onclick = function() { location.href = '../shopping/search.html'; };
+  var logout = document.querySelector('.account-nav-logout');
+  if (logout) logout.onclick = function() { location.href = '../auth/login.html'; };
   // Stat cards → orders/wishlist/etc
   var stats = document.querySelectorAll('.stat-card');
   if (stats[0]) stats[0].onclick = function() { location.href = 'orders.html'; };

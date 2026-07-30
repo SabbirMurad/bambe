@@ -135,6 +135,44 @@ input, textarea, select { font-family: var(--font-body); font-size: 14px; }
 ul { list-style: none; }
 img { display: block; max-width: 100%; }
 
+/* ── Scrollbar ─────────────────────────────────────────────
+   The page scrollbar sits on the warm neutral ramp and picks up
+   the accent on hover, so it reads as part of the page rather
+   than as OS chrome. Scoped scroll areas repeat this treatment
+   at a narrower width.
+
+   Chrome discards every ::-webkit-scrollbar rule on an element
+   that also sets scrollbar-width/-color, so the standard
+   properties are gated to engines without the pseudo-elements.
+══════════════════════════════════════════════════════════ ── */
+@supports not selector(::-webkit-scrollbar) {
+  html {
+    scrollbar-width: thin;
+    scrollbar-color: var(--faint) transparent;
+  }
+}
+body::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+body::-webkit-scrollbar-track {
+  background: var(--input-bg);
+}
+body::-webkit-scrollbar-thumb {
+  background: var(--faint);
+  border-radius: 5px;
+  /* Inset the thumb so it reads as a pill inside the track. */
+  border: 2px solid var(--input-bg);
+  background-clip: padding-box;
+}
+body::-webkit-scrollbar-thumb:hover {
+  background: var(--primary);
+  background-clip: padding-box;
+}
+body::-webkit-scrollbar-corner {
+  background: var(--input-bg);
+}
+
 /* ── Container ────────────────────────────────────────────── */
 .container {
   max-width: var(--content-max);
