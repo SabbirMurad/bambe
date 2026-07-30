@@ -10,7 +10,8 @@
       "Bash(python scripts/search.py \"fashion ecommerce premium minimal elegant\" --design-system -p \"ShopEase\")",
       "Bash(python:*)",
       "Bash(Remove-Item *)",
-      "PowerShell(Remove-Item *)"
+      "PowerShell(Remove-Item *)",
+      "Bash(xargs sed -i 's/ShopEase/Bambe/g')"
     ]
   }
 }

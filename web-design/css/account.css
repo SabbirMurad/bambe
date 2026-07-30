@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════
-   ShopEase Web — account.css
+   Bambe Web — account.css
    Styles for: Profile, My Orders, Order Tracking, Notifications
 ═══════════════════════════════════════════════════════════════ */
 
@@ -79,7 +79,7 @@
 .account-nav-item:hover { background: var(--surface); color: var(--dark); }
 .account-nav-item.active {
   background: var(--blue-lt);
-  color: var(--blue);
+  color: var(--primary-text);
   font-weight: 700;
 }
 .account-nav-item.active::before {
@@ -100,7 +100,7 @@
   padding: 0 6px;
   border-radius: 10px;
   background: var(--blue);
-  color: white;
+  color: var(--on-primary);
   font-size: 10px;
   font-weight: 700;
   display: flex;
@@ -128,7 +128,7 @@
    PROFILE PAGE
 ══════════════════════════════════════════════════════ ── */
 .profile-hero {
-  background: linear-gradient(135deg, var(--black) 0%, #1a1a2e 100%);
+  background: linear-gradient(135deg, #2A2620 0%, var(--ink) 100%);
   border-radius: var(--radius-lg);
   padding: 32px 28px;
   display: flex;
@@ -205,7 +205,7 @@
   cursor: pointer;
   transition: all 0.15s;
 }
-.stat-card:hover { border-color: var(--blue); box-shadow: var(--shadow-sm); }
+.stat-card:hover { border-color: var(--primary-text); box-shadow: var(--shadow-sm); }
 .stat-num {
   font-family: var(--font-head);
   font-size: 26px;
@@ -260,7 +260,7 @@
   white-space: nowrap;
 }
 .order-filter-tab:hover { border-color: var(--faint); color: var(--dark); }
-.order-filter-tab.active { background: var(--blue); border-color: var(--blue); color: white; }
+.order-filter-tab.active { background: var(--blue); border-color: var(--blue); color: var(--on-primary); }
 
 .order-card {
   background: var(--white);
@@ -294,7 +294,7 @@
   font-weight: 700;
 }
 .status-processing { background: var(--gold-lt); color: var(--warn); }
-.status-shipped { background: var(--blue-lt); color: var(--blue); }
+.status-shipped { background: var(--blue-lt); color: var(--primary-text); }
 .status-delivered { background: var(--success-lt); color: var(--success); }
 .status-cancelled { background: var(--error-lt); color: var(--error); }
 
@@ -348,7 +348,7 @@
    ORDER TRACKING PAGE
 ══════════════════════════════════════════════════════ ── */
 .tracking-header-card {
-  background: var(--black);
+  background: var(--ink);
   border-radius: var(--radius-lg);
   padding: 24px;
   display: flex;
@@ -369,7 +369,7 @@
   font-size: 13px;
   font-weight: 700;
   background: var(--blue);
-  color: white;
+  color: var(--on-primary);
 }
 
 .tracking-layout { display: grid; grid-template-columns: 1fr 340px; gap: 24px; align-items: flex-start; }
@@ -428,7 +428,7 @@
   margin-bottom: 3px;
 }
 .tl-title.done { color: var(--success); }
-.tl-title.active { color: var(--blue); }
+.tl-title.active { color: var(--primary-text); }
 .tl-title.pending { color: var(--faint); }
 .tl-desc { font-size: 12.5px; color: var(--subtle); line-height: 1.55; margin-bottom: 4px; }
 .tl-time { font-size: 11.5px; color: var(--faint); }
@@ -489,7 +489,7 @@
 .notif-mark-all {
   font-size: 13px;
   font-weight: 600;
-  color: var(--blue);
+  color: var(--primary-text);
   cursor: pointer;
 }
 
@@ -511,7 +511,7 @@
   position: relative;
 }
 .notif-item:last-child { border-bottom: none; }
-.notif-item.unread { background: rgba(67,156,219,0.03); }
+.notif-item.unread { background: rgba(250,170,57,0.03); }
 .notif-icon-wrap {
   width: 44px;
   height: 44px;
