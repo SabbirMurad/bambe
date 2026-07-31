@@ -25,6 +25,32 @@
 /* ── ══════════════════════════════════════════════════════
    ADMIN LAYOUT
 ══════════════════════════════════════════════════════ ── */
+
+/* The console is a workspace, not a reading column, so it drops the
+   storefront's 1280px container and runs the full viewport width with
+   a flat 48px gutter. The navbar is widened to match — left at 1280px
+   it would start its logo well inside the sidebar underneath it.
+   Scoped to body.admin so the storefront container is untouched. */
+.admin .container,
+.admin .navbar-inner {
+  max-width: none;
+  padding-left: 48px;
+  padding-right: 48px;
+}
+
+/* The storefront pins the search just after the logo and pushes the
+   free space to its right (margin-right: auto), which strands it at the
+   far left once the bar runs the full viewport. Swapping the auto to
+   the left moves it over to sit with the account controls. The auto
+   margin eats the free space, so the basis has to be an explicit width
+   rather than the storefront's flex-grow off a zero basis. */
+.admin .nav-search {
+  flex: 0 1 720px;
+  max-width: 720px;
+  margin-left: auto;
+  margin-right: 0;
+}
+
 .admin-layout {
   display: grid;
   grid-template-columns: var(--sidebar-w) 1fr;
@@ -289,9 +315,15 @@
    viewBox would skew the stroke weight and turn the marker oval. */
 .chart-svg {
   width: 100%;
+  /* The whole drawing scales with its box, axis labels and stroke
+     weights included, so an unbounded width blows the 10px labels up
+     to headline size on a full-width panel. Capped at ~1.4x the
+     viewBox and centred instead. */
+  max-width: 900px;
   height: auto;
   aspect-ratio: 640 / 210;
   display: block;
+  margin: 0 auto;
   overflow: visible;
 }
 .chart-grid-line { stroke: var(--border); stroke-width: 1; }
@@ -310,6 +342,10 @@
   display: flex;
   align-items: center;
   gap: 16px;
+  /* Tracks the capped chart above it so the two stay one block
+     rather than the legend drifting off to the panel edge. */
+  max-width: 900px;
+  margin: 0 auto;
   padding: 12px 4px 0;
   font-size: 11.5px;
   color: var(--mid);
@@ -555,6 +591,63 @@
   font-size: 12.5px;
   color: var(--mid);
 }
+
+/* ── ══════════════════════════════════════════════════════
+   CATEGORIES — two-level tree inside a normal admin table
+
+   Rows are siblings in one <tbody> rather than nested tables, so the
+   columns stay aligned across levels. Depth is carried by data-level
+   and read back by the indent rule below.
+══════════════════════════════════════════════════════ ── */
+.cat-cell { display: flex; align-items: center; gap: 10px; }
+
+/* Subcategories indent by the width of the parent's chevron plus its
+   swatch, so a child's name lines up under its parent's name. */
+.admin-table tr[data-level="1"] .cat-cell { padding-left: 40px; }
+
+.cat-toggle {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  color: var(--mid);
+  cursor: pointer;
+  /* Collapsed is the resting state; expanded rotates the chevron down. */
+  transition: transform 0.15s, background 0.12s;
+}
+.cat-toggle:hover { background: var(--input-bg); color: var(--dark); }
+.cat-toggle[aria-expanded="true"] { transform: rotate(90deg); }
+
+/* Leaf rows keep the slot so their swatch lines up with a parent's. */
+.cat-toggle-spacer { width: 20px; flex-shrink: 0; }
+
+.cat-swatch {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+  background: var(--input-bg);
+}
+.cat-swatch.sub { width: 10px; height: 10px; border-radius: 3px; margin: 0 9px; }
+
+.cat-hidden { display: none; }
+
+/* A hidden category is still listed, just dimmed — the toggle in the
+   row is the thing that says why, so the text shouldn't shout. */
+.admin-table tr.cat-off .cell-strong,
+.admin-table tr.cat-off .cell-sub,
+.admin-table tr.cat-off .cat-slug,
+.admin-table tr.cat-off .num { opacity: 0.5; }
+
+.cat-slug {
+  font-family: var(--font-head);
+  font-size: 12px;
+  color: var(--mid);
+}
+.cat-count-zero { color: var(--subtle); font-weight: 400; }
 
 /* ── ══════════════════════════════════════════════════════
    SUPPORT — ticket queue + conversation
