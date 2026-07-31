@@ -382,6 +382,11 @@
 .price-inputs { display: flex; gap: 10px; align-items: center; }
 .price-input {
   flex: 1;
+  /* A flex item won't shrink below its intrinsic width while
+     min-width is auto, and an input's intrinsic width comes from
+     its size attribute (~172px by default) — enough to push the
+     pair out of the sidebar. */
+  min-width: 0;
   height: 36px;
   padding: 0 10px;
   border: 1.5px solid var(--border);
@@ -746,11 +751,21 @@
 }
 .rating-big { font-family: var(--font-head); font-size: 56px; font-weight: 700; color: var(--black); line-height: 1; }
 .rating-sub { font-size: 12px; color: var(--subtle); margin-top: 4px; }
-.rating-bars { flex: 1; display: flex; flex-direction: column; gap: 6px; }
+/* Held to half the card. Stretched across the full width the tracks
+   become long thin ribbons and the differences between ratings get
+   harder to read, not easier. The last column is pinned right so
+   capping the bars doesn't leave the card ending in dead space. */
+.rating-bars {
+  flex: 0 1 50%;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.rating-summary > :last-child { margin-left: auto; }
 .rbar-row { display: flex; align-items: center; gap: 10px; }
 .rbar-label { font-size: 12px; color: var(--mid); width: 36px; text-align: right; flex-shrink: 0; }
 .rbar-track { flex: 1; height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; }
-.rbar-fill { height: 100%; background: var(--gold); border-radius: 4px; }
+.rbar-fill { height: 100%; background: var(--primary); border-radius: 4px; }
 .rbar-count { font-size: 11.5px; color: var(--subtle); width: 28px; flex-shrink: 0; }
 
 /* ── Wishlist page ────────────────────────────────────────── */
