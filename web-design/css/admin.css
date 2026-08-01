@@ -1018,3 +1018,60 @@
   .ticket-item,
   .row-btn { transition: none; }
 }
+
+/* ── ══════════════════════════════════════════════════════
+   COUPONS
+
+   The table is the standard admin one; these are the parts a
+   discount row needs that an order or product row doesn't — the
+   code itself, and how much of the allowance is spent.
+══════════════════════════════════════════════════════ ── */
+
+/* The code is the row's identity and the thing people copy, so it
+   is set as a chip in the heading face rather than as body copy. */
+.coupon-code {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 26px;
+  padding: 0 10px;
+  border-radius: var(--radius-sm);
+  border: 1px dashed var(--faint);
+  background: var(--input-bg);
+  font-family: var(--font-head);
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  color: var(--black);
+  cursor: pointer;
+}
+.coupon-code:hover { border-color: var(--warn); color: var(--warn); }
+.coupon-code svg { flex-shrink: 0; opacity: 0.55; }
+.coupon-code:focus-visible { outline: 2px solid var(--warn); outline-offset: 2px; }
+
+/* A spent coupon is still listed, just dimmed — the status cell is
+   the thing that says why, so the rest shouldn't shout. */
+.admin-table tr.coupon-off .coupon-code,
+.admin-table tr.coupon-off .cell-strong,
+.admin-table tr.coupon-off .cell-sub,
+.admin-table tr.coupon-off .num { opacity: 0.5; }
+
+.coupon-usage { min-width: 110px; }
+.coupon-usage-bar {
+  height: 5px;
+  border-radius: 3px;
+  background: var(--border);
+  overflow: hidden;
+  margin-top: 5px;
+}
+.coupon-usage-fill {
+  height: 100%;
+  border-radius: 3px;
+  background: var(--warn);
+  transition: width 0.2s;
+}
+/* Nearly spent is worth noticing before it runs out entirely. */
+.coupon-usage-fill.low { background: var(--error); }
+.coupon-usage-none { color: var(--subtle); font-weight: 400; }
+
+.coupon-value { font-family: var(--font-head); font-weight: 700; color: var(--black); }

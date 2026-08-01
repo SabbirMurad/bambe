@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Coupons — Bambe Admin</title>
+<link rel="stylesheet" href="../../css/common.css">
+<link rel="stylesheet" href="../../css/admin.css">
+</head>
+<body class="admin">
+<nav class="navbar"><div class="navbar-inner"><a href="../shopping/home.html" class="nav-logo"><div class="nav-logo-mark"></div><span class="nav-logo-text">ambe</span></a><div class="nav-search"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="7" cy="7" r="5" stroke="#94908A" stroke-width="1.4"/><path d="M11 11 14.5 14.5" stroke="#94908A" stroke-width="1.4" stroke-linecap="round"/></svg><input type="text" placeholder="Search orders, products, customers…" aria-label="Search the admin console"><div class="nav-search-btn"><svg width="14" height="14" viewBox="0 0 16 16" fill="none"><circle cx="7" cy="7" r="5" stroke="white" stroke-width="1.4"/><path d="M11 11 14.5 14.5" stroke="white" stroke-width="1.4" stroke-linecap="round"/></svg></div></div><div class="nav-actions"><div class="nav-icon-btn" title="Notifications"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M10 2a6 6 0 0 1 6 6c0 3 .9 5 1.9 6.5H2.1C3 14 4 12 4 8a6 6 0 0 1 6-6ZM8 17h4a2 2 0 0 1-4 0Z" stroke="#32302C" stroke-width="1.5" stroke-linejoin="round"/></svg><div class="nav-badge" style="background:#E5645C;">7</div></div><div class="nav-user-btn" style="background:var(--blue-lt);"><div class="nav-avatar"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="5.5" r="3" stroke="var(--blue)" stroke-width="1.4"/><path d="M2 14c0-3.3 2.7-6 6-6s6 2.7 6 6" stroke="var(--blue)" stroke-width="1.4" stroke-linecap="round"/></svg></div><span class="nav-user-name">S. Hassan</span></div></div></div></nav>
+
+<main>
+  <div class="container">
+    <div class="admin-layout">
+
+      <aside class="admin-sidebar">
+        <div class="admin-brand">
+          <div class="admin-brand-mark">
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M3 7.5 9 3l6 4.5V15a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V7.5Z" stroke="var(--warn)" stroke-width="1.5" stroke-linejoin="round"/><path d="M7 16v-5h4v5" stroke="var(--warn)" stroke-width="1.5" stroke-linejoin="round"/></svg>
+          </div>
+          <div>
+            <div class="admin-brand-title">Admin Console</div>
+            <div class="admin-brand-sub">Bambe Store</div>
+          </div>
+        </div>
+        <nav class="admin-nav" aria-label="Admin sections">
+          <div class="admin-nav-group-label">Workspace</div>
+          <a href="overview.html"><div class="admin-nav-item"><svg class="admin-nav-icon" viewBox="0 0 18 18" fill="none"><rect x="2" y="2" width="6" height="6" rx="1.5" stroke="currentColor" stroke-width="1.4"/><rect x="10" y="2" width="6" height="6" rx="1.5" stroke="currentColor" stroke-width="1.4"/><rect x="2" y="10" width="6" height="6" rx="1.5" stroke="currentColor" stroke-width="1.4"/><rect x="10" y="10" width="6" height="6" rx="1.5" stroke="currentColor" stroke-width="1.4"/></svg>Overview</div></a>
+          <a href="orders.html"><div class="admin-nav-item"><svg class="admin-nav-icon" viewBox="0 0 18 18" fill="none"><path d="M2.5 5.5 9 2l6.5 3.5v7L9 16l-6.5-3.5v-7Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path d="M2.5 5.5 9 9m0 0 6.5-3.5M9 9v7" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>Orders<span class="admin-nav-count">24</span></div></a>
+          <a href="products.html"><div class="admin-nav-item"><svg class="admin-nav-icon" viewBox="0 0 18 18" fill="none"><path d="M2.5 8.2V3.5a1 1 0 0 1 1-1h4.7a1 1 0 0 1 .7.3l6.3 6.3a1 1 0 0 1 0 1.4l-4.7 4.7a1 1 0 0 1-1.4 0L2.8 8.9a1 1 0 0 1-.3-.7Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><circle cx="6" cy="6" r="1.2" fill="currentColor"/></svg>Products<span class="admin-nav-count">318</span></div></a>
+          <a href="categories.html"><div class="admin-nav-item"><svg class="admin-nav-icon" viewBox="0 0 18 18" fill="none"><path d="M2.5 5a1.5 1.5 0 0 1 1.5-1.5h3a1 1 0 0 1 .8.4l.9 1.2h5.3A1.5 1.5 0 0 1 15.5 6.6V13a1.5 1.5 0 0 1-1.5 1.5H4A1.5 1.5 0 0 1 2.5 13V5Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>Categories<span class="admin-nav-count">17</span></div></a>
+          <a href="customers.html"><div class="admin-nav-item"><svg class="admin-nav-icon" viewBox="0 0 18 18" fill="none"><circle cx="7" cy="6" r="3" stroke="currentColor" stroke-width="1.4"/><path d="M1.5 15.5c0-3 2.5-5.5 5.5-5.5s5.5 2.5 5.5 5.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><path d="M12.5 3.5a3 3 0 0 1 0 5.5M14 15.5c0-2-.6-3.6-1.6-4.8" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>Customers<span class="admin-nav-count">1,204</span></div></a>
+
+          <a href="coupons.html"><div class="admin-nav-item active"><svg class="admin-nav-icon" viewBox="0 0 18 18" fill="none"><path d="M2.5 5.5a1 1 0 0 1 1-1h11a1 1 0 0 1 1 1v1.9a1.6 1.6 0 0 0 0 3.2v1.9a1 1 0 0 1-1 1h-11a1 1 0 0 1-1-1v-1.9a1.6 1.6 0 0 0 0-3.2V5.5Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path d="M11 6.5v1M11 8.5v1M11 10.5v1" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>Coupons<span class="admin-nav-count">10</span></div></a>
+          <div class="admin-nav-group-label">Service</div>
+          <a href="support.html"><div class="admin-nav-item"><svg class="admin-nav-icon" viewBox="0 0 18 18" fill="none"><path d="M2.5 4.5a1.5 1.5 0 0 1 1.5-1.5h10a1.5 1.5 0 0 1 1.5 1.5v6a1.5 1.5 0 0 1-1.5 1.5H7l-3.5 3v-3a1 1 0 0 1-1-1v-6Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>Support<span class="admin-nav-count alert">7</span></div></a>
+
+          <div class="admin-nav-group-label">Configure</div>
+          <a href="settings.html"><div class="admin-nav-item"><svg class="admin-nav-icon" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="9" r="2.5" stroke="currentColor" stroke-width="1.4"/><path d="M9 1.5v2M9 14.5v2M1.5 9h2M14.5 9h2M3.7 3.7l1.4 1.4M12.9 12.9l1.4 1.4M14.3 3.7l-1.4 1.4M5.1 12.9l-1.4 1.4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>Settings</div></a>
+
+          <div class="admin-nav-logout" tabindex="0"><svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M7 2H3a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h4M12 13l4-4-4-4M16 9H7" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Log Out</div>
+        </nav>
+      </aside>
+
+      <div>
+        <div class="admin-head">
+          <div>
+            <h1 class="admin-title">Coupons</h1>
+            <div class="admin-subtitle" id="cp-subtitle">&nbsp;</div>
+          </div>
+          <div class="admin-head-actions">
+            <button class="btn btn-outline btn-sm" id="cp-export">Export codes</button>
+            <button class="btn btn-primary btn-sm" id="cp-jump-new">Create coupon</button>
+          </div>
+        </div>
+
+        <!-- ── Coupon list ───────────────────────────────────── -->
+        <div class="admin-panel">
+          <div class="admin-tabs" role="tablist">
+            <div class="admin-tab active" role="tab" tabindex="0">All<span class="admin-tab-count">0</span></div>
+            <div class="admin-tab" role="tab" tabindex="0">Active<span class="admin-tab-count">0</span></div>
+            <div class="admin-tab" role="tab" tabindex="0">Scheduled<span class="admin-tab-count">0</span></div>
+            <div class="admin-tab" role="tab" tabindex="0">Expired<span class="admin-tab-count">0</span></div>
+            <div class="admin-tab" role="tab" tabindex="0">Disabled<span class="admin-tab-count">0</span></div>
+          </div>
+
+          <div class="admin-toolbar">
+            <div class="admin-search">
+              <svg width="15" height="15" viewBox="0 0 16 16" fill="none"><circle cx="7" cy="7" r="5" stroke="#94908A" stroke-width="1.4"/><path d="M11 11 14.5 14.5" stroke="#94908A" stroke-width="1.4" stroke-linecap="round"/></svg>
+              <input type="text" placeholder="Search code or description&hellip;" aria-label="Search coupons">
+            </div>
+            <select class="admin-filter" aria-label="Filter by discount type">
+              <option>All types</option>
+              <option>Percentage</option>
+              <option>Fixed amount</option>
+              <option>Free shipping</option>
+            </select>
+            <select class="admin-filter" aria-label="Sort coupons">
+              <option>Recently created</option>
+              <option>Ending soonest</option>
+              <option>Most redeemed</option>
+              <option>Largest discount</option>
+            </select>
+          </div>
+
+          <div class="admin-bulk" data-bulk>
+            <span data-bulk-count>0 selected</span>
+            <div class="admin-bulk-actions">
+              <button class="btn btn-outline btn-sm">Enable</button>
+              <button class="btn btn-outline btn-sm">Disable</button>
+              <button class="btn btn-outline btn-sm">Duplicate</button>
+              <button class="btn btn-danger btn-sm">Delete</button>
+            </div>
+          </div>
+
+          <div class="table-scroll">
+            <table class="admin-table" data-selectable>
+              <thead>
+                <tr>
+                  <th scope="col" class="col-check"><input type="checkbox" class="admin-check" data-check-all aria-label="Select all coupons"></th>
+                  <th scope="col">Code</th>
+                  <th scope="col">Type</th>
+                  <th scope="col">Value</th>
+                  <th scope="col">Redemptions</th>
+                  <th scope="col">Runs</th>
+                  <th scope="col">Status</th>
+                  <th scope="col">Enabled</th>
+                  <th scope="col" class="col-actions"><span class="sr-only">Actions</span></th>
+                </tr>
+              </thead>
+              <tbody id="cp-body" data-skeleton>
+                <tr data-coupon data-code="SUMMER50" data-type="percent" data-value="50"
+                    data-min="80" data-used="1842" data-limit="5000"
+                    data-start="2026-06-01" data-end="2026-08-31">
+                  <td><input type="checkbox" class="admin-check" data-row-check aria-label="Select SUMMER50"></td>
+                  <td>
+                    <span class="coupon-code" data-copy tabindex="0" role="button" title="Copy code">
+                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><rect x="3.5" y="3.5" width="6.5" height="6.5" rx="1.2" stroke="currentColor" stroke-width="1.2"/><path d="M8 3.5V2.6a1 1 0 0 0-1-1H2.6a1 1 0 0 0-1 1V7a1 1 0 0 0 1 1h.9" stroke="currentColor" stroke-width="1.2"/></svg>
+                      SUMMER50
+                    </span>
+                    <div class="cell-sub">Summer Sale — sitewide</div>
+                  </td>
+                  <td><span class="tag tag-blue">Percentage</span></td>
+                  <td><span class="coupon-value">50% off</span><div class="cell-sub">Min spend $80</div></td>
+                  <td class="coupon-usage">
+                    <span class="num">1,842</span> <span class="cell-sub" style="display:inline;">/ 5,000</span>
+                    <div class="coupon-usage-bar"><div class="coupon-usage-fill" style="width:37%;"></div></div>
+                  </td>
+                  <td>1 Jun 2026 – 31 Aug 2026<div class="cell-sub" data-field="status-note"></div></td>
+                  <td><span class="tag" data-field="status">—</span></td>
+                  <td><div class="toggle on"></div></td>
+                  <td class="col-actions"><span class="row-btn" tabindex="0" title="More actions"><svg width="15" height="15" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="3" r="1.3" fill="currentColor"/><circle cx="8" cy="8" r="1.3" fill="currentColor"/><circle cx="8" cy="13" r="1.3" fill="currentColor"/></svg></span></td>
+                </tr>
+                <tr data-coupon data-code="SAVE10" data-type="percent" data-value="10"
+                    data-min="50" data-used="612" data-limit="2000"
+                    data-start="2026-07-01" data-end="2026-09-30">
+                  <td><input type="checkbox" class="admin-check" data-row-check aria-label="Select SAVE10"></td>
+                  <td>
+                    <span class="coupon-code" data-copy tabindex="0" role="button" title="Copy code">
+                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><rect x="3.5" y="3.5" width="6.5" height="6.5" rx="1.2" stroke="currentColor" stroke-width="1.2"/><path d="M8 3.5V2.6a1 1 0 0 0-1-1H2.6a1 1 0 0 0-1 1V7a1 1 0 0 0 1 1h.9" stroke="currentColor" stroke-width="1.2"/></svg>
+                      SAVE10
+                    </span>
+                    <div class="cell-sub">Evergreen basket nudge</div>
+                  </td>
+                  <td><span class="tag tag-blue">Percentage</span></td>
+                  <td><span class="coupon-value">10% off</span><div class="cell-sub">Min spend $50</div></td>
+                  <td class="coupon-usage">
+                    <span class="num">612</span> <span class="cell-sub" style="display:inline;">/ 2,000</span>
+                    <div class="coupon-usage-bar"><div class="coupon-usage-fill" style="width:31%;"></div></div>
+                  </td>
+                  <td>1 Jul 2026 – 30 Sep 2026<div class="cell-sub" data-field="status-note"></div></td>
+                  <td><span class="tag" data-field="status">—</span></td>
+                  <td><div class="toggle on"></div></td>
+                  <td class="col-actions"><span class="row-btn" tabindex="0" title="More actions"><svg width="15" height="15" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="3" r="1.3" fill="currentColor"/><circle cx="8" cy="8" r="1.3" fill="currentColor"/><circle cx="8" cy="13" r="1.3" fill="currentColor"/></svg></span></td>
+                </tr>
+                <tr data-coupon data-code="FREESHIP" data-type="ship" data-value=""
+                    data-min="35" data-used="3104" data-limit="0"
+                    data-start="2026-01-01" data-end="2026-12-31">
+                  <td><input type="checkbox" class="admin-check" data-row-check aria-label="Select FREESHIP"></td>
+                  <td>
+                    <span class="coupon-code" data-copy tabindex="0" role="button" title="Copy code">
+                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><rect x="3.5" y="3.5" width="6.5" height="6.5" rx="1.2" stroke="currentColor" stroke-width="1.2"/><path d="M8 3.5V2.6a1 1 0 0 0-1-1H2.6a1 1 0 0 0-1 1V7a1 1 0 0 0 1 1h.9" stroke="currentColor" stroke-width="1.2"/></svg>
+                      FREESHIP
+                    </span>
+                    <div class="cell-sub">Free standard delivery</div>
+                  </td>
+                  <td><span class="tag tag-green">Free shipping</span></td>
+                  <td><span class="coupon-value">Shipping</span><div class="cell-sub">Min spend $35</div></td>
+                  <td class="coupon-usage">
+                    <span class="num">3,104</span> <span class="cell-sub" style="display:inline;">/ <span class="coupon-usage-none">Unlimited</span></span>
+                    
+                  </td>
+                  <td>1 Jan 2026 – 31 Dec 2026<div class="cell-sub" data-field="status-note"></div></td>
+                  <td><span class="tag" data-field="status">—</span></td>
+                  <td><div class="toggle on"></div></td>
+                  <td class="col-actions"><span class="row-btn" tabindex="0" title="More actions"><svg width="15" height="15" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="3" r="1.3" fill="currentColor"/><circle cx="8" cy="8" r="1.3" fill="currentColor"/><circle cx="8" cy="13" r="1.3" fill="currentColor"/></svg></span></td>
+                </tr>
+                <tr data-coupon data-code="WELCOME15" data-type="percent" data-value="15"
+                    data-min="40" data-used="978" data-limit="0"
+                    data-start="2026-01-01" data-end="2026-12-31">
+                  <td><input type="checkbox" class="admin-check" data-row-check aria-label="Select WELCOME15"></td>
+                  <td>
+                    <span class="coupon-code" data-copy tabindex="0" role="button" title="Copy code">
+                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><rect x="3.5" y="3.5" width="6.5" height="6.5" rx="1.2" stroke="currentColor" stroke-width="1.2"/><path d="M8 3.5V2.6a1 1 0 0 0-1-1H2.6a1 1 0 0 0-1 1V7a1 1 0 0 0 1 1h.9" stroke="currentColor" stroke-width="1.2"/></svg>
+                      WELCOME15
+                    </span>
+                    <div class="cell-sub">First order only</div>
+                  </td>
+                  <td><span class="tag tag-blue">Percentage</span></td>
+                  <td><span class="coupon-value">15% off</span><div class="cell-sub">Min spend $40</div></td>
+                  <td class="coupon-usage">
+                    <span class="num">978</span> <span class="cell-sub" style="display:inline;">/ <span class="coupon-usage-none">Unlimited</span></span>
+                    
+                  </td>
+                  <td>1 Jan 2026 – 31 Dec 2026<div class="cell-sub" data-field="status-note"></div></td>
+                  <td><span class="tag" data-field="status">—</span></td>
+                  <td><div class="toggle on"></div></td>
+                  <td class="col-actions"><span class="row-btn" tabindex="0" title="More actions"><svg width="15" height="15" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="3" r="1.3" fill="currentColor"/><circle cx="8" cy="8" r="1.3" fill="currentColor"/><circle cx="8" cy="13" r="1.3" fill="currentColor"/></svg></span></td>
+                </tr>
+                <tr data-coupon data-code="APP10" data-type="percent" data-value="10"
+                    data-min="0" data-used="204" data-limit="1000"
+                    data-start="2026-07-15" data-end="2026-10-15">
+                  <td><input type="checkbox" class="admin-check" data-row-check aria-label="Select APP10"></td>
+                  <td>
+                    <span class="coupon-code" data-copy tabindex="0" role="button" title="Copy code">
+                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><rect x="3.5" y="3.5" width="6.5" height="6.5" rx="1.2" stroke="currentColor" stroke-width="1.2"/><path d="M8 3.5V2.6a1 1 0 0 0-1-1H2.6a1 1 0 0 0-1 1V7a1 1 0 0 0 1 1h.9" stroke="currentColor" stroke-width="1.2"/></svg>
+                      APP10
+                    </span>
+                    <div class="cell-sub">App install reward</div>
+                  </td>
+                  <td><span class="tag tag-blue">Percentage</span></td>
+                  <td><span class="coupon-value">10% off</span><div class="cell-sub">No minimum</div></td>
+                  <td class="coupon-usage">
+                    <span class="num">204</span> <span class="cell-sub" style="display:inline;">/ 1,000</span>
+                    <div class="coupon-usage-bar"><div class="coupon-usage-fill" style="width:20%;"></div></div>
+                  </td>
+                  <td>15 Jul 2026 – 15 Oct 2026<div class="cell-sub" data-field="status-note"></div></td>
+                  <td><span class="tag" data-field="status">—</span></td>
+                  <td><div class="toggle on"></div></td>
+                  <td class="col-actions"><span class="row-btn" tabindex="0" title="More actions"><svg width="15" height="15" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="3" r="1.3" fill="currentColor"/><circle cx="8" cy="8" r="1.3" fill="currentColor"/><circle cx="8" cy="13" r="1.3" fill="currentColor"/></svg></span></td>
+                </tr>
+                <tr data-coupon data-code="FLASH40" data-type="percent" data-value="40"
+                    data-min="60" data-used="500" data-limit="500"
+                    data-start="2026-04-15" data-end="2026-04-16">
+                  <td><input type="checkbox" class="admin-check" data-row-check aria-label="Select FLASH40"></td>
+                  <td>
+                    <span class="coupon-code" data-copy tabindex="0" role="button" title="Copy code">
+                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><rect x="3.5" y="3.5" width="6.5" height="6.5" rx="1.2" stroke="currentColor" stroke-width="1.2"/><path d="M8 3.5V2.6a1 1 0 0 0-1-1H2.6a1 1 0 0 0-1 1V7a1 1 0 0 0 1 1h.9" stroke="currentColor" stroke-width="1.2"/></svg>
+                      FLASH40
+                    </span>
+                    <div class="cell-sub">24-hour flash sale</div>
+                  </td>
+                  <td><span class="tag tag-blue">Percentage</span></td>
+                  <td><span class="coupon-value">40% off</span><div class="cell-sub">Min spend $60</div></td>
+                  <td class="coupon-usage">
+                    <span class="num">500</span> <span class="cell-sub" style="display:inline;">/ 500</span>
+                    <div class="coupon-usage-bar"><div class="coupon-usage-fill low" style="width:100%;"></div></div>
+                  </td>
+                  <td>15 Apr 2026 – 16 Apr 2026<div class="cell-sub" data-field="status-note"></div></td>
+                  <td><span class="tag" data-field="status">—</span></td>
+                  <td><div class="toggle"></div></td>
+                  <td class="col-actions"><span class="row-btn" tabindex="0" title="More actions"><svg width="15" height="15" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="3" r="1.3" fill="currentColor"/><circle cx="8" cy="8" r="1.3" fill="currentColor"/><circle cx="8" cy="13" r="1.3" fill="currentColor"/></svg></span></td>
+                </tr>
+                <tr data-coupon data-code="BAMBE20" data-type="fixed" data-value="20"
+                    data-min="120" data-used="87" data-limit="400"
+                    data-start="2026-08-15" data-end="2026-09-15">
+                  <td><input type="checkbox" class="admin-check" data-row-check aria-label="Select BAMBE20"></td>
+                  <td>
+                    <span class="coupon-code" data-copy tabindex="0" role="button" title="Copy code">
+                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><rect x="3.5" y="3.5" width="6.5" height="6.5" rx="1.2" stroke="currentColor" stroke-width="1.2"/><path d="M8 3.5V2.6a1 1 0 0 0-1-1H2.6a1 1 0 0 0-1 1V7a1 1 0 0 0 1 1h.9" stroke="currentColor" stroke-width="1.2"/></svg>
+                      BAMBE20
+                    </span>
+                    <div class="cell-sub">Loyalty tier reward</div>
+                  </td>
+                  <td><span class="tag tag-gold">Fixed amount</span></td>
+                  <td><span class="coupon-value">$20 off</span><div class="cell-sub">Min spend $120</div></td>
+                  <td class="coupon-usage">
+                    <span class="num">87</span> <span class="cell-sub" style="display:inline;">/ 400</span>
+                    <div class="coupon-usage-bar"><div class="coupon-usage-fill" style="width:22%;"></div></div>
+                  </td>
+                  <td>15 Aug 2026 – 15 Sep 2026<div class="cell-sub" data-field="status-note"></div></td>
+                  <td><span class="tag" data-field="status">—</span></td>
+                  <td><div class="toggle on"></div></td>
+                  <td class="col-actions"><span class="row-btn" tabindex="0" title="More actions"><svg width="15" height="15" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="3" r="1.3" fill="currentColor"/><circle cx="8" cy="8" r="1.3" fill="currentColor"/><circle cx="8" cy="13" r="1.3" fill="currentColor"/></svg></span></td>
+                </tr>
+                <tr data-coupon data-code="STUDENT10" data-type="percent" data-value="10"
+                    data-min="0" data-used="41" data-limit="0"
+                    data-start="2026-09-01" data-end="2027-01-31">
+                  <td><input type="checkbox" class="admin-check" data-row-check aria-label="Select STUDENT10"></td>
+                  <td>
+                    <span class="coupon-code" data-copy tabindex="0" role="button" title="Copy code">
+                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><rect x="3.5" y="3.5" width="6.5" height="6.5" rx="1.2" stroke="currentColor" stroke-width="1.2"/><path d="M8 3.5V2.6a1 1 0 0 0-1-1H2.6a1 1 0 0 0-1 1V7a1 1 0 0 0 1 1h.9" stroke="currentColor" stroke-width="1.2"/></svg>
+                      STUDENT10
+                    </span>
+                    <div class="cell-sub">Verified students</div>
+                  </td>
+                  <td><span class="tag tag-blue">Percentage</span></td>
+                  <td><span class="coupon-value">10% off</span><div class="cell-sub">No minimum</div></td>
+                  <td class="coupon-usage">
+                    <span class="num">41</span> <span class="cell-sub" style="display:inline;">/ <span class="coupon-usage-none">Unlimited</span></span>
+                    
+                  </td>
+                  <td>1 Sep 2026 – 31 Jan 2027<div class="cell-sub" data-field="status-note"></div></td>
+                  <td><span class="tag" data-field="status">—</span></td>
+                  <td><div class="toggle on"></div></td>
+                  <td class="col-actions"><span class="row-btn" tabindex="0" title="More actions"><svg width="15" height="15" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="3" r="1.3" fill="currentColor"/><circle cx="8" cy="8" r="1.3" fill="currentColor"/><circle cx="8" cy="13" r="1.3" fill="currentColor"/></svg></span></td>
+                </tr>
+                <tr data-coupon data-code="NEWYEAR25" data-type="percent" data-value="25"
+                    data-min="75" data-used="2210" data-limit="2500"
+                    data-start="2025-12-26" data-end="2026-01-07">
+                  <td><input type="checkbox" class="admin-check" data-row-check aria-label="Select NEWYEAR25"></td>
+                  <td>
+                    <span class="coupon-code" data-copy tabindex="0" role="button" title="Copy code">
+                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><rect x="3.5" y="3.5" width="6.5" height="6.5" rx="1.2" stroke="currentColor" stroke-width="1.2"/><path d="M8 3.5V2.6a1 1 0 0 0-1-1H2.6a1 1 0 0 0-1 1V7a1 1 0 0 0 1 1h.9" stroke="currentColor" stroke-width="1.2"/></svg>
+                      NEWYEAR25
+                    </span>
+                    <div class="cell-sub">Last winter campaign</div>
+                  </td>
+                  <td><span class="tag tag-blue">Percentage</span></td>
+                  <td><span class="coupon-value">25% off</span><div class="cell-sub">Min spend $75</div></td>
+                  <td class="coupon-usage">
+                    <span class="num">2,210</span> <span class="cell-sub" style="display:inline;">/ 2,500</span>
+                    <div class="coupon-usage-bar"><div class="coupon-usage-fill" style="width:88%;"></div></div>
+                  </td>
+                  <td>26 Dec 2025 – 7 Jan 2026<div class="cell-sub" data-field="status-note"></div></td>
+                  <td><span class="tag" data-field="status">—</span></td>
+                  <td><div class="toggle on"></div></td>
+                  <td class="col-actions"><span class="row-btn" tabindex="0" title="More actions"><svg width="15" height="15" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="3" r="1.3" fill="currentColor"/><circle cx="8" cy="8" r="1.3" fill="currentColor"/><circle cx="8" cy="13" r="1.3" fill="currentColor"/></svg></span></td>
+                </tr>
+                <tr data-coupon data-code="RESTOCK5" data-type="fixed" data-value="5"
+                    data-min="30" data-used="0" data-limit="250"
+                    data-start="2026-08-10" data-end="2026-08-24">
+                  <td><input type="checkbox" class="admin-check" data-row-check aria-label="Select RESTOCK5"></td>
+                  <td>
+                    <span class="coupon-code" data-copy tabindex="0" role="button" title="Copy code">
+                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><rect x="3.5" y="3.5" width="6.5" height="6.5" rx="1.2" stroke="currentColor" stroke-width="1.2"/><path d="M8 3.5V2.6a1 1 0 0 0-1-1H2.6a1 1 0 0 0-1 1V7a1 1 0 0 0 1 1h.9" stroke="currentColor" stroke-width="1.2"/></svg>
+                      RESTOCK5
+                    </span>
+                    <div class="cell-sub">Back-in-stock nudge</div>
+                  </td>
+                  <td><span class="tag tag-gold">Fixed amount</span></td>
+                  <td><span class="coupon-value">$5 off</span><div class="cell-sub">Min spend $30</div></td>
+                  <td class="coupon-usage">
+                    <span class="num">0</span> <span class="cell-sub" style="display:inline;">/ 250</span>
+                    <div class="coupon-usage-bar"><div class="coupon-usage-fill" style="width:0%;"></div></div>
+                  </td>
+                  <td>10 Aug 2026 – 24 Aug 2026<div class="cell-sub" data-field="status-note"></div></td>
+                  <td><span class="tag" data-field="status">—</span></td>
+                  <td><div class="toggle"></div></td>
+                  <td class="col-actions"><span class="row-btn" tabindex="0" title="More actions"><svg width="15" height="15" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="3" r="1.3" fill="currentColor"/><circle cx="8" cy="8" r="1.3" fill="currentColor"/><circle cx="8" cy="13" r="1.3" fill="currentColor"/></svg></span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="admin-table-foot">
+            <span id="cp-foot">&nbsp;</span>
+            <span>Disabled codes are rejected at checkout but keep their redemption history.</span>
+          </div>
+        </div>
+
+        <!-- ── Create ────────────────────────────────────────── -->
+        <div class="admin-panel" id="cp-new" style="margin-top:20px;">
+          <div class="admin-panel-head">
+            <div>
+              <div class="admin-panel-title">Create coupon</div>
+              <div class="admin-subtitle">Codes are matched case-insensitively at checkout</div>
+            </div>
+          </div>
+          <div class="admin-panel-body">
+            <div class="form-row-2">
+              <div class="form-group">
+                <label class="form-label" for="cp-code">Code</label>
+                <input class="form-input" id="cp-code" type="text" placeholder="e.g. AUTUMN20" autocomplete="off">
+                <div class="form-hint">Letters and numbers only &mdash; typed in upper case for you.</div>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="cp-type">Discount type</label>
+                <select class="form-select" id="cp-type">
+                  <option value="percent">Percentage off</option>
+                  <option value="fixed">Fixed amount off</option>
+                  <option value="ship">Free shipping</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-row-2">
+              <div class="form-group">
+                <label class="form-label" for="cp-value">Value</label>
+                <input class="form-input" id="cp-value" type="text" placeholder="20">
+                <div class="form-hint" id="cp-value-hint">Percent off the order subtotal.</div>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="cp-min">Minimum spend</label>
+                <input class="form-input" id="cp-min" type="text" placeholder="0">
+                <div class="form-hint">Leave at 0 for no minimum.</div>
+              </div>
+            </div>
+            <div class="form-row-2">
+              <div class="form-group">
+                <label class="form-label" for="cp-limit">Total redemption limit</label>
+                <input class="form-input" id="cp-limit" type="text" placeholder="0">
+                <div class="form-hint">0 means unlimited.</div>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="cp-note">Description</label>
+                <input class="form-input" id="cp-note" type="text" placeholder="What this code is for">
+              </div>
+            </div>
+            <div class="form-row-2">
+              <div class="form-group">
+                <label class="form-label" for="cp-start">Starts</label>
+                <input class="form-input" id="cp-start" type="date">
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="cp-end">Ends</label>
+                <input class="form-input" id="cp-end" type="date">
+              </div>
+            </div>
+            <div class="form-group" style="margin-bottom:0;">
+              <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+                <span style="display:flex;align-items:center;gap:10px;font-size:13px;color:var(--dark);">
+                  <span class="toggle on" id="cp-enabled" aria-label="Enabled at checkout"></span>Enabled at checkout
+                </span>
+                <button class="btn btn-primary btn-sm" id="cp-create" style="margin-left:auto;">Create coupon</button>
+              </div>
+              <div class="form-hint" id="cp-msg" style="display:none;"></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</main>
+
+<script src="../../js/toggle.js"></script>
+<script src="admin.js"></script>
+<script src="coupons.js"></script>
+<script src="../../js/select.js"></script>
+<script src="../../js/skeleton.js"></script>
+</body>
+</html>

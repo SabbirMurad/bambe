@@ -333,6 +333,13 @@
   font-weight: 700;
   color: var(--dark);
 }
+.filter-card-head svg { transition: transform 0.16s ease; }
+/* Collapsed cards keep their head as the handle back open, and the
+   chevron points at the state it will move to. */
+.filter-card.collapsed .filter-card-head { border-bottom-color: transparent; }
+.filter-card.collapsed .filter-card-head svg { transform: rotate(-90deg); }
+.filter-card.collapsed .filter-card-body { display: none; }
+
 .filter-card-body { padding: 12px 16px; }
 
 .filter-option {
@@ -341,6 +348,24 @@
   justify-content: space-between;
   padding: 6px 0;
   cursor: pointer;
+  border-radius: var(--radius-sm);
+  transition: color 0.12s;
+}
+.filter-option:hover .filter-option-label { color: var(--black); }
+.filter-option:hover .filter-option-count { color: var(--mid); }
+
+/* The facets are divs rather than inputs, so the focus ring has to
+   be drawn on the row itself for keyboard users. */
+.filter-option:focus-visible,
+.rating-filter-item:focus-visible,
+.size-chip:focus-visible,
+.color-swatch:focus-visible,
+.filter-card-head:focus-visible,
+.clear-filters-btn:focus-visible,
+.active-filter-chip:focus-visible,
+.view-btn:focus-visible {
+  outline: 2px solid var(--warn);
+  outline-offset: 2px;
 }
 .filter-option-label {
   display: flex;
@@ -358,6 +383,18 @@
   background: var(--border);
   border-radius: 2px;
   margin: 18px 6px 24px;
+  cursor: pointer;
+  /* The thumbs drag on pointer events, so the browser must not
+     claim the gesture for scrolling first. */
+  touch-action: none;
+}
+/* The bar is 4px tall, which is far too thin to aim at. This gives
+   it a ~26px invisible grab strip. It is the track's first child, so
+   the fill and thumbs still paint over it and keep their own hits. */
+.price-range-track::before {
+  content: '';
+  position: absolute;
+  inset: -11px 0;
 }
 .price-range-fill {
   position: absolute;
@@ -378,6 +415,25 @@
   border: 2px solid var(--blue);
   box-shadow: var(--shadow-sm);
   cursor: grab;
+  touch-action: none;
+  transition: box-shadow 0.15s, border-width 0.1s;
+}
+/* Same idea for the 16px handle — a 32px target to grab. */
+.price-range-thumb::before {
+  content: '';
+  position: absolute;
+  inset: -8px;
+  border-radius: 50%;
+}
+.price-range-thumb:hover { box-shadow: 0 0 0 6px var(--primary-lt); }
+.price-range-thumb.dragging {
+  cursor: grabbing;
+  border-width: 3px;
+  box-shadow: 0 0 0 8px var(--primary-lt);
+}
+.price-range-thumb:focus-visible {
+  outline: 2px solid var(--warn);
+  outline-offset: 3px;
 }
 .price-inputs { display: flex; gap: 10px; align-items: center; }
 .price-input {
@@ -483,8 +539,13 @@
   justify-content: center;
   cursor: pointer;
   transition: all 0.15s;
+  /* Both icons draw with currentColor so the active state only has to
+     flip one property — the inactive icon used to be a hard-coded
+     grey, which left it unreadable once the button filled orange. */
+  color: var(--mid);
 }
-.view-btn.active { background: var(--blue); border-color: var(--blue); }
+.view-btn:hover { border-color: var(--faint); color: var(--dark); }
+.view-btn.active { background: var(--blue); border-color: var(--blue); color: var(--on-primary); }
 
 /* Active filters chips bar */
 .active-filters { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
@@ -782,3 +843,242 @@
   color: var(--black);
 }
 .wishlist-subtitle { font-size: 13.5px; color: var(--subtle); margin-top: 3px; }
+
+/* ── ══════════════════════════════════════════════════════
+   GET THE APP  (home page)
+
+   A dark band between the last product row and the footer. It
+   borrows the footer's ink surface and white-alpha text ramp so the
+   page ends on one dark block rather than two competing ones — the
+   band reads as the lead-in to the footer, not a separate slab.
+══════════════════════════════════════════════════════ ── */
+.app-band {
+  background: var(--ink);
+  color: rgba(255,255,255,0.72);
+  /* A top-level block, sibling to <main> and the footer, so it spans
+     the page on its own. It is deliberately NOT inside .container:
+     the usual `margin: 0 calc(50% - 50vw)` escape measures against
+     100vw, which counts the scrollbar, and the band would overhang
+     the content area by the scrollbar's width and add a horizontal
+     scrollbar of its own. The inner wrapper below puts the content
+     back on the same 1280 track the footer uses.
+
+     The negative bottom margin cancels the footer's own top margin,
+     so the two dark blocks meet with no light seam between them. */
+  margin: 56px 0 -80px;
+  overflow: hidden;
+  position: relative;
+}
+/* A soft warm wash behind the phone, so the block isn't flat ink. */
+.app-band::before {
+  content: '';
+  position: absolute;
+  right: -80px;
+  top: -120px;
+  width: 620px;
+  height: 620px;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--primary-lt) 0%, transparent 68%);
+  pointer-events: none;
+}
+.app-inner {
+  max-width: var(--content-max);
+  margin: 0 auto;
+  padding: 56px 32px 0;
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: 56px;
+  align-items: end;
+  position: relative;
+}
+
+.app-copy { padding-bottom: 60px; }
+.app-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 26px;
+  padding: 0 12px;
+  border-radius: 20px;
+  background: rgba(250,170,57,0.16);
+  color: var(--primary);
+  font-family: var(--font-head);
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  margin-bottom: 16px;
+}
+.app-title {
+  font-family: var(--font-head);
+  font-size: 34px;
+  font-weight: 700;
+  line-height: 1.15;
+  color: white;
+  margin-bottom: 12px;
+}
+.app-title em { font-style: normal; color: var(--primary); }
+.app-desc {
+  font-size: 13.5px;
+  line-height: 1.7;
+  max-width: 420px;
+  margin-bottom: 22px;
+}
+
+.app-perks { display: flex; gap: 26px; margin-bottom: 26px; flex-wrap: wrap; }
+.app-perk { display: flex; align-items: center; gap: 9px; font-size: 12.5px; }
+.app-perk-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  background: rgba(255,255,255,0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--primary);
+}
+
+.app-get { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+/* Store buttons keep the badge proportions people already scan for —
+   small "Download on the" line over a large wordmark. */
+.app-store-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 52px;
+  padding: 0 18px 0 15px;
+  border-radius: var(--radius-md);
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.14);
+  color: white;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, transform 0.15s;
+}
+.app-store-btn:hover {
+  background: rgba(255,255,255,0.14);
+  border-color: rgba(255,255,255,0.28);
+  transform: translateY(-1px);
+}
+.app-store-btn:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 3px;
+}
+.app-store-label { line-height: 1.15; text-align: left; }
+.app-store-label small {
+  display: block;
+  font-size: 9.5px;
+  letter-spacing: 0.4px;
+  color: rgba(255,255,255,0.55);
+  text-transform: uppercase;
+}
+.app-store-label strong {
+  font-family: var(--font-head);
+  font-size: 15px;
+  font-weight: 700;
+}
+
+/* The QR stands in for the real code; it is drawn, not photographed,
+   so it stays crisp and needs no asset. */
+.app-qr {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-left: 18px;
+  margin-left: 6px;
+  border-left: 1px solid rgba(255,255,255,0.12);
+}
+.app-qr-code {
+  width: 52px;
+  height: 52px;
+  border-radius: 8px;
+  background: white;
+  padding: 5px;
+  flex-shrink: 0;
+}
+.app-qr-text { font-size: 11.5px; line-height: 1.45; width: 118px; }
+.app-qr-text b { display: block; color: white; font-weight: 600; }
+
+.app-rating {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 22px;
+  font-size: 12px;
+  color: rgba(255,255,255,0.5);
+}
+.app-rating strong { color: white; font-family: var(--font-head); font-size: 13px; }
+
+/* ── Phone ────────────────────────────────────────────────
+   Drawn in CSS. It is cropped by the band's overflow so the
+   handset reads as rising out of the section rather than
+   floating in a box. */
+.app-phone {
+  width: 260px;
+  height: 380px;
+  margin: 0 auto;
+  border-radius: 34px 34px 0 0;
+  border: 8px solid #2E2C29;
+  border-bottom: none;
+  background: var(--white);
+  box-shadow: 0 -2px 40px rgba(0,0,0,0.45);
+  position: relative;
+  overflow: hidden;
+}
+.app-phone-notch {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 96px;
+  height: 20px;
+  background: #2E2C29;
+  border-radius: 0 0 12px 12px;
+  z-index: 2;
+}
+.app-screen { padding: 30px 14px 0; }
+.app-screen-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 32px;
+  padding: 0 10px;
+  border-radius: 20px;
+  background: var(--input-bg);
+  font-size: 10.5px;
+  color: var(--subtle);
+  margin-bottom: 12px;
+}
+.app-screen-row { display: flex; gap: 8px; margin-bottom: 10px; }
+.app-screen-chip {
+  height: 22px;
+  padding: 0 10px;
+  border-radius: 20px;
+  background: var(--input-bg);
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--mid);
+  display: flex;
+  align-items: center;
+}
+.app-screen-chip.on { background: var(--primary); color: var(--on-primary); }
+.app-screen-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.app-screen-card {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.app-screen-thumb { aspect-ratio: 1; }
+.app-screen-meta { padding: 7px 8px 9px; }
+.app-screen-line {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--border);
+}
+.app-screen-line.short { width: 54%; margin-top: 5px; }
+.app-screen-price {
+  margin-top: 6px;
+  font-family: var(--font-head);
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--black);
+}

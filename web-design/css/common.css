@@ -650,6 +650,145 @@ body::-webkit-scrollbar-corner {
 }
 .form-select:focus { border-color: var(--primary-text); box-shadow: 0 0 0 3px var(--blue-lt); }
 
+/* ── ══════════════════════════════════════════════════════
+   CUSTOM SELECT  (js/select.js)
+
+   The native <select> stays in the markup and keeps owning the
+   value; select.js hides it and puts a button + listbox in its
+   place, so the popup can be themed the way the OS menu can't.
+
+   The button inherits whichever skin the original select wore —
+   .form-select or admin.css's .admin-filter — so it lands in the
+   layout at exactly the size the native one occupied. Those skins
+   paint their own caret into the background, and .admin-filter is
+   in a stylesheet that loads after this one, so the reset below is
+   written as button.select-btn to out-specify it rather than
+   relying on source order.
+══════════════════════════════════════════════════════ ── */
+.select-native {
+  /* Kept in the DOM for its value and any form that submits it, but
+     taken out of the layout and the tab order. */
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+button.select-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  background-image: none;
+  /* Both skins reserve room on the right for a caret painted into the
+     background. The caret is a real element here, so that reservation
+     comes back off as padding. */
+  padding-right: 12px;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+button.select-btn:hover { border-color: var(--faint); }
+button.select-btn[aria-expanded="true"] {
+  border-color: var(--primary-text);
+  box-shadow: 0 0 0 3px var(--blue-lt);
+}
+button.select-btn:focus-visible {
+  outline: none;
+  border-color: var(--primary-text);
+  box-shadow: 0 0 0 3px var(--blue-lt);
+}
+button.select-btn:disabled { cursor: not-allowed; opacity: 0.55; }
+
+.select-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* A select with nothing chosen shows its placeholder in the muted
+   tone so it reads as absent rather than as a real value. */
+.select-btn.is-empty .select-label { color: var(--subtle); }
+
+.select-caret {
+  flex-shrink: 0;
+  color: var(--subtle);
+  transition: transform 0.16s ease;
+}
+.select-btn[aria-expanded="true"] .select-caret {
+  transform: rotate(180deg);
+  color: var(--primary-text);
+}
+
+/* The menu is appended to <body> and positioned in viewport
+   coordinates, so a filter card or panel with overflow:hidden
+   can't clip it and no stacking context can bury it. */
+.select-menu {
+  position: fixed;
+  z-index: 60;
+  width: max-content;
+  max-width: 360px;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  padding: 6px;
+  max-height: 288px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  opacity: 0;
+  transform: translateY(-4px);
+  transition: opacity 0.14s ease, transform 0.14s ease;
+}
+.select-menu.open { opacity: 1; transform: none; }
+/* Opening upward should grow from the bottom edge, not the top. */
+.select-menu.drop-up { transform: translateY(4px); }
+.select-menu.drop-up.open { transform: none; }
+
+.select-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 13.5px;
+  line-height: 1.35;
+  color: var(--dark);
+  cursor: pointer;
+}
+/* .active is the keyboard cursor; it has to look the same as hover
+   so arrowing through the list reads like pointing at it. */
+.select-option:hover,
+.select-option.active { background: var(--input-bg); }
+.select-option[aria-selected="true"] {
+  background: var(--primary-lt);
+  font-weight: 600;
+  /* Deliberately not --primary-text: at 1.9:1 on white the accent is
+     unreadable at this size, so the tint carries the state and the
+     label keeps the body colour. */
+  color: var(--dark);
+}
+.select-option[aria-selected="true"]:hover,
+.select-option[aria-selected="true"].active { background: rgba(250,170,57,0.22); }
+.select-option-text { flex: 1; min-width: 0; }
+.select-check {
+  flex-shrink: 0;
+  opacity: 0;
+  color: var(--warn);
+}
+.select-option[aria-selected="true"] .select-check { opacity: 1; }
+.select-option[aria-disabled="true"] { color: var(--faint); cursor: not-allowed; }
+.select-option[aria-disabled="true"]:hover { background: none; }
+
+.select-empty { padding: 10px; font-size: 13px; color: var(--subtle); }
+
+@media (prefers-reduced-motion: reduce) {
+  .select-menu, .select-caret { transition: none; }
+}
+
 .form-hint { font-size: 11.5px; color: var(--subtle); margin-top: 5px; }
 .form-error { font-size: 11.5px; color: var(--error); margin-top: 5px; display: flex; align-items: center; gap: 4px; }
 
@@ -776,6 +915,33 @@ body::-webkit-scrollbar-corner {
 }
 .product-grid-3 { grid-template-columns: repeat(3, 1fr); }
 .product-grid-5 { grid-template-columns: repeat(5, 1fr); }
+
+/* List view — the view toggle on the listing pages flips the same
+   cards onto their side. It overrides the column count set by
+   .product-grid-3 etc., so it has to out-specify those. */
+.product-grid.is-list.is-list {
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+.is-list .product-card {
+  display: grid;
+  grid-template-columns: 168px 1fr;
+}
+/* Lifting a full-width row on hover reads as a jolt rather than a
+   pick-up, so the row keeps the shadow and drops the travel. */
+.is-list .product-card:hover { transform: none; }
+.is-list .product-card-img { aspect-ratio: 1; }
+.is-list .product-card-body {
+  padding: 18px 22px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+}
+.is-list .product-card-name { font-size: 15px; }
+/* The row is tall enough to show the quick-add without the hover
+   veil, and the gradient would cover half the image at this size. */
+.is-list .product-card-quick { display: none; }
 
 .product-card {
   background: var(--white);
@@ -1008,48 +1174,55 @@ body::-webkit-scrollbar-corner {
 /* ── ══════════════════════════════════════════════════════
    SKELETON / LOADING
 ══════════════════════════════════════════════════════ ── */
+/* Measured in percentages of the element, not pixels, so exactly one
+   highlight crosses one element per cycle whatever its size. A fixed
+   600px tile repeated several times across a product image, which
+   read as a flicker, while barely moving across a short text bar. */
 @keyframes shimmer {
-  0% { background-position: -600px 0; }
-  100% { background-position: 600px 0; }
+  from { background-position: 100% 0; }
+  to   { background-position: 0 0; }
 }
+/* Named so skeleton.js can paint the same fill inline when it has to
+   out-rank a component's own colour — a red stock bar, a status dot. */
+:root { --skeleton-fill: linear-gradient(90deg, var(--border) 20%, var(--input-bg) 50%, var(--border) 80%); }
 .skeleton {
-  background: linear-gradient(90deg, var(--border) 25%, var(--input-bg) 50%, var(--border) 75%);
-  background-size: 600px 100%;
-  animation: shimmer 1.4s infinite;
+  background-color: transparent;
+  background-image: var(--skeleton-fill);
+  background-repeat: no-repeat;
+  background-size: 200% 100%;
+  animation: shimmer 1.8s ease-in-out infinite;
   border-radius: var(--radius-sm);
 }
 
-/* Product-card placeholder. Geometry is copied from .product-card so the
-   grid doesn't reflow when the real cards swap in. */
-.skeleton-card {
-  background: var(--white);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  overflow: hidden;
+/* ── Derived placeholders (js/skeleton.js) ──────────────────
+   skeleton.js clones the real container and swaps its contents for
+   these, so the only thing that needs styling is the pieces it
+   substitutes in — the surrounding chrome is the component's own. */
+.skeleton-clone {
+  pointer-events: none;
+  user-select: none;
 }
-.skeleton-card-img {
-  aspect-ratio: 3/3.5;          /* matches .product-card-img */
-  border-radius: 0;
-}
-.skeleton-card-body { padding: 12px 14px 14px; }
-.skeleton-line { height: 10px; border-radius: 4px; }
-.skeleton-line + .skeleton-line { margin-top: 8px; }
-.skeleton-line.sk-brand  { width: 38%;  height: 9px;  }
-.skeleton-line.sk-name   { width: 100%; }
-.skeleton-line.sk-name-2 { width: 68%;  }
-.skeleton-line.sk-rating { width: 52%;  height: 9px;  margin-top: 10px; }
-.skeleton-line.sk-price  { width: 44%;  height: 14px; margin-top: 12px; }
+.skeleton-box { display: inline-block; vertical-align: middle; }
 
-/* Real cards ease in rather than popping */
+.skeleton-text { display: inline-block; vertical-align: middle; max-width: 100%; }
+.skeleton-text > i { display: block; border-radius: 4px; }
+.skeleton-text > i + i { margin-top: 6px; }
+
+/* skeleton.js flattens brand colour inline, element by element, so
+   the only thing left to strip here is the depth those components
+   would otherwise keep. */
+.skeleton-clone [class] { box-shadow: none; }
+
+/* Real content eases in rather than popping */
 @keyframes grid-fade-in {
   from { opacity: 0; transform: translateY(6px); }
   to   { opacity: 1; transform: none; }
 }
-.product-grid.is-loaded { animation: grid-fade-in 0.35s ease both; }
+.is-loaded { animation: grid-fade-in 0.35s ease both; }
 
 @media (prefers-reduced-motion: reduce) {
   .skeleton { animation: none; }
-  .product-grid.is-loaded { animation: none; }
+  .is-loaded { animation: none; }
 }
 
 /* ── ══════════════════════════════════════════════════════

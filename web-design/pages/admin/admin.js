@@ -84,21 +84,10 @@
     };
   });
 
-  /* ── Settings toggles ───────────────────────────────────────
-     The a11y attributes are stamped on once at load; the flip itself
-     is delegated so switches rendered later still respond. Anything
-     built at runtime is expected to carry its own role/tabindex.  */
-  document.querySelectorAll('.toggle').forEach(function(toggle) {
-    toggle.setAttribute('role', 'switch');
-    toggle.setAttribute('tabindex', '0');
-    toggle.setAttribute('aria-checked', toggle.classList.contains('on') ? 'true' : 'false');
-  });
-  document.addEventListener('click', function(e) {
-    var toggle = e.target.closest ? e.target.closest('.toggle') : null;
-    if (!toggle) return;
-    toggle.classList.toggle('on');
-    toggle.setAttribute('aria-checked', toggle.classList.contains('on') ? 'true' : 'false');
-  });
+  /* Switches are the shared component in js/toggle.js — including
+     their keyboard handling — so .toggle is deliberately absent from
+     both this file and the parity list below. Two owners would flip
+     the class twice and leave it where it started. */
 
   /* ── Keyboard parity ────────────────────────────────────────
      Several controls above are divs with tabindex rather than
@@ -107,7 +96,7 @@
     if (e.key !== 'Enter' && e.key !== ' ') return;
     var el = document.activeElement;
     if (!el) return;
-    if (el.matches('.admin-tab, .ticket-item, .toggle, .cat-toggle, .admin-nav-logout, .row-btn, .admin-panel-link')) {
+    if (el.matches('.admin-tab, .ticket-item, .cat-toggle, .admin-nav-logout, .row-btn, .admin-panel-link')) {
       e.preventDefault();
       el.click();
     }

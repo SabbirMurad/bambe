@@ -195,11 +195,8 @@
                 <span style="font-size:13px;color:var(--mid);">Two-factor authentication</span>
               </div>
               <div style="display:flex;align-items:center;gap:8px;">
-                <span style="font-size:12px;color:var(--success);font-weight:600;">Enabled</span>
-                <label class="toggle" style="width:42px;height:24px;">
-                  <input type="checkbox" checked style="display:none;">
-                  <span style="display:block;width:42px;height:24px;border-radius:12px;background:var(--blue);position:relative;cursor:pointer;"><span style="position:absolute;right:3px;top:3px;width:18px;height:18px;border-radius:50%;background:white;"></span></span>
-                </label>
+                <span id="twofa-state" style="font-size:12px;color:var(--success);font-weight:600;">Enabled</span>
+                <div class="toggle on" id="twofa" aria-labelledby="twofa-state"></div>
               </div>
             </div>
           </div>
@@ -216,10 +213,7 @@
                 <div style="font-size:14px;font-weight:600;color:var(--dark);">Order Updates</div>
                 <div style="font-size:12px;color:var(--subtle);">Shipping confirmations, delivery alerts</div>
               </div>
-              <label class="toggle" style="width:42px;height:24px;">
-                <input type="checkbox" checked style="display:none;">
-                <span style="display:block;width:42px;height:24px;border-radius:12px;background:var(--blue);position:relative;cursor:pointer;"><span style="position:absolute;right:3px;top:3px;width:18px;height:18px;border-radius:50%;background:white;"></span></span>
-              </label>
+              <div class="toggle on"></div>
             </div>
             <div class="divider"></div>
             <div style="display:flex;justify-content:space-between;align-items:center;">
@@ -227,10 +221,7 @@
                 <div style="font-size:14px;font-weight:600;color:var(--dark);">Promotions & Deals</div>
                 <div style="font-size:12px;color:var(--subtle);">Flash sales, exclusive discounts, new arrivals</div>
               </div>
-              <label class="toggle" style="width:42px;height:24px;">
-                <input type="checkbox" checked style="display:none;">
-                <span style="display:block;width:42px;height:24px;border-radius:12px;background:var(--blue);position:relative;cursor:pointer;"><span style="position:absolute;right:3px;top:3px;width:18px;height:18px;border-radius:50%;background:white;"></span></span>
-              </label>
+              <div class="toggle on"></div>
             </div>
             <div class="divider"></div>
             <div style="display:flex;justify-content:space-between;align-items:center;">
@@ -238,10 +229,7 @@
                 <div style="font-size:14px;font-weight:600;color:var(--dark);">Wishlist Alerts</div>
                 <div style="font-size:12px;color:var(--subtle);">Price drops, back in stock</div>
               </div>
-              <label class="toggle" style="width:42px;height:24px;">
-                <input type="checkbox" style="display:none;">
-                <span style="display:block;width:42px;height:24px;border-radius:12px;background:var(--border);position:relative;cursor:pointer;"><span style="position:absolute;left:3px;top:3px;width:18px;height:18px;border-radius:50%;background:white;"></span></span>
-              </label>
+              <div class="toggle"></div>
             </div>
           </div>
         </div>
@@ -325,7 +313,23 @@
   if (stats[1]) stats[1].onclick = function() { location.href = '../shopping/wishlist.html'; };
   if (stats[2]) stats[2].onclick = function() { location.href = 'orders.html'; };
   if (stats[3]) stats[3].onclick = function() { location.href = 'orders.html'; };
+
+  /* The word beside the two-factor switch is the thing that actually
+     says what the state is, so it has to follow the switch. This
+     listener is registered before toggle.js's, so the class hasn't
+     flipped yet when it runs — read the state it is moving to. */
+  var twofa = document.getElementById('twofa');
+  var state = document.getElementById('twofa-state');
+  if (twofa && state) {
+    twofa.addEventListener('click', function() {
+      var on = !twofa.classList.contains('on');
+      state.textContent = on ? 'Enabled' : 'Disabled';
+      state.style.color = on ? 'var(--success)' : 'var(--subtle)';
+    });
+  }
 })();
 </script>
+<script src="../../js/select.js"></script>
+<script src="../../js/toggle.js"></script>
 </body>
 </html>

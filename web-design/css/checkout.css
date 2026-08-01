@@ -620,3 +620,82 @@
 
 .confirm-actions { display: flex; gap: 12px; width: 100%; }
 .confirm-actions .btn { flex: 1; height: 48px; font-size: 14px; }
+
+/* ── Address add / edit form ──────────────────────────────
+   One panel serves both jobs — it opens under the cards with the
+   fields blank for a new address, or filled in from the card whose
+   Edit was clicked. Keeping it inline rather than in a modal means
+   the cards stay visible while you type, which is the whole point
+   when the thing you are editing is one of them. */
+.addr-form {
+  border: 1.5px solid var(--primary-text);
+  border-radius: var(--radius-md);
+  background: var(--white);
+  margin-bottom: 16px;
+  overflow: hidden;
+}
+.addr-form-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border);
+  font-family: var(--font-head);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--black);
+}
+.addr-form-close {
+  width: 26px;
+  height: 26px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--subtle);
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+}
+.addr-form-close:hover { background: var(--input-bg); color: var(--dark); }
+
+.addr-form-grid {
+  padding: 18px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px 16px;
+}
+.addr-form-grid .span-2 { grid-column: 1 / -1; }
+
+.addr-form-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 18px;
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+  flex-wrap: wrap;
+}
+.addr-form-actions { display: flex; align-items: center; gap: 10px; }
+.addr-form-msg { font-size: 12px; color: var(--error); }
+.addr-form-msg.ok { color: var(--success); }
+
+/* The cards and options are divs standing in for radios, so the
+   focus ring has to be drawn on them by hand. */
+.address-card:focus-visible,
+.add-address-card:focus-visible,
+.delivery-option:focus-visible,
+.address-card-edit:focus-visible,
+.addr-form-close:focus-visible,
+.form-check:focus-visible {
+  outline: 2px solid var(--warn);
+  outline-offset: 2px;
+}
+
+/* Something has to be the default, so the box can't be cleared from
+   the address that currently is one — it dims rather than pretending
+   to be clickable. */
+.addr-form-foot .form-check.is-locked {
+  cursor: default;
+  opacity: 0.6;
+}
