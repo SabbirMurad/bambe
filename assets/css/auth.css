@@ -1,0 +1,251 @@
+/* ═══════════════════════════════════════════════════════════════
+   Bambe Web — auth.css
+   Styles for: Login, Register, Forgot Password, OTP, Reset Password
+═══════════════════════════════════════════════════════════════ */
+
+/* ── Auth Page Layout ─────────────────────────────────────── */
+.auth-page {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+
+/* Left panel — brand/visual */
+.auth-panel-left {
+  background: var(--ink);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 48px;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow: hidden;
+}
+.auth-panel-left-bg {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, #2A2620 0%, #14120E 100%);
+}
+.auth-panel-deco {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.deco-circle {
+  position: absolute;
+  border-radius: 50%;
+  border: 1px solid rgba(250,170,57,0.15);
+}
+.auth-panel-left > * { position: relative; z-index: 1; }
+
+.auth-brand { display: flex; align-items: flex-end; gap: 0; }
+.auth-brand-mark {
+  width: 36px;
+  height: 40px;
+  flex-shrink: 0;
+  background-color: white;
+  -webkit-mask: url('/assets/icons/bambe_logo.svg') center / contain no-repeat;
+  mask: url('/assets/icons/bambe_logo.svg') center / contain no-repeat;
+}
+.auth-brand-name {
+  font-family: var(--font-head);
+  font-size: 20px;
+  font-weight: 400;
+  line-height: 1;
+  margin-bottom: -0.153em;
+  color: white;
+}
+
+.auth-panel-body { flex: 1; display: flex; flex-direction: column; justify-content: center; }
+.auth-panel-tagline {
+  font-family: var(--font-head);
+  font-size: 36px;
+  font-weight: 700;
+  color: white;
+  line-height: 1.2;
+  margin-bottom: 16px;
+}
+.auth-panel-tagline em {
+  font-style: normal;
+  color: var(--blue);
+}
+.auth-panel-sub {
+  font-size: 14px;
+  color: rgba(255,255,255,0.55);
+  line-height: 1.65;
+  max-width: 320px;
+  margin-bottom: 36px;
+}
+.auth-feature-list { display: flex; flex-direction: column; gap: 12px; }
+.auth-feature-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+  color: rgba(255,255,255,0.75);
+}
+.auth-feature-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  background: rgba(250,170,57,0.15);
+  border: 1px solid rgba(250,170,57,0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.auth-panel-footer {
+  font-size: 11px;
+  color: rgba(255,255,255,0.25);
+}
+
+/* Right panel — form */
+.auth-panel-right {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 64px;
+  min-height: 100vh;
+  background: var(--white);
+  overflow-y: auto;
+}
+
+.auth-form-wrap {
+  width: 100%;
+  max-width: 400px;
+}
+
+.auth-form-header { margin-bottom: 28px; }
+.auth-form-title {
+  font-family: var(--font-head);
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--black);
+  margin-bottom: 6px;
+}
+.auth-form-sub { font-size: 13.5px; color: var(--subtle); line-height: 1.55; }
+
+/* Social login */
+.social-login { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+.social-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 42px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--dark);
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+.social-btn:hover { border-color: var(--faint); background: var(--surface); }
+
+/* Password strength meter */
+.pw-strength { margin-top: 7px; display: flex; align-items: center; gap: 8px; }
+.pw-bars { display: flex; gap: 4px; }
+.pw-bar {
+  width: 36px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--border);
+  transition: background 0.2s;
+}
+.pw-bar.filled-weak { background: var(--error); }
+.pw-bar.filled-mid { background: var(--gold); }
+.pw-bar.filled-strong { background: var(--success); }
+.pw-label { font-size: 11px; color: var(--subtle); }
+
+/* Register step progress */
+.reg-progress {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+.reg-step {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--subtle);
+}
+.reg-step-num {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1.5px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+}
+.reg-step.active .reg-step-num { background: var(--blue); border-color: var(--blue); color: var(--on-primary); }
+.reg-step.active { color: var(--primary-text); font-weight: 600; }
+.reg-step.done .reg-step-num { background: var(--success); border-color: var(--success); color: white; }
+.reg-step-line { flex: 1; height: 1px; background: var(--border); }
+
+/* OTP input boxes */
+.otp-row { display: flex; gap: 10px; justify-content: center; margin: 20px 0; }
+.otp-box {
+  width: 52px;
+  height: 60px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--input-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-head);
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--black);
+}
+.otp-box.filled { border-color: var(--primary-text); background: var(--blue-lt); }
+.otp-box.active { border-color: var(--primary-text); background: var(--white); box-shadow: 0 0 0 3px var(--blue-lt); }
+
+.auth-footer-link { text-align: center; font-size: 13px; color: var(--subtle); margin-top: 20px; }
+.auth-footer-link a { color: var(--primary-text); font-weight: 600; cursor: pointer; }
+
+/* Terms row */
+.terms-row { font-size: 12px; color: var(--subtle); line-height: 1.55; }
+.terms-row a { color: var(--primary-text); font-weight: 600; }
+
+/* Phone input with dial code */
+.phone-input-group { display: flex; gap: 0; }
+.phone-dial {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 12px;
+  border: 1.5px solid var(--border);
+  border-right: none;
+  border-radius: var(--radius-sm) 0 0 var(--radius-sm);
+  background: var(--input-bg);
+  font-size: 13.5px;
+  color: var(--dark);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.phone-dial-input {
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0 !important;
+}
+
+/* Forgot password flow icon */
+.auth-icon-wrap {
+  width: 72px;
+  height: 72px;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
+}

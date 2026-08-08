@@ -1,0 +1,1427 @@
+/* ═══════════════════════════════════════════════════════════════
+   Bambe Web — common.css
+   Shared design tokens, typography, layout, navbar, footer,
+   buttons, forms, product cards, and reusable UI atoms.
+   All page-specific CSS lives in its own section file.
+═══════════════════════════════════════════════════════════════ */
+
+/* ── Google Fonts ─────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@300;400;500;600;700&family=Rubik:wght@300;400;500;600;700&display=swap');
+
+/* ── Design Tokens ────────────────────────────────────────── */
+:root {
+  /* ── PREVIOUS THEME — cool neutrals + blue accent (kept for reference) ──
+  --black:    #111111;
+  --dark:     #2A2A2A;
+  --mid:      #666666;
+  --subtle:   #999999;
+  --faint:    #C8C8C8;
+  --border:   #E5E5E5;
+  --input-bg: #F4F4F4;
+  --surface:  #FAFAFA;
+  --white:    #FFFFFF;
+
+  --gold:     #C9A84C;
+  --gold-lt:  rgba(201,168,76,0.12);
+  --blue:     #439CDB;
+  --blue-dk:  #2F7BB8;
+  --blue-lt:  rgba(67,156,219,0.10);
+  --error:    #D32F2F;
+  --error-lt: rgba(211,47,47,0.08);
+  --success:  #2E7D52;
+  --success-lt: rgba(46,125,82,0.10);
+  --warn:     #B45309;
+  ──────────────────────────────────────────────────────────────────────── */
+
+  /* ── BLACK BOX THEME — inverted ramp, foil gold (kept for reference) ───
+  --ink:      #000000;
+  --surface:  #070706;
+  --white:    #121110;
+  --input-bg: #191817;
+  --border:   #2B2823;
+  --faint:    #4E483E;
+  --subtle:   #857D70;
+  --mid:      #A79D8E;
+  --dark:     #DBD2C3;
+  --black:    #F5EFE4;
+  --primary:    #E3CA9E;
+  --primary-dk: #F0DCBA;
+  --primary-lt: rgba(227,202,158,0.14);
+  --on-primary: #0A0908;
+  --error:    #E1665C;
+  --error-lt: rgba(225,102,92,0.14);
+  --success:  #86AF74;
+  --success-lt: rgba(134,175,116,0.14);
+  --warn:     #C8A772;
+  ──────────────────────────────────────────────────────────────────────── */
+
+  /* ── ACTIVE THEME — near-white ground, light-orange accent ─────────────
+     Surfaces carry only a trace of warmth so the orange reads as the
+     accent rather than tinting the whole page.                       */
+  --black:    #1A1A18;   /* headings                                   */
+  --dark:     #32302C;   /* body copy                                  */
+  --mid:      #6A665F;
+  --subtle:   #94908A;
+  --faint:    #C4C0B9;
+  --border:   #E8E5E0;   /* hairline — neutral, barely warm            */
+  --input-bg: #F6F5F2;
+  --surface:  #FCFBF9;   /* page ground — near-white                   */
+  --white:    #FFFFFF;   /* raised card / panel                        */
+  --ink:      #1A1A18;   /* dark surfaces: footer, auth panel, toasts  */
+
+  --gold:     #C8A772;   /* foil gold — star ratings, hot badge        */
+  --gold-lt:  rgba(200,167,114,0.16);
+  --cream:    #DFD3C7;
+  --greige:   #D0C3B3;
+
+  --primary:      #FAAA39;   /* light orange — buttons, badges, fills  */
+  --primary-dk:   #E8951F;   /* hover                                  */
+  --primary-lt:   rgba(250,170,57,0.13);
+  /* Text tone matches the fill by choice. Note this is 1.9:1 on white,
+     below the 4.5:1 AA floor — set this back to #B05E0D (4.7:1) if the
+     links and active labels need to be readable at small sizes. */
+  --primary-text: var(--primary);
+  --on-primary:   #2A1B06;   /* dark ink on an orange fill             */
+
+  /* The --blue* names are kept as aliases so the ~225 existing usages
+     adopt the theme without a site-wide rename. */
+  --blue:     var(--primary);
+  --blue-dk:  var(--primary-dk);
+  --blue-lt:  var(--primary-lt);
+
+  --error:    #B3261E;
+  --error-lt: rgba(179,38,30,0.08);
+  --success:  #4A6B45;
+  --success-lt: rgba(74,107,69,0.12);
+  --warn:     #B05E0D;
+
+  --nav-h:    64px;
+  --subnav-h: 44px;
+  --sidebar-w: 240px;
+  --content-max: 1280px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
+  --shadow-md: 0 4px 16px rgba(0,0,0,0.10);
+  --shadow-lg: 0 8px 32px rgba(0,0,0,0.12);
+
+  --font-head: 'Rubik', sans-serif;
+  --font-body: 'Nunito Sans', sans-serif;
+  --z-base: 1;
+  --z-sticky: 10;
+  --z-nav: 20;
+  --z-modal: 50;
+}
+
+/* ── Reset & Base ─────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: var(--font-body);
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--dark);
+  background: var(--surface);
+  -webkit-font-smoothing: antialiased;
+  min-width: 960px;
+}
+
+a { color: inherit; text-decoration: none; }
+button { font-family: var(--font-body); cursor: pointer; border: none; background: none; }
+input, textarea, select { font-family: var(--font-body); font-size: 14px; }
+ul { list-style: none; }
+img { display: block; max-width: 100%; }
+
+/* ── Scrollbar ─────────────────────────────────────────────
+   The page scrollbar sits on the warm neutral ramp and picks up
+   the accent on hover, so it reads as part of the page rather
+   than as OS chrome. Scoped scroll areas repeat this treatment
+   at a narrower width.
+
+   Chrome discards every ::-webkit-scrollbar rule on an element
+   that also sets scrollbar-width/-color, so the standard
+   properties are gated to engines without the pseudo-elements.
+══════════════════════════════════════════════════════════ ── */
+@supports not selector(::-webkit-scrollbar) {
+  html {
+    scrollbar-width: thin;
+    scrollbar-color: var(--faint) transparent;
+  }
+}
+body::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+body::-webkit-scrollbar-track {
+  background: var(--input-bg);
+}
+body::-webkit-scrollbar-thumb {
+  background: var(--faint);
+  border-radius: 5px;
+  /* Inset the thumb so it reads as a pill inside the track. */
+  border: 2px solid var(--input-bg);
+  background-clip: padding-box;
+}
+body::-webkit-scrollbar-thumb:hover {
+  background: var(--primary);
+  background-clip: padding-box;
+}
+body::-webkit-scrollbar-corner {
+  background: var(--input-bg);
+}
+
+/* ── Container ────────────────────────────────────────────── */
+.container {
+  max-width: var(--content-max);
+  margin: 0 auto;
+  padding: 0 32px;
+}
+
+/* ── ══════════════════════════════════════════════════════
+   NAVBAR
+══════════════════════════════════════════════════════ ── */
+.navbar {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-nav);
+  background: var(--white);
+  border-bottom: 1px solid var(--border);
+  height: var(--nav-h);
+}
+
+.navbar-inner {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  height: 100%;
+  max-width: var(--content-max);
+  margin: 0 auto;
+  padding: 0 32px;
+}
+
+/* Logo */
+/* The stag mark stands in for the "B", so the mark and "ambe" sit on a
+   shared baseline with almost no gap and read as one word. */
+.nav-logo {
+  display: flex;
+  align-items: flex-end;
+  gap: 0;
+  flex-shrink: 0;
+}
+/* Brand mark — the stag is a single-colour silhouette, so it's applied as a
+   mask and tinted per context (dark on light pages, white on dark panels).
+   One asset, no per-page recolouring. */
+.nav-logo-mark {
+  width: 32px;
+  height: 34px;
+  flex-shrink: 0;
+  background-color: var(--black);
+  -webkit-mask: url('/assets/icons/bambe_logo.svg') center / contain no-repeat;
+  mask: url('/assets/icons/bambe_logo.svg') center / contain no-repeat;
+}
+.nav-logo-text {
+  font-family: var(--font-head);
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 1;
+  /* Drops the line box's descender space so "ambe" sits on its baseline,
+     level with the stag's feet rather than floating above them. */
+  margin-bottom: -0.153em;
+  color: var(--black);
+}
+
+/* Search bar */
+.nav-search {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  background: var(--input-bg);
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  height: 40px;
+  padding: 0 14px;
+  gap: 10px;
+  max-width: 520px;
+  transition: border-color 0.15s;
+  margin-right: auto;
+}
+.nav-search:focus-within {
+  border-color: var(--primary-text);
+  background: var(--white);
+}
+.nav-search input {
+  flex: 1;
+  border: none;
+  background: none;
+  outline: none;
+  font-size: 13.5px;
+  color: var(--dark);
+}
+.nav-search input::placeholder { color: var(--subtle); }
+.nav-search-btn {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  background: var(--blue);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+/* Deliver to */
+.nav-deliver {
+  flex-shrink: 0;
+  font-size: 11.5px;
+  line-height: 1.3;
+}
+.nav-deliver-lbl { color: var(--subtle); font-size: 10px; }
+.nav-deliver-loc {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-weight: 600;
+  color: var(--black);
+  font-size: 12.5px;
+  cursor: pointer;
+}
+
+/* Nav icon buttons */
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+.nav-icon-btn {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.nav-icon-btn:hover { background: var(--input-bg); }
+
+.nav-badge {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 8px;
+  background: var(--blue);
+  color: var(--on-primary);
+  font-family: var(--font-head);
+  font-size: 9px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* User button */
+.nav-user-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  border: 1.5px solid var(--border);
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+.nav-user-btn:hover { border-color: var(--primary-text); background: var(--blue-lt); }
+.nav-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--blue-lt);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.nav-user-name {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--dark);
+  white-space: nowrap;
+}
+
+/* Sub-nav */
+.subnav {
+  background: var(--white);
+  border-bottom: 1px solid var(--border);
+  height: var(--subnav-h);
+  position: sticky;
+  top: var(--nav-h);
+  z-index: calc(var(--z-nav) - 1);
+}
+.subnav-inner {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  height: 100%;
+  max-width: var(--content-max);
+  margin: 0 auto;
+  padding: 0 32px;
+}
+.subnav-link {
+  padding: 0 16px;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--mid);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: color 0.15s, border-color 0.15s;
+  white-space: nowrap;
+}
+.subnav-link:hover { color: var(--black); }
+.subnav-link.active { color: var(--primary-text); border-bottom-color: var(--primary-text); font-weight: 600; }
+.subnav-link.sale { color: var(--error); }
+
+/* ── ══════════════════════════════════════════════════════
+   FOOTER
+══════════════════════════════════════════════════════ ── */
+.footer {
+  background: var(--ink);
+  color: rgba(255,255,255,0.7);
+  margin-top: 80px;
+}
+.footer-main {
+  max-width: var(--content-max);
+  margin: 0 auto;
+  padding: 56px 32px 40px;
+  display: grid;
+  grid-template-columns: 1.8fr 1fr 1fr 1fr 1fr;
+  gap: 40px;
+}
+.footer-brand {}
+.footer-logo {
+  display: flex;
+  align-items: flex-end;
+  gap: 0;
+  margin-bottom: 14px;
+}
+.footer-logo-mark {
+  width: 63px;
+  height: 68px;
+  flex-shrink: 0;
+  background-color: white;
+  -webkit-mask: url('/assets/icons/bambe_logo.svg') center / contain no-repeat;
+  mask: url('/assets/icons/bambe_logo.svg') center / contain no-repeat;
+}
+.footer-logo-text {
+  font-family: var(--font-head);
+  font-size: 36px;
+  font-weight: 400;
+  line-height: 1;
+  margin-bottom: -0.153em;
+  color: white;
+}
+.footer-desc {
+  font-size: 12.5px;
+  line-height: 1.7;
+  max-width: 220px;
+  margin-bottom: 18px;
+}
+.footer-social { display: flex; gap: 10px; }
+.footer-social-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.footer-social-btn:hover { background: var(--blue); }
+
+.footer-col-title {
+  font-family: var(--font-head);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: white;
+  margin-bottom: 16px;
+}
+.footer-link {
+  display: block;
+  font-size: 12.5px;
+  color: rgba(255,255,255,0.6);
+  margin-bottom: 9px;
+  cursor: pointer;
+  transition: color 0.15s;
+}
+.footer-link:hover { color: white; }
+
+.footer-bottom {
+  border-top: 1px solid rgba(255,255,255,0.08);
+  max-width: var(--content-max);
+  margin: 0 auto;
+  padding: 18px 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11.5px;
+  color: rgba(255,255,255,0.4);
+}
+.footer-pay-icons { display: flex; gap: 8px; align-items: center; }
+.pay-icon {
+  height: 20px;
+  padding: 0 8px;
+  background: rgba(255,255,255,0.12);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  font-size: 9px;
+  font-weight: 700;
+  color: rgba(255,255,255,0.7);
+  letter-spacing: 0.5px;
+}
+
+/* ── ══════════════════════════════════════════════════════
+   TYPOGRAPHY
+══════════════════════════════════════════════════════ ── */
+.h1 { font-family: var(--font-head); font-size: 32px; font-weight: 700; color: var(--black); line-height: 1.2; }
+.h2 { font-family: var(--font-head); font-size: 24px; font-weight: 700; color: var(--black); line-height: 1.25; }
+.h3 { font-family: var(--font-head); font-size: 18px; font-weight: 600; color: var(--black); }
+.h4 { font-family: var(--font-head); font-size: 15px; font-weight: 600; color: var(--dark); }
+.body-lg { font-size: 15px; line-height: 1.65; }
+.body-sm { font-size: 12.5px; line-height: 1.55; color: var(--mid); }
+.label { font-size: 11px; font-weight: 700; letter-spacing: 0.6px; text-transform: uppercase; color: var(--subtle); }
+.caption { font-size: 11px; color: var(--subtle); }
+
+/* ── ══════════════════════════════════════════════════════
+   BUTTONS
+══════════════════════════════════════════════════════ ── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 20px;
+  height: 42px;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-head);
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+  border: 1.5px solid transparent;
+}
+.btn-lg { height: 50px; padding: 0 28px; font-size: 15px; border-radius: var(--radius-md); }
+.btn-sm { height: 34px; padding: 0 14px; font-size: 12px; }
+.btn-icon-only { width: 42px; padding: 0; }
+.btn-icon-only.btn-sm { width: 34px; }
+
+.btn-primary {
+  background: var(--blue);
+  color: var(--on-primary);
+  border-color: var(--blue);
+}
+.btn-primary:hover { background: var(--blue-dk); border-color: var(--blue-dk); }
+
+.btn-secondary {
+  background: var(--ink);
+  color: white;
+  border-color: var(--black);
+}
+.btn-secondary:hover { background: var(--dark); }
+
+.btn-outline {
+  background: transparent;
+  color: var(--primary-text);
+  border-color: var(--primary-text);
+}
+.btn-outline:hover { background: var(--blue-lt); }
+
+.btn-ghost {
+  background: transparent;
+  color: var(--dark);
+  border-color: var(--border);
+}
+.btn-ghost:hover { background: var(--input-bg); border-color: var(--faint); }
+
+.btn-danger {
+  background: var(--error);
+  color: white;
+  border-color: var(--error);
+}
+
+/* ── ══════════════════════════════════════════════════════
+   FORM ELEMENTS
+══════════════════════════════════════════════════════ ── */
+.form-group { margin-bottom: 18px; }
+.form-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--dark);
+  margin-bottom: 6px;
+  letter-spacing: 0.3px;
+}
+.form-label .req { color: var(--error); margin-left: 2px; }
+
+.form-input {
+  width: 100%;
+  height: 44px;
+  padding: 0 14px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--white);
+  font-size: 14px;
+  color: var(--dark);
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.form-input::placeholder { color: var(--faint); }
+.form-input:focus { border-color: var(--primary-text); box-shadow: 0 0 0 3px var(--blue-lt); }
+.form-input.error { border-color: var(--error); }
+.form-input.error:focus { box-shadow: 0 0 0 3px var(--error-lt); }
+
+.form-input-icon {
+  position: relative;
+}
+.form-input-icon .form-input { padding-left: 42px; }
+.form-input-icon .input-icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+.form-input-icon .input-icon-right {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: pointer;
+}
+
+.form-textarea {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--white);
+  font-size: 14px;
+  color: var(--dark);
+  outline: none;
+  resize: vertical;
+  min-height: 96px;
+  transition: border-color 0.15s;
+}
+.form-textarea:focus { border-color: var(--primary-text); box-shadow: 0 0 0 3px var(--blue-lt); }
+
+.form-select {
+  width: 100%;
+  height: 44px;
+  padding: 0 14px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--white);
+  font-size: 14px;
+  color: var(--dark);
+  outline: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1.5l5 5 5-5' stroke='%23999' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  padding-right: 36px;
+  transition: border-color 0.15s;
+}
+.form-select:focus { border-color: var(--primary-text); box-shadow: 0 0 0 3px var(--blue-lt); }
+
+/* ── ══════════════════════════════════════════════════════
+   CUSTOM SELECT  (js/select.js)
+
+   The native <select> stays in the markup and keeps owning the
+   value; select.js hides it and puts a button + listbox in its
+   place, so the popup can be themed the way the OS menu can't.
+
+   The button inherits whichever skin the original select wore —
+   .form-select or admin.css's .admin-filter — so it lands in the
+   layout at exactly the size the native one occupied. Those skins
+   paint their own caret into the background, and .admin-filter is
+   in a stylesheet that loads after this one, so the reset below is
+   written as button.select-btn to out-specify it rather than
+   relying on source order.
+══════════════════════════════════════════════════════ ── */
+.select-native {
+  /* Kept in the DOM for its value and any form that submits it, but
+     taken out of the layout and the tab order. */
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+button.select-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  background-image: none;
+  /* Both skins reserve room on the right for a caret painted into the
+     background. The caret is a real element here, so that reservation
+     comes back off as padding. */
+  padding-right: 12px;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+button.select-btn:hover { border-color: var(--faint); }
+button.select-btn[aria-expanded="true"] {
+  border-color: var(--primary-text);
+  box-shadow: 0 0 0 3px var(--blue-lt);
+}
+button.select-btn:focus-visible {
+  outline: none;
+  border-color: var(--primary-text);
+  box-shadow: 0 0 0 3px var(--blue-lt);
+}
+button.select-btn:disabled { cursor: not-allowed; opacity: 0.55; }
+
+.select-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* A select with nothing chosen shows its placeholder in the muted
+   tone so it reads as absent rather than as a real value. */
+.select-btn.is-empty .select-label { color: var(--subtle); }
+
+.select-caret {
+  flex-shrink: 0;
+  color: var(--subtle);
+  transition: transform 0.16s ease;
+}
+.select-btn[aria-expanded="true"] .select-caret {
+  transform: rotate(180deg);
+  color: var(--primary-text);
+}
+
+/* The menu is appended to <body> and positioned in viewport
+   coordinates, so a filter card or panel with overflow:hidden
+   can't clip it and no stacking context can bury it. */
+.select-menu {
+  position: fixed;
+  z-index: 60;
+  width: max-content;
+  max-width: 360px;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  padding: 6px;
+  max-height: 288px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  opacity: 0;
+  transform: translateY(-4px);
+  transition: opacity 0.14s ease, transform 0.14s ease;
+}
+.select-menu.open { opacity: 1; transform: none; }
+/* Opening upward should grow from the bottom edge, not the top. */
+.select-menu.drop-up { transform: translateY(4px); }
+.select-menu.drop-up.open { transform: none; }
+
+.select-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 13.5px;
+  line-height: 1.35;
+  color: var(--dark);
+  cursor: pointer;
+}
+/* .active is the keyboard cursor; it has to look the same as hover
+   so arrowing through the list reads like pointing at it. */
+.select-option:hover,
+.select-option.active { background: var(--input-bg); }
+.select-option[aria-selected="true"] {
+  background: var(--primary-lt);
+  font-weight: 600;
+  /* Deliberately not --primary-text: at 1.9:1 on white the accent is
+     unreadable at this size, so the tint carries the state and the
+     label keeps the body colour. */
+  color: var(--dark);
+}
+.select-option[aria-selected="true"]:hover,
+.select-option[aria-selected="true"].active { background: rgba(250,170,57,0.22); }
+.select-option-text { flex: 1; min-width: 0; }
+.select-check {
+  flex-shrink: 0;
+  opacity: 0;
+  color: var(--warn);
+}
+.select-option[aria-selected="true"] .select-check { opacity: 1; }
+.select-option[aria-disabled="true"] { color: var(--faint); cursor: not-allowed; }
+.select-option[aria-disabled="true"]:hover { background: none; }
+
+.select-empty { padding: 10px; font-size: 13px; color: var(--subtle); }
+
+@media (prefers-reduced-motion: reduce) {
+  .select-menu, .select-caret { transition: none; }
+}
+
+.form-hint { font-size: 11.5px; color: var(--subtle); margin-top: 5px; }
+.form-error { font-size: 11.5px; color: var(--error); margin-top: 5px; display: flex; align-items: center; gap: 4px; }
+
+/* Checkbox & Radio */
+.form-check {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+}
+.form-check-input {
+  width: 18px;
+  height: 18px;
+  border: 1.5px solid var(--border);
+  border-radius: 5px;
+  background: var(--white);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+}
+.form-check-input.checked {
+  background: var(--blue);
+  border-color: var(--blue);
+}
+.form-check-input:not(.checked) svg { opacity: 0; }
+.form-radio-input {
+  width: 18px;
+  height: 18px;
+  border: 1.5px solid var(--border);
+  border-radius: 50%;
+  background: var(--white);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+}
+.form-radio-input.checked { border-color: var(--primary-text); }
+.form-radio-input.checked::after {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--blue);
+}
+.form-check-label { font-size: 13.5px; color: var(--dark); }
+
+/* Toggle switch */
+.toggle {
+  width: 44px;
+  height: 24px;
+  border-radius: 12px;
+  background: var(--border);
+  position: relative;
+  cursor: pointer;
+  transition: background 0.2s;
+  flex-shrink: 0;
+}
+.toggle.on { background: var(--blue); }
+.toggle::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: white;
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.2s;
+}
+.toggle.on::after { transform: translateX(20px); }
+
+/* Quantity stepper  (shared across product detail & cart) */
+.qty-ctrl {
+  display: inline-flex;
+  align-items: center;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  flex-shrink: 0;
+  background: var(--white);
+}
+.qty-btn {
+  width: 38px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--input-bg);
+  cursor: pointer;
+  font-size: 18px;
+  font-weight: 300;
+  color: var(--dark);
+  transition: background 0.15s;
+  user-select: none;
+}
+.qty-btn:hover { background: var(--border); }
+.qty-btn.disabled { color: var(--faint); cursor: default; }
+.qty-btn.disabled:hover { background: var(--input-bg); }
+.qty-val {
+  width: 44px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-head);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--black);
+  border-left: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+}
+
+/* ── ══════════════════════════════════════════════════════
+   PRODUCT CARD  (shared across home, category, search…)
+══════════════════════════════════════════════════════ ── */
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+}
+.product-grid-3 { grid-template-columns: repeat(3, 1fr); }
+.product-grid-5 { grid-template-columns: repeat(5, 1fr); }
+
+/* List view — the view toggle on the listing pages flips the same
+   cards onto their side. It overrides the column count set by
+   .product-grid-3 etc., so it has to out-specify those. */
+.product-grid.is-list.is-list {
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+.is-list .product-card {
+  display: grid;
+  grid-template-columns: 168px 1fr;
+}
+/* Lifting a full-width row on hover reads as a jolt rather than a
+   pick-up, so the row keeps the shadow and drops the travel. */
+.is-list .product-card:hover { transform: none; }
+.is-list .product-card-img { aspect-ratio: 1; }
+.is-list .product-card-body {
+  padding: 18px 22px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+}
+.is-list .product-card-name { font-size: 15px; }
+/* The row is tall enough to show the quick-add without the hover
+   veil, and the gradient would cover half the image at this size. */
+.is-list .product-card-quick { display: none; }
+
+.product-card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  cursor: pointer;
+  transition: box-shadow 0.2s, border-color 0.2s, transform 0.2s;
+}
+.product-card:hover {
+  box-shadow: var(--shadow-md);
+  border-color: var(--faint);
+  transform: translateY(-2px);
+}
+
+.product-card-img {
+  aspect-ratio: 3/3.5;
+  background: var(--input-bg);
+  position: relative;
+  overflow: hidden;
+}
+.product-card-img-bg { width: 100%; height: 100%; }
+
+.product-card-badge {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  padding: 3px 8px;
+  border-radius: 20px;
+  font-family: var(--font-head);
+  font-size: 10px;
+  font-weight: 700;
+}
+.badge-sale { background: var(--error); color: white; }
+.badge-new { background: var(--success); color: white; }
+.badge-hot { background: var(--gold); color: var(--on-primary); }
+
+.product-card-wish {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.92);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  transition: background 0.15s;
+}
+.product-card-wish:hover { background: var(--white); }
+
+.product-card-quick {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 10px;
+  background: linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 100%);
+  display: flex;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.product-card:hover .product-card-quick { opacity: 1; }
+.quick-add-btn {
+  background: white;
+  color: var(--black);
+  border: none;
+  border-radius: 20px;
+  padding: 7px 18px;
+  font-family: var(--font-head);
+  font-size: 11.5px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.product-card-body { padding: 12px 14px 14px; }
+.product-card-brand { font-size: 10.5px; color: var(--subtle); font-weight: 600; margin-bottom: 3px; }
+.product-card-name {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--dark);
+  margin-bottom: 6px;
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.product-card-rating { display: flex; align-items: center; gap: 5px; margin-bottom: 8px; }
+.stars { display: flex; gap: 2px; }
+.star { width: 12px; height: 12px; }
+.rating-count { font-size: 11px; color: var(--subtle); }
+.product-card-price {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+}
+.price { font-family: var(--font-head); font-size: 15px; font-weight: 700; color: var(--black); }
+.price-old { font-size: 12px; color: var(--faint); text-decoration: line-through; }
+.price-discount { font-size: 11px; font-weight: 700; color: var(--error); }
+
+/* ── ══════════════════════════════════════════════════════
+   BREADCRUMB
+══════════════════════════════════════════════════════ ── */
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  color: var(--subtle);
+  padding: 14px 0;
+}
+.breadcrumb-item { cursor: pointer; }
+.breadcrumb-item:hover { color: var(--primary-text); }
+.breadcrumb-sep { color: var(--faint); }
+.breadcrumb-item.current { color: var(--dark); font-weight: 600; cursor: default; }
+
+/* ── ══════════════════════════════════════════════════════
+   SECTION HEADERS
+══════════════════════════════════════════════════════ ── */
+.section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+.section-head-title {
+  font-family: var(--font-head);
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--black);
+}
+.section-head-link {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--primary-text);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* ── ══════════════════════════════════════════════════════
+   BADGES & TAGS
+══════════════════════════════════════════════════════ ── */
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+}
+.tag-blue { background: var(--blue-lt); color: var(--primary-text); }
+.tag-green { background: var(--success-lt); color: var(--success); }
+.tag-red { background: var(--error-lt); color: var(--error); }
+.tag-gold { background: var(--gold-lt); color: var(--warn); }
+.tag-gray { background: var(--input-bg); color: var(--mid); }
+
+/* ── ══════════════════════════════════════════════════════
+   CARD BASE
+══════════════════════════════════════════════════════ ── */
+.card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 20px;
+}
+.card-lg { border-radius: var(--radius-lg); padding: 28px; }
+.card-sm { padding: 14px; }
+
+/* ── ══════════════════════════════════════════════════════
+   DIVIDERS
+══════════════════════════════════════════════════════ ── */
+.divider { height: 1px; background: var(--border); margin: 16px 0; }
+.divider-text {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--subtle);
+  font-size: 12px;
+  margin: 20px 0;
+}
+.divider-text::before, .divider-text::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+/* ── ══════════════════════════════════════════════════════
+   PAGINATION
+══════════════════════════════════════════════════════ ── */
+.pagination {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  justify-content: center;
+  margin-top: 36px;
+}
+.page-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-sm);
+  border: 1.5px solid var(--border);
+  background: var(--white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--mid);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.page-btn:hover { border-color: var(--primary-text); color: var(--primary-text); }
+.page-btn.active {
+  background: var(--blue);
+  border-color: var(--blue);
+  color: var(--on-primary);
+  font-weight: 700;
+}
+.page-btn.disabled { opacity: 0.4; cursor: default; }
+
+/* ── ══════════════════════════════════════════════════════
+   SKELETON / LOADING
+══════════════════════════════════════════════════════ ── */
+/* Measured in percentages of the element, not pixels, so exactly one
+   highlight crosses one element per cycle whatever its size. A fixed
+   600px tile repeated several times across a product image, which
+   read as a flicker, while barely moving across a short text bar. */
+@keyframes shimmer {
+  from { background-position: 100% 0; }
+  to   { background-position: 0 0; }
+}
+/* Named so skeleton.js can paint the same fill inline when it has to
+   out-rank a component's own colour — a red stock bar, a status dot. */
+:root { --skeleton-fill: linear-gradient(90deg, var(--border) 20%, var(--input-bg) 50%, var(--border) 80%); }
+.skeleton {
+  background-color: transparent;
+  background-image: var(--skeleton-fill);
+  background-repeat: no-repeat;
+  background-size: 200% 100%;
+  animation: shimmer 1.8s ease-in-out infinite;
+  border-radius: var(--radius-sm);
+}
+
+/* ── Derived placeholders (js/skeleton.js) ──────────────────
+   skeleton.js clones the real container and swaps its contents for
+   these, so the only thing that needs styling is the pieces it
+   substitutes in — the surrounding chrome is the component's own. */
+.skeleton-clone {
+  pointer-events: none;
+  user-select: none;
+}
+.skeleton-box { display: inline-block; vertical-align: middle; }
+
+.skeleton-text { display: inline-block; vertical-align: middle; max-width: 100%; }
+.skeleton-text > i { display: block; border-radius: 4px; }
+.skeleton-text > i + i { margin-top: 6px; }
+
+/* skeleton.js flattens brand colour inline, element by element, so
+   the only thing left to strip here is the depth those components
+   would otherwise keep. */
+.skeleton-clone [class] { box-shadow: none; }
+
+/* Real content eases in rather than popping */
+@keyframes grid-fade-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: none; }
+}
+.is-loaded { animation: grid-fade-in 0.35s ease both; }
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton { animation: none; }
+  .is-loaded { animation: none; }
+}
+
+/* ── ══════════════════════════════════════════════════════
+   TOAST / NOTIFICATION SNACKBAR
+══════════════════════════════════════════════════════ ── */
+.toast {
+  position: fixed;
+  bottom: 28px;
+  right: 28px;
+  z-index: var(--z-modal);
+  background: var(--ink);
+  color: white;
+  padding: 13px 18px;
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: var(--shadow-lg);
+  max-width: 340px;
+}
+.toast-success { background: var(--success); }
+.toast-error { background: var(--error); }
+
+/* ── ══════════════════════════════════════════════════════
+   EMPTY STATE
+══════════════════════════════════════════════════════ ── */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 72px 24px;
+  text-align: center;
+}
+.empty-icon {
+  width: 72px;
+  height: 72px;
+  border-radius: 20px;
+  background: var(--input-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 18px;
+}
+.empty-title {
+  font-family: var(--font-head);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--black);
+  margin-bottom: 8px;
+}
+.empty-desc {
+  font-size: 13.5px;
+  color: var(--subtle);
+  line-height: 1.6;
+  max-width: 280px;
+  margin-bottom: 22px;
+}
+
+/* ── ══════════════════════════════════════════════════════
+   MODAL OVERLAY
+══════════════════════════════════════════════════════ ── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: var(--z-modal);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+.modal {
+  background: var(--white);
+  border-radius: var(--radius-lg);
+  width: 100%;
+  max-width: 480px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: var(--shadow-lg);
+}
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 22px 24px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.modal-title { font-family: var(--font-head); font-size: 16px; font-weight: 700; color: var(--black); }
+.modal-body { padding: 24px; }
+.modal-footer {
+  padding: 16px 24px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+/* ── ══════════════════════════════════════════════════════
+   PAGE LAYOUT HELPERS
+══════════════════════════════════════════════════════ ── */
+.page-content {
+  padding: 28px 32px 60px;
+  max-width: var(--content-max);
+  margin: 0 auto;
+}
+.page-content-full { max-width: 100%; }
+
+.with-sidebar {
+  display: grid;
+  grid-template-columns: var(--sidebar-w) 1fr;
+  gap: 28px;
+  align-items: flex-start;
+}
+.with-sidebar-wide {
+  grid-template-columns: 280px 1fr;
+}
+.with-right-panel {
+  display: grid;
+  grid-template-columns: 1fr 360px;
+  gap: 28px;
+  align-items: flex-start;
+}
+
+.sticky-top {
+  position: sticky;
+  top: calc(var(--nav-h) + var(--subnav-h) + 20px);
+}
+.sticky-top-no-sub {
+  position: sticky;
+  top: calc(var(--nav-h) + 20px);
+}
+
+
+/* ── ══════════════════════════════════════════════════════
+   ACCENT CONTRAST
+   Foil gold is a light tone, so the white icon strokes these
+   components ship with drop to ~2.2:1 on it. Anything sitting on
+   the accent gets the dark ink instead — matches the text rules
+   that use var(--on-primary).
+══════════════════════════════════════════════════════ ── */
+.account-nav-badge svg [stroke="white"],
+.account-nav-item.active .account-nav-badge svg [stroke="white"],
+.address-card.selected .address-select-dot svg [stroke="white"],
+.badge-hot svg [stroke="white"],
+.btn-primary svg [stroke="white"],
+.checkout-btn svg [stroke="white"],
+.ck-node.active svg [stroke="white"],
+.footer-social-btn:hover svg [stroke="white"],
+.form-check-input.checked svg [stroke="white"],
+.hero-cta-primary svg [stroke="white"],
+.hero-image-sale-badge svg [stroke="white"],
+.nav-badge svg [stroke="white"],
+.nav-search-btn svg [stroke="white"],
+.notif-unread-dot svg [stroke="white"],
+.order-filter-tab.active svg [stroke="white"],
+.page-btn.active svg [stroke="white"],
+.pd-add-cart svg [stroke="white"],
+.price-range-fill svg [stroke="white"],
+.profile-avatar svg [stroke="white"],
+.profile-avatar-edit svg [stroke="white"],
+.promo-strip svg [stroke="white"],
+.pw-bar.filled-mid svg [stroke="white"],
+.rbar-fill svg [stroke="white"],
+.reg-step.active .reg-step-num svg [stroke="white"],
+.tl-dot.active svg [stroke="white"],
+.toggle.on svg [stroke="white"],
+.tracking-status-badge svg [stroke="white"],
+.view-btn.active svg [stroke="white"] {
+  stroke: var(--on-primary);
+}
+.account-nav-badge svg [fill="white"],
+.account-nav-item.active .account-nav-badge svg [fill="white"],
+.address-card.selected .address-select-dot svg [fill="white"],
+.badge-hot svg [fill="white"],
+.btn-primary svg [fill="white"],
+.checkout-btn svg [fill="white"],
+.ck-node.active svg [fill="white"],
+.footer-social-btn:hover svg [fill="white"],
+.form-check-input.checked svg [fill="white"],
+.hero-cta-primary svg [fill="white"],
+.hero-image-sale-badge svg [fill="white"],
+.nav-badge svg [fill="white"],
+.nav-search-btn svg [fill="white"],
+.notif-unread-dot svg [fill="white"],
+.order-filter-tab.active svg [fill="white"],
+.page-btn.active svg [fill="white"],
+.pd-add-cart svg [fill="white"],
+.price-range-fill svg [fill="white"],
+.profile-avatar svg [fill="white"],
+.profile-avatar-edit svg [fill="white"],
+.promo-strip svg [fill="white"],
+.pw-bar.filled-mid svg [fill="white"],
+.rbar-fill svg [fill="white"],
+.reg-step.active .reg-step-num svg [fill="white"],
+.tl-dot.active svg [fill="white"],
+.toggle.on svg [fill="white"],
+.tracking-status-badge svg [fill="white"],
+.view-btn.active svg [fill="white"] {
+  fill: var(--on-primary);
+}

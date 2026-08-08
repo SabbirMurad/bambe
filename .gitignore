@@ -1,0 +1,26 @@
+# Build artefacts
+/target
+
+# Secrets — .env holds the SMTP password, JWT signing keys, the session key
+# and the admin sign-up secret. Keep an .env.example in the repo instead.
+.env
+.env.*
+!.env.example
+
+# Local TLS material for https on localhost. localhost.key is a private key.
+/.dev_tls
+
+# Runtime output
+status.log
+*.log
+/logs
+
+# Local databases
+*.sqlite
+*.sqlite3
+*.db
+
+# Editor / OS
+.DS_Store
+Thumbs.db
+*.swp

@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wishlist — Bambe</title>
+<link rel="stylesheet" href="/assets/css/common.css">
+<link rel="stylesheet" href="/assets/css/shopping.css">
+</head>
+<body>
+<nav class="navbar"><div class="navbar-inner"><a href="/" class="nav-logo"><div class="nav-logo-mark"></div><span class="nav-logo-text">ambe</span></a><div class="nav-search"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="7" cy="7" r="5" stroke="#94908A" stroke-width="1.4"/><path d="M11 11 14.5 14.5" stroke="#94908A" stroke-width="1.4" stroke-linecap="round"/></svg><input type="text" placeholder="Search products, brands…"><div class="nav-search-btn"><svg width="14" height="14" viewBox="0 0 16 16" fill="none"><circle cx="7" cy="7" r="5" stroke="white" stroke-width="1.4"/><path d="M11 11 14.5 14.5" stroke="white" stroke-width="1.4" stroke-linecap="round"/></svg></div></div><div class="nav-actions"><div class="nav-icon-btn"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M10 17S2 12 2 6.5a4 4 0 0 1 8-1 4 4 0 0 1 8 1C18 12 10 17 10 17Z" fill="var(--blue)" stroke="var(--blue)" stroke-width="1.5" stroke-linejoin="round"/></svg><div class="nav-badge">5</div></div><div class="nav-icon-btn"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M2 2h2.5l3 10h9l2-7H5.5" stroke="#32302C" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="9" cy="17" r="1.5" fill="#32302C"/><circle cx="15" cy="17" r="1.5" fill="#32302C"/></svg><div class="nav-badge">3</div></div><div class="nav-user-btn"><div class="nav-avatar"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="5.5" r="3" stroke="var(--blue)" stroke-width="1.4"/><path d="M2 14c0-3.3 2.7-6 6-6s6 2.7 6 6" stroke="var(--blue)" stroke-width="1.4" stroke-linecap="round"/></svg></div><span class="nav-user-name">John D.</span></div></div></div></nav>
+
+<main>
+  <div class="container" style="padding-top:28px;padding-bottom:60px;">
+    <div class="wishlist-header">
+      <div>
+        <h1 class="wishlist-title">My Wishlist</h1>
+        <p class="wishlist-subtitle">5 items saved · 2 items on sale</p>
+      </div>
+      <div style="display:flex;gap:10px;">
+        <button class="btn btn-ghost btn-sm">Share Wishlist</button>
+        <button class="btn btn-primary btn-sm">Add All to Cart (5)</button>
+      </div>
+    </div>
+
+    <!-- Sale alert -->
+    <div style="background:var(--error-lt);border:1px solid rgba(211,47,47,0.2);border-radius:var(--radius-md);padding:12px 16px;display:flex;align-items:center;gap:10px;margin-bottom:24px;">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" stroke="var(--error)" stroke-width="1.3"/><path d="M8 5v4M8 11v.5" stroke="var(--error)" stroke-width="1.3" stroke-linecap="round"/></svg>
+      <span style="font-size:13px;color:var(--error);font-weight:600;">2 items in your wishlist are now on sale!</span>
+    </div>
+
+    <div class="product-grid product-grid-5" data-skeleton>
+      <!-- Card 1 — wishlisted & on sale -->
+      <div class="product-card">
+        <div class="product-card-img" style="background:linear-gradient(140deg,#D8E4ED,#EDE5D8);">
+          <span class="product-card-badge badge-sale">–33%</span>
+          <div class="product-card-wish" style="background:rgba(211,47,47,0.1);">
+            <svg width="14" height="13" viewBox="0 0 14 13" fill="none"><path d="M7 11.5S1 7.5 1 4a3 3 0 0 1 6-1 3 3 0 0 1 6 1c0 3.5-6 7.5-6 7.5Z" fill="var(--error)" stroke="var(--error)" stroke-width="1.3" stroke-linejoin="round"/></svg>
+          </div>
+        </div>
+        <div class="product-card-body">
+          <div class="product-card-brand">TrendCo</div>
+          <div class="product-card-name">Essential White Tee</div>
+          <div class="product-card-price"><span class="price">$29.99</span><span class="price-old">$44.99</span></div>
+          <button class="btn btn-primary btn-sm" style="width:100%;margin-top:10px;border-radius:var(--radius-sm);">Add to Cart</button>
+        </div>
+      </div>
+      <!-- Card 2 -->
+      <div class="product-card">
+        <div class="product-card-img" style="background:linear-gradient(140deg,#E8D5C0,#F5E6D3);">
+          <div class="product-card-wish" style="background:rgba(211,47,47,0.1);"><svg width="14" height="13" viewBox="0 0 14 13" fill="none"><path d="M7 11.5S1 7.5 1 4a3 3 0 0 1 6-1 3 3 0 0 1 6 1c0 3.5-6 7.5-6 7.5Z" fill="var(--error)" stroke="var(--error)" stroke-width="1.3" stroke-linejoin="round"/></svg></div>
+        </div>
+        <div class="product-card-body">
+          <div class="product-card-brand">MoodCo</div>
+          <div class="product-card-name">Relaxed Linen Blazer</div>
+          <div class="product-card-price"><span class="price">$89.00</span></div>
+          <button class="btn btn-primary btn-sm" style="width:100%;margin-top:10px;border-radius:var(--radius-sm);">Add to Cart</button>
+        </div>
+      </div>
+      <!-- Card 3 — out of stock -->
+      <div class="product-card">
+        <div class="product-card-img" style="background:linear-gradient(140deg,#EDE5D8,#E8E0F0);">
+          <div class="product-card-badge" style="background:var(--input-bg);color:var(--mid);top:10px;left:10px;">Out of Stock</div>
+          <div class="product-card-wish" style="background:rgba(211,47,47,0.1);"><svg width="14" height="13" viewBox="0 0 14 13" fill="none"><path d="M7 11.5S1 7.5 1 4a3 3 0 0 1 6-1 3 3 0 0 1 6 1c0 3.5-6 7.5-6 7.5Z" fill="var(--error)" stroke="var(--error)" stroke-width="1.3" stroke-linejoin="round"/></svg></div>
+        </div>
+        <div class="product-card-body">
+          <div class="product-card-brand">ClassicLine</div>
+          <div class="product-card-name">Slim Fit Chino Trousers</div>
+          <div class="product-card-price"><span class="price" style="color:var(--subtle);">$64.99</span></div>
+          <button class="btn btn-ghost btn-sm" style="width:100%;margin-top:10px;border-radius:var(--radius-sm);">Notify Me</button>
+        </div>
+      </div>
+      <!-- Card 4 -->
+      <div class="product-card">
+        <div class="product-card-img" style="background:linear-gradient(140deg,#D8EDE4,#C8E0D0);">
+          <span class="product-card-badge badge-sale">–27%</span>
+          <div class="product-card-wish" style="background:rgba(211,47,47,0.1);"><svg width="14" height="13" viewBox="0 0 14 13" fill="none"><path d="M7 11.5S1 7.5 1 4a3 3 0 0 1 6-1 3 3 0 0 1 6 1c0 3.5-6 7.5-6 7.5Z" fill="var(--error)" stroke="var(--error)" stroke-width="1.3" stroke-linejoin="round"/></svg></div>
+        </div>
+        <div class="product-card-body">
+          <div class="product-card-brand">SportMax</div>
+          <div class="product-card-name">Performance Track Jacket</div>
+          <div class="product-card-price"><span class="price">$79.99</span><span class="price-old">$110.00</span></div>
+          <button class="btn btn-primary btn-sm" style="width:100%;margin-top:10px;border-radius:var(--radius-sm);">Add to Cart</button>
+        </div>
+      </div>
+      <!-- Card 5 -->
+      <div class="product-card">
+        <div class="product-card-img" style="background:linear-gradient(140deg,#F0EDE5,#E5EDF0);">
+          <div class="product-card-wish" style="background:rgba(211,47,47,0.1);"><svg width="14" height="13" viewBox="0 0 14 13" fill="none"><path d="M7 11.5S1 7.5 1 4a3 3 0 0 1 6-1 3 3 0 0 1 6 1c0 3.5-6 7.5-6 7.5Z" fill="var(--error)" stroke="var(--error)" stroke-width="1.3" stroke-linejoin="round"/></svg></div>
+        </div>
+        <div class="product-card-body">
+          <div class="product-card-brand">UrbanWear</div>
+          <div class="product-card-name">Canvas Tote Bag — Structured</div>
+          <div class="product-card-price"><span class="price">$45.00</span></div>
+          <button class="btn btn-primary btn-sm" style="width:100%;margin-top:10px;border-radius:var(--radius-sm);">Add to Cart</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer class="footer">
+  <div class="footer-main">
+    <div class="footer-brand">
+      <div class="footer-logo">
+        <div class="footer-logo-mark"></div>
+        <span class="footer-logo-text">ambe</span>
+      </div>
+      <p class="footer-desc">Your one-stop shop for fashion, electronics, home goods, and more. Premium brands, unbeatable prices.</p>
+      <div class="footer-social">
+        <div class="footer-social-btn"><svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M16 8.05C16 3.6 12.4 0 8 0S0 3.6 0 8.05c0 3.9 2.8 7.2 6.5 7.85v-5.5H4.5v-2.4H6.5V6.2c0-2 1.2-3.1 3-3.1.85 0 1.7.15 1.7.15v1.9h-1c-.95 0-1.2.6-1.2 1.2v1.4H11l-.4 2.4H9v5.5C12.7 15.2 16 11.9 16 8.05Z" fill="rgba(255,255,255,0.6)"/></svg></div>
+        <div class="footer-social-btn"><svg width="14" height="14" viewBox="0 0 16 16" fill="none"><rect x="1" y="1" width="14" height="14" rx="3.5" stroke="rgba(255,255,255,0.6)" stroke-width="1.3"/><circle cx="8" cy="8" r="3" stroke="rgba(255,255,255,0.6)" stroke-width="1.3"/><circle cx="12" cy="4" r="1" fill="rgba(255,255,255,0.6)"/></svg></div>
+        <div class="footer-social-btn"><svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M15 2.5s-1.7.9-2.6 1.1A3.5 3.5 0 0 0 1 7.2v.8C4.9 9 7.5 7 9 5c0 0 .7 3 4 4 0 0-2 2-5 2a6.5 6.5 0 0 1-6.5-3C1.5 10 3 14 6 15c-1 .5-2.5.5-3.5 0 1 2.5 3 3.5 5.5 3.5-1 1-3 1.5-5 1.5" stroke="rgba(255,255,255,0.6)" stroke-width="1.3" stroke-linecap="round"/></svg></div>
+        <div class="footer-social-btn"><svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M1 1l6 6-6 8h2l5-6.5L13 15h3L10 8.5 15.5 1H13.5L8 7 3.5 1H1Z" fill="rgba(255,255,255,0.6)"/></svg></div>
+      </div>
+    </div>
+    <div>
+      <div class="footer-col-title">Shop</div>
+      <a class="footer-link">Men's Fashion</a>
+      <a class="footer-link">Women's Fashion</a>
+      <a class="footer-link">Kids & Baby</a>
+      <a class="footer-link">Electronics</a>
+      <a class="footer-link">Home & Living</a>
+      <a class="footer-link">Sale</a>
+    </div>
+    <div>
+      <div class="footer-col-title">Account</div>
+      <a class="footer-link" href="/account/profile">My Profile</a>
+      <a class="footer-link" href="/account/orders">My Orders</a>
+      <a class="footer-link" href="/wishlist">Wishlist</a>
+      <a class="footer-link" href="/cart">Cart</a>
+      <a class="footer-link">Loyalty Points</a>
+    </div>
+    <div>
+      <div class="footer-col-title">Help</div>
+      <a class="footer-link">Help Center</a>
+      <a class="footer-link">Track Order</a>
+      <a class="footer-link">Returns</a>
+      <a class="footer-link">Shipping Info</a>
+      <a class="footer-link">Contact Us</a>
+    </div>
+    <div>
+      <div class="footer-col-title">Company</div>
+      <a class="footer-link">About Us</a>
+      <a class="footer-link">Careers</a>
+      <a class="footer-link">Blog</a>
+      <a class="footer-link">Press</a>
+      <a class="footer-link">Affiliates</a>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span>© 2026 Bambe Inc. · Privacy Policy · Terms of Service</span>
+    <div class="footer-pay-icons">
+      <div class="pay-icon">VISA</div>
+      <div class="pay-icon">MC</div>
+      <div class="pay-icon">AMEX</div>
+      <div class="pay-icon">PayPal</div>
+      <div class="pay-icon">Apple Pay</div>
+    </div>
+  </div>
+</footer>
+<script>
+(function() {
+  var icons = document.querySelectorAll('.nav-icon-btn');
+  // icons[0] = wishlist (already active), icons[1] = cart
+  if (icons[1]) icons[1].onclick = function() { location.href = '/cart'; };
+  var userBtn = document.querySelector('.nav-user-btn');
+  if (userBtn) userBtn.onclick = function() { location.href = '/account/profile'; };
+  var searchBtn = document.querySelector('.nav-search-btn');
+  if (searchBtn) searchBtn.onclick = function() { location.href = '/search'; };
+  // Add to Cart buttons on wishlist cards
+  document.querySelectorAll('.btn-primary.btn-sm').forEach(function(b) {
+    b.onclick = function(e) { e.stopPropagation(); location.href = '/cart'; };
+  });
+  // Notify Me button → product
+  document.querySelectorAll('.btn-ghost.btn-sm').forEach(function(b) {
+    if (b.textContent.trim() === 'Notify Me') b.onclick = function(e) { e.stopPropagation(); location.href = '/product'; };
+  });
+  // "Add All to Cart"
+  var addAll = Array.from(document.querySelectorAll('.btn-primary')).find(function(b) { return b.textContent.includes('Add All'); });
+  if (addAll) addAll.onclick = function() { location.href = '/cart'; };
+  // Clicking a product card → product page
+  document.querySelectorAll('.product-card').forEach(function(c) {
+    c.onclick = function(e) {
+      if (!e.target.closest('button')) location.href = '/product';
+    };
+  });
+})();
+</script>
+<script src="/assets/js/skeleton.js"></script>
+</body>
+</html>

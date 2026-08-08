@@ -1,0 +1,111 @@
+[package]
+name = "bambe"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+
+# Actor framework
+actix = "0.13.5"
+actix-cors = "0.7.1"
+actix-files = "0.6.6"
+actix-multipart = "0.7.2"
+actix-web-actors = "4.3.1"
+
+# Provide TLS functionality
+rustls = "0.20"
+rustls-pemfile = "1"
+
+# Random bytes generator
+rand = "0.9.0"
+
+# Regular expression
+regex = "1.11.1"
+
+# Logging facade for Rust
+log = "0.4.27"
+
+#Make HTTP/HTTPS request
+reqwest = "0.12.15"
+
+# MongoDB driver
+mongodb = "3.2.3"
+
+# Convert image to webp
+webp = "0.3.1"
+
+# Compression
+zip = "0.6"
+
+# Date and time
+chrono = "0.4.40"
+
+# Email library
+lettre = "0.11.15"
+
+# Environment variables
+dotenv = "0.15.0"
+
+# Filesystem operations
+tera = "1.20.0"
+
+# Serializing and deserializing Rust data structures
+serde_json = "1.0.140"
+
+# futures and streams
+futures = "0.3.31"
+
+# Google Authentication
+google-api-auth = "0.2.1"
+
+# Determines the type of image contained in a file or byte stream
+imghdr = "0.7.0"
+
+# Quick probing of image dimensions
+imagesize = "0.12.0"
+
+# Image Processing Library
+image = "0.24.6"
+
+# Watch dev code changes
+listenfd = "0.5"
+
+resend = "0.1.4"
+resend-rs = "0.21.1"
+
+[dependencies.jsonwebtoken]
+version = "8"
+default-features = false
+
+[dependencies.rusqlite]
+version = "0.29.0"
+features = ["bundled", "limits"]
+
+[dependencies.actix-web]
+version = "4"
+features = ["rustls"]
+
+[dependencies.actix-session]
+version = "0.7"
+features = ["redis-actor-session"]
+
+[dependencies.futures-util]
+version = "0.3"
+features = ["std"]
+default-features = false
+
+[dependencies.serde]
+version = "1"
+features = ["derive"]
+
+[dependencies.flexi_logger]
+version = "0.22"
+features = ["async", "colors", "compress"]
+
+[dependencies.uuid]
+version = "1.16.0"
+features = ["v7"]
+
+[dependencies.tokio]
+features = ["full"]
+version = "1.44.2"
