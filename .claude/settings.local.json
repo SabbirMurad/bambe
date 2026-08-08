@@ -11,7 +11,8 @@
       "Bash(python:*)",
       "Bash(Remove-Item *)",
       "PowerShell(Remove-Item *)",
-      "Bash(xargs sed -i 's/ShopEase/Bambe/g')"
+      "Bash(xargs sed -i 's/ShopEase/Bambe/g')",
+      "Bash(cargo --version)"
     ]
   }
 }

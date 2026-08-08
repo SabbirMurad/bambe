@@ -1,0 +1,125 @@
+use actix_web::web;
+use crate::Markup;
+
+pub fn router(cfg: &mut web::ServiceConfig) {
+    cfg.service(
+        web::scope("")
+        /* ── Storefront ─────────────────────────────────── */
+        .route(
+            "/",
+            web::get().to(Markup::home)
+        )
+        .route(
+            "/listing",
+            web::get().to(Markup::listing)
+        )
+        .route(
+            "/product",
+            web::get().to(Markup::product)
+        )
+        .route(
+            "/search",
+            web::get().to(Markup::search)
+        )
+        .route(
+            "/wishlist",
+            web::get().to(Markup::wishlist)
+        )
+
+        /* ── Checkout ───────────────────────────────────── */
+        .route(
+            "/cart",
+            web::get().to(Markup::cart)
+        )
+        .route(
+            "/checkout/address",
+            web::get().to(Markup::checkout_address)
+        )
+        .route(
+            "/checkout/payment",
+            web::get().to(Markup::checkout_payment)
+        )
+        .route(
+            "/checkout/review",
+            web::get().to(Markup::checkout_review)
+        )
+        .route(
+            "/checkout/confirmation",
+            web::get().to(Markup::checkout_confirmation)
+        )
+
+        /* ── Account ────────────────────────────────────── */
+        .route(
+            "/account/profile",
+            web::get().to(Markup::account_profile)
+        )
+        .route(
+            "/account/orders",
+            web::get().to(Markup::account_orders)
+        )
+        .route(
+            "/account/tracking",
+            web::get().to(Markup::account_tracking)
+        )
+        .route(
+            "/account/notifications",
+            web::get().to(Markup::account_notifications)
+        )
+
+        /* ── Auth ───────────────────────────────────────── */
+        .route(
+            "/login",
+            web::get().to(Markup::sign_in)
+        )
+        .route(
+            "/register",
+            web::get().to(Markup::sign_up)
+        )
+        .route(
+            "/forgot-password",
+            web::get().to(Markup::forgot_password)
+        )
+
+        /*
+          ── Admin console ──────────────────────────────────
+          These only collide with the JSON API by prefix, not by
+          path: the admin endpoints live under /api/v1/admin.
+        */
+        .route(
+            "/admin",
+            web::get().to(Markup::admin_overview)
+        )
+        .route(
+            "/admin/products",
+            web::get().to(Markup::admin_products)
+        )
+        .route(
+            "/admin/products/new",
+            web::get().to(Markup::admin_product_new)
+        )
+        .route(
+            "/admin/categories",
+            web::get().to(Markup::admin_categories)
+        )
+        .route(
+            "/admin/orders",
+            web::get().to(Markup::admin_orders)
+        )
+        .route(
+            "/admin/customers",
+            web::get().to(Markup::admin_customers)
+        )
+        .route(
+            "/admin/coupons",
+            web::get().to(Markup::admin_coupons)
+        )
+        .route(
+            "/admin/support",
+            web::get().to(Markup::admin_support)
+        )
+        .route(
+            "/admin/settings",
+            web::get().to(Markup::admin_settings)
+        )
+    );
+}
