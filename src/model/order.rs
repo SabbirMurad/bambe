@@ -57,7 +57,6 @@ pub struct Order {
     pub number: String,
     pub user_id: String,
 
-    pub items: Vec<OrderItem>,
     pub shipping_address: AddressSnapshot,
     // Usually the same as shipping; kept apart because it isn't always, and
     // the invoice needs the billing one.
@@ -92,7 +91,13 @@ pub struct Order {
 }
 
 /*
-  A purchased line.
+  order_item — a purchased line, in its own collection.
+
+  Points back at its order rather than being embedded in it. That keeps a
+  refund to a single small write instead of a rewrite of the whole order, and
+  it makes the lines queryable in their own right — "units sold per variant",
+  "what was in the damaged parcels" — which an array buried inside orders can
+  only answer by unwinding every order in the shop.
 
   Every display field is copied, not referenced. The catalogue is not a stable
   record of the past: products get renamed, repriced, rephotographed and
@@ -101,6 +106,8 @@ pub struct Order {
 */
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct OrderItem {
+    pub uuid: String,
+    pub order_id: String,
     pub product_id: String,
     pub variant_id: String,
 
@@ -126,9 +133,15 @@ pub struct OrderItem {
 /*
   The money, all of it, at the moment of purchase.
 
-  Invariant: subtotal - discount + shipping + packaging + tax == grand_total.
-  Assert it before writing the order; a total that disagrees with its parts is
-  the kind of bug that is only ever found by a customer.
+  Invariant: subtotal - discount + shipping + packaging + tax == grand_total,
+  and `subtotal` is the sum of the order's lines. Assert both before writing;
+  a total that disagrees with its parts is the kind of bug that is only ever
+  found by a customer.
+
+  The lines live in their own collection now, so those two writes need a
+  transaction. Without one, a failure between them leaves an order whose total
+  has no lines under it — worse than the array ever was, because nothing in
+  the document itself shows it is incomplete.
 */
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct OrderTotals {
@@ -249,7 +262,6 @@ pub struct ReturnRequest {
     pub uuid: String,
     pub order_id: String,
     pub user_id: String,
-    pub items: Vec<ReturnItem>,
     pub reason: String,
     pub details: Option<String>,
     // Photos of a damaged item — ImageStruct uuids.
@@ -262,8 +274,23 @@ pub struct ReturnRequest {
     pub resolved_by: Option<String>,
 }
 
+/*
+  return_item — one line of a return, in its own collection.
+
+  Same shape as the order/order_item split: it points at its request rather
+  than living inside it. What it buys here is the join to order_item — a
+  return is always a return *of* something already bought, and keeping both
+  sides as rows lets one query answer how much of a given line has been sent
+  back. Unique on (return_request_id, order_item_id).
+*/
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct ReturnItem {
+    pub uuid: String,
+    pub return_request_id: String,
+    // The line being returned, not just the variant: an order can hold the
+    // same variant on two lines, and a refund has to know which one it came
+    // off to reverse the right amount.
+    pub order_item_id: String,
     pub variant_id: String,
     pub quantity: u32,
 }

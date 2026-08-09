@@ -33,8 +33,6 @@ pub struct Product {
     pub description: String,
     pub brand_id: Option<String>,
     pub category_id: String,
-    pub tags: Vec<String>,
-    pub images: Vec<ProductImage>,
     pub status: ProductStatus,
 
     /*
@@ -63,14 +61,30 @@ pub struct Product {
     pub deleted_at: Option<i64>,
 }
 
-// One gallery image. `image_id` is an ImageStruct uuid, so the blur hash and
-// generated sizes come from the existing image pipeline rather than a URL
-// pasted into the product.
+/*
+  product_tag — one row per tag per product.
+
+  A tag on the product would only ever be searched from the product's side:
+  finding every product tagged "summer" means scanning the catalogue and
+  testing each array. As rows, an index on `slug` answers it directly, and the
+  same index gives the tag cloud its counts without touching a product.
+
+  Unique on (product_id, slug).
+*/
 #[derive(Debug, Clone, Deserialize, Serialize)]
-pub struct ProductImage {
-    pub image_id: String,
-    pub alt: Option<String>,
-    pub position: u16,
+pub struct ProductTag {
+    pub uuid: String,
+    pub product_id: String,
+    // What the admin typed — "Summer Sale". Shown on the product page.
+    pub name: String,
+    /*
+      The normalised form the lookup actually uses — "summer-sale". Kept
+      beside the display name because tags are free text: "Summer Sale",
+      "summer sale" and "SUMMER SALE" are one tag to a shopper, and matching on
+      `name` would file them as three.
+    */
+    pub slug: String,
+    pub created_at: i64,
 }
 
 /*
@@ -90,7 +104,15 @@ pub struct ProductVariant {
     pub color: Option<String>,
     // The swatch shown on the product page, e.g. "#1A1A18".
     pub color_hex: Option<String>,
-    // Gallery image to jump to when this variant is picked.
+    /*
+      The variant's photograph — an ImageStruct uuid. Photographs are of a
+      variant, not of a product: the black jacket and the tan one are the same
+      product and do not share a picture, which is why it is uploaded on the
+      variant row in the admin form.
+
+      Option because a draft can have its sizes and prices filled in before
+      the photography comes back.
+    */
     pub image_id: Option<String>,
 
     pub price: Cents,

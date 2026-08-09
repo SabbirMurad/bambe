@@ -15,7 +15,6 @@ pub struct Cart {
     // Set for guests, cleared once the cart is claimed by an account.
     pub session_id: Option<String>,
 
-    pub items: Vec<CartItem>,
     // Applied at the cart, validated again at payment — a code can expire or
     // hit its limit between the two.
     pub coupon_code: Option<String>,
@@ -28,7 +27,14 @@ pub struct Cart {
 }
 
 /*
-  A line in the cart.
+  cart_item — a line in the cart, in its own collection.
+
+  Points back at its cart rather than being embedded in it, so adding one item
+  writes one small document instead of rewriting the whole basket. It also
+  keeps the two hot paths off each other: applying a coupon touches the cart,
+  changing a quantity touches a line, and neither can clobber the other's
+  write. Unique on (cart_id, variant_id) — adding a variant already in the
+  basket is an increment, not a second row.
 
   It holds only the variant and a quantity — no title, no price. Everything
   else is read live from the catalogue, so an item sitting in a cart for a week
@@ -37,6 +43,8 @@ pub struct Cart {
 */
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct CartItem {
+    pub uuid: String,
+    pub cart_id: String,
     pub product_id: String,
     pub variant_id: String,
     pub quantity: u32,
