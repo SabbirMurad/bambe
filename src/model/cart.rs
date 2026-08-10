@@ -15,7 +15,6 @@ pub struct Cart {
     // Set for guests, cleared once the cart is claimed by an account.
     pub session_id: Option<String>,
 
-    pub items: Vec<CartItem>,
     // Applied at the cart, validated again at payment — a code can expire or
     // hit its limit between the two.
     pub coupon_code: Option<String>,
@@ -28,7 +27,8 @@ pub struct Cart {
 }
 
 /*
-  A line in the cart.
+  A line in the cart — its own collection, one row per line, joined back to
+  the cart by `cart_id`.
 
   It holds only the variant and a quantity — no title, no price. Everything
   else is read live from the catalogue, so an item sitting in a cart for a week
@@ -37,6 +37,8 @@ pub struct Cart {
 */
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct CartItem {
+    pub uuid: String,
+    pub cart_id: String,
     pub product_id: String,
     pub variant_id: String,
     pub quantity: u32,

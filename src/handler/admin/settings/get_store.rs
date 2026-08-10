@@ -1,0 +1,45 @@
+use chrono::Utc;
+use mongodb::bson::doc;
+use actix_web::{Error, HttpResponse, HttpRequest};
+use crate::BuiltIns::mongo::MongoDB;
+use crate::utils::response::Response;
+use crate::Middleware::Auth::{require_access, AccessRequirement};
+use crate::model::Account::AccountRole;
+use crate::model::Store::StoreSettings;
+use super::STORE_SETTINGS_ID;
+
+pub async fn task(req: HttpRequest) -> Result<HttpResponse, Error> {
+    require_access(&req, AccessRequirement::Role(AccountRole::Administrator))?;
+    let db = MongoDB.connect();
+    let col = db.collection::<StoreSettings>("store_settings");
+
+    let existing = col.find_one(doc! { "uuid": STORE_SETTINGS_ID }).await.ok().flatten();
+    if let Some(settings) = existing {
+        return Ok(HttpResponse::Ok().content_type("application/json").json(settings));
+    }
+
+    let defaults = StoreSettings {
+        uuid: STORE_SETTINGS_ID.to_string(),
+        store_name: "My Store".to_string(),
+        support_email: String::new(),
+        support_phone: None,
+        business_address: String::new(),
+        default_currency: "USD".to_string(),
+        timezone: "UTC".to_string(),
+        logo_image_id: None,
+        order_number_prefix: "OR".to_string(),
+        ticket_number_prefix: "TK".to_string(),
+        tax_rate_bps: 0,
+        prices_include_tax: false,
+        maintenance_mode: false,
+        modified_at: Utc::now().timestamp_millis(),
+        modified_by: None,
+    };
+
+    if let Err(error) = col.insert_one(&defaults).await {
+        log::error!("{:?}", error);
+        return Ok(Response::internal_server_error(&error.to_string()));
+    }
+
+    Ok(HttpResponse::Ok().content_type("application/json").json(defaults))
+}

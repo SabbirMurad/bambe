@@ -286,6 +286,18 @@ async fn main() -> io::Result<()> {
             .configure(Routes::Video::router)
             .configure(Routes::Notification::router)
             .configure(Routes::Admin::router)
+            .configure(Routes::Category::router)
+            .configure(Routes::Product::router)
+            .configure(Routes::Review::router)
+            .configure(Routes::Cart::router)
+            .configure(Routes::Wishlist::router)
+            .configure(Routes::RecentlyViewed::router)
+            .configure(Routes::Address::router)
+            .configure(Routes::Checkout::router)
+            .configure(Routes::Order::router)
+            .configure(Routes::PaymentMethod::router)
+            .configure(Routes::ReturnRequest::router)
+            .configure(Routes::SupportTicket::router)
             /* Page routes last: its scope("") matches everything, so an API
                router registered after it would never be reached. */
             .configure(Routes::Pages::router)
