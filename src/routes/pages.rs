@@ -86,6 +86,10 @@ pub fn router(cfg: &mut web::ServiceConfig) {
           path: the admin endpoints live under /api/v1/admin.
         */
         .route(
+            "/admin/login",
+            web::get().to(Markup::admin_sign_in)
+        )
+        .route(
             "/admin",
             web::get().to(Markup::admin_overview)
         )

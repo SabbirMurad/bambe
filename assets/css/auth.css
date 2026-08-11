@@ -212,6 +212,24 @@
 .otp-box.filled { border-color: var(--primary-text); background: var(--blue-lt); }
 .otp-box.active { border-color: var(--primary-text); background: var(--white); box-shadow: 0 0 0 3px var(--blue-lt); }
 
+/* The boxes are real <input>s now, one digit each. Flex centring does
+   nothing to an input's own text, so it centres itself instead, and the
+   focus ring reuses the .active look rather than the browser default. */
+input.otp-box {
+  display: block;
+  text-align: center;
+  padding: 0;
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+}
+input.otp-box::-webkit-outer-spin-button,
+input.otp-box::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+input.otp-box:focus { border-color: var(--primary-text); background: var(--white); box-shadow: 0 0 0 3px var(--blue-lt); }
+
+/* Any auth button mid-request: still readable, but not clickable twice. */
+.btn.is-busy { opacity: 0.6; pointer-events: none; }
+
 .auth-footer-link { text-align: center; font-size: 13px; color: var(--subtle); margin-top: 20px; }
 .auth-footer-link a { color: var(--primary-text); font-weight: 600; cursor: pointer; }
 

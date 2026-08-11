@@ -72,6 +72,20 @@ async fn resolve_category_ids(db: &mongodb::Database, key: &str) -> Vec<String> 
     ids
 }
 
+/*
+  Brand, size and colour are ticklists in the sidebar, so they arrive as
+  "a,b,c" and mean "any of these". Split here rather than taking one value
+  and dropping the rest, which would let the page show three brands ticked
+  while filtering by one.
+*/
+fn csv(raw: &str) -> Vec<String> {
+    raw.split(',')
+        .map(|part| part.trim())
+        .filter(|part| !part.is_empty())
+        .map(|part| part.to_string())
+        .collect()
+}
+
 pub async fn task(query: web::Query<ReqQuery>) -> Result<HttpResponse, Error> {
     let db = MongoDB.connect();
     let mut filter = doc! { "status": "Active", "deleted_at": null };
@@ -82,7 +96,7 @@ pub async fn task(query: web::Query<ReqQuery>) -> Result<HttpResponse, Error> {
     }
 
     if let Some(brand) = &query.brand {
-        filter.insert("brand_id", brand);
+        filter.insert("brand_id", doc! { "$in": csv(brand) });
     }
 
     if query.price_min.is_some() || query.price_max.is_some() {
@@ -118,10 +132,10 @@ pub async fn task(query: web::Query<ReqQuery>) -> Result<HttpResponse, Error> {
     if query.size.is_some() || query.color.is_some() {
         let mut variant_filter = Document::new();
         if let Some(size) = &query.size {
-            variant_filter.insert("size", size);
+            variant_filter.insert("size", doc! { "$in": csv(size) });
         }
         if let Some(color) = &query.color {
-            variant_filter.insert("color", color);
+            variant_filter.insert("color", doc! { "$in": csv(color) });
         }
 
         let product_ids: HashSet<String> = match db
@@ -198,10 +212,7 @@ pub async fn task(query: web::Query<ReqQuery>) -> Result<HttpResponse, Error> {
         map
     };
 
-    let cover_image_ids: Vec<String> = products
-        .iter()
-        .filter_map(|p| p.images.iter().min_by_key(|i| i.position).map(|i| i.image_id.clone()))
-        .collect();
+    let cover_image_ids: Vec<String> = products.iter().filter_map(|p| p.cover_image_id.clone()).collect();
     let images: HashMap<String, ImageStruct> = if cover_image_ids.is_empty() {
         HashMap::new()
     } else {
@@ -220,11 +231,7 @@ pub async fn task(query: web::Query<ReqQuery>) -> Result<HttpResponse, Error> {
     let items: Vec<_> = products
         .iter()
         .map(|p| {
-            let cover = p
-                .images
-                .iter()
-                .min_by_key(|i| i.position)
-                .and_then(|i| images.get(&i.image_id));
+            let cover = p.cover_image_id.as_ref().and_then(|id| images.get(id));
 
             json!({
                 "uuid": p.uuid,

@@ -87,7 +87,7 @@
           <span class="input-icon">
             <svg width="16" height="13" viewBox="0 0 16 13" fill="none"><rect x=".5" y=".5" width="15" height="12" rx="2" stroke="#C4C0B9" stroke-width="1.2"/><path d="M1 2l7 5 7-5" stroke="#C4C0B9" stroke-width="1.2" stroke-linecap="round"/></svg>
           </span>
-          <input class="form-input" type="email" placeholder="john@example.com" value="john@example.com">
+          <input id="login-email" class="form-input" type="email" placeholder="john@example.com" autocomplete="username">
         </div>
       </div>
 
@@ -101,8 +101,8 @@
           <span class="input-icon">
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="2" y="7" width="12" height="8" rx="2" stroke="#C4C0B9" stroke-width="1.3"/><path d="M5 7V5a3 3 0 0 1 6 0v2" stroke="#C4C0B9" stroke-width="1.3" stroke-linecap="round"/></svg>
           </span>
-          <input class="form-input" type="password" value="••••••••••">
-          <span class="input-icon-right">
+          <input id="login-password" class="form-input" type="password" placeholder="Your password" autocomplete="current-password">
+          <span class="input-icon-right" id="login-password-toggle" style="cursor:pointer;">
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M1 8s3-5 7-5 7 5 7 5-3 5-7 5-7-5-7-5Z" stroke="#C4C0B9" stroke-width="1.3"/><circle cx="8" cy="8" r="2" stroke="#C4C0B9" stroke-width="1.3"/></svg>
           </span>
         </div>
@@ -118,23 +118,13 @@
         </div>
       </div>
 
-      <button class="btn btn-primary" style="width:100%;height:48px;font-size:15px;border-radius:var(--radius-md);">Sign In</button>
+      <button id="login-submit" class="btn btn-primary" style="width:100%;height:48px;font-size:15px;border-radius:var(--radius-md);">Sign In</button>
 
       <div class="auth-footer-link">Don't have an account? <a href="/register">Create one — it's free</a></div>
     </div>
   </div>
 
 </div>
-<script>
-(function() {
-  // Sign In button → home
-  var signInBtn = document.querySelector('.btn-primary');
-  if (signInBtn) signInBtn.onclick = function() { location.href = '/'; };
-  // Social buttons → home
-  document.querySelectorAll('.social-btn').forEach(function(b) {
-    b.onclick = function() { location.href = '/'; };
-  });
-})();
-</script>
+<script type="module" src="/assets/js/auth.js"></script>
 </body>
 </html>

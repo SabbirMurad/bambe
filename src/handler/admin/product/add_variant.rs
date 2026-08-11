@@ -17,7 +17,7 @@ pub struct ReqBody {
     size: Option<String>,
     color: Option<String>,
     color_hex: Option<String>,
-    image_id: Option<String>,
+    image_id: String,
     price: Cents,
     compare_at_price: Option<Cents>,
     #[serde(default)]

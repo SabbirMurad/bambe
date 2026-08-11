@@ -551,27 +551,19 @@
   document.querySelectorAll('.subnav-link').forEach(function(l) {
     l.onclick = function() { location.href = '/listing'; };
   });
-  // Category cards
-  document.querySelectorAll('.category-card').forEach(function(c) {
-    c.onclick = function() { location.href = '/listing'; };
-  });
   // Promo CTAs
   document.querySelectorAll('.promo-cta').forEach(function(cta) {
     cta.style.cursor = 'pointer';
     cta.onclick = function() { location.href = '/listing'; };
   });
-  // Product cards
-  document.querySelectorAll('.product-card').forEach(function(c) {
-    c.onclick = function(e) {
-      if (!e.target.closest('button') && !e.target.closest('.product-card-wish') && !e.target.closest('.product-card-quick')) {
-        location.href = '/product';
-      }
-    };
-  });
-  // Quick add buttons
-  document.querySelectorAll('.quick-add-btn').forEach(function(b) {
-    b.onclick = function(e) { e.stopPropagation(); location.href = '/cart'; };
-  });
+
+  /*
+    The category cards, product cards and Quick Add buttons used to
+    get blanket handlers here, all pointing at the same placeholder
+    URL. home.js now rebuilds those three from the API as real links
+    to a real slug, so handlers that sent every card to /product
+    would override the right destination with the wrong one.
+  */
 
   // App store buttons. There is no store to send anyone to from a
   // wireframe, so they acknowledge the tap through the shared toast
@@ -597,5 +589,6 @@
 })();
 </script>
 <script src="/assets/js/skeleton.js"></script>
+<script type="module" src="/assets/js/home.js"></script>
 </body>
 </html>

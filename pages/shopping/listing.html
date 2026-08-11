@@ -34,24 +34,17 @@
           </span>
         </div>
 
-        <!-- Category -->
-        <div class="filter-card">
+        <!-- Category — options are rendered from /v1/category/list -->
+        <div class="filter-card" data-facet="category" data-single>
           <div class="filter-card-head">
             <span class="filter-card-title">Category</span>
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M3 5l3 3 3-3" stroke="#94908A" stroke-width="1.3" stroke-linecap="round"/></svg>
           </div>
-          <div class="filter-card-body">
-            <div class="filter-option"><div class="filter-option-label"><div class="form-check-input checked"><svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4l3 3 5-6" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>T-Shirts &amp; Tops</div><span class="filter-option-count">843</span></div>
-            <div class="filter-option"><div class="filter-option-label"><div class="form-check-input"></div>Shirts &amp; Polos</div><span class="filter-option-count">421</span></div>
-            <div class="filter-option"><div class="filter-option-label"><div class="form-check-input"></div>Jackets &amp; Coats</div><span class="filter-option-count">267</span></div>
-            <div class="filter-option"><div class="filter-option-label"><div class="form-check-input"></div>Trousers &amp; Chinos</div><span class="filter-option-count">512</span></div>
-            <div class="filter-option"><div class="filter-option-label"><div class="form-check-input"></div>Jeans</div><span class="filter-option-count">389</span></div>
-            <div class="filter-option"><div class="filter-option-label"><div class="form-check-input"></div>Sportswear</div><span class="filter-option-count">634</span></div>
-          </div>
+          <div class="filter-card-body"></div>
         </div>
 
         <!-- Price -->
-        <div class="filter-card">
+        <div class="filter-card" data-facet="price">
           <div class="filter-card-head">
             <span class="filter-card-title">Price Range</span>
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M3 5l3 3 3-3" stroke="#94908A" stroke-width="1.3" stroke-linecap="round"/></svg>
@@ -71,55 +64,50 @@
         </div>
 
         <!-- Brand -->
-        <div class="filter-card">
+        <div class="filter-card" data-facet="brand">
           <div class="filter-card-head">
             <span class="filter-card-title">Brand</span>
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M3 5l3 3 3-3" stroke="#94908A" stroke-width="1.3" stroke-linecap="round"/></svg>
           </div>
-          <div class="filter-card-body">
-            <div class="filter-option"><div class="filter-option-label"><div class="form-check-input checked"><svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4l3 3 5-6" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>TrendCo</div><span class="filter-option-count">312</span></div>
-            <div class="filter-option"><div class="filter-option-label"><div class="form-check-input"></div>UrbanWear</div><span class="filter-option-count">208</span></div>
-            <div class="filter-option"><div class="filter-option-label"><div class="form-check-input"></div>ClassicLine</div><span class="filter-option-count">175</span></div>
-            <div class="filter-option"><div class="filter-option-label"><div class="form-check-input"></div>SportMax</div><span class="filter-option-count">290</span></div>
-            <div class="filter-option"><div class="filter-option-label"><div class="form-check-input"></div>MoodCo</div><span class="filter-option-count">143</span></div>
-          </div>
+          <!-- Options are rendered from /v1/product/brand/list -->
+          <div class="filter-card-body"></div>
         </div>
 
         <!-- Rating -->
-        <div class="filter-card">
+        <div class="filter-card" data-facet="rating" data-single>
           <div class="filter-card-head">
             <span class="filter-card-title">Customer Rating</span>
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M3 5l3 3 3-3" stroke="#94908A" stroke-width="1.3" stroke-linecap="round"/></svg>
           </div>
           <div class="filter-card-body">
-            <div class="rating-filter-item" data-label="5★ &amp; up"><div class="form-radio-input checked"></div><div class="stars" style="gap:2px;"><svg width="11" height="11" viewBox="0 0 12 12" fill="#FAAA39"><path d="M6 1l1.1 3.4H11L8.2 6.5l1 3.4L6 8.1 2.8 9.9l1-3.4L1 4.4h3.9L6 1Z"/></svg><svg width="11" height="11" viewBox="0 0 12 12" fill="#FAAA39"><path d="M6 1l1.1 3.4H11L8.2 6.5l1 3.4L6 8.1 2.8 9.9l1-3.4L1 4.4h3.9L6 1Z"/></svg><svg width="11" height="11" viewBox="0 0 12 12" fill="#FAAA39"><path d="M6 1l1.1 3.4H11L8.2 6.5l1 3.4L6 8.1 2.8 9.9l1-3.4L1 4.4h3.9L6 1Z"/></svg><svg width="11" height="11" viewBox="0 0 12 12" fill="#FAAA39"><path d="M6 1l1.1 3.4H11L8.2 6.5l1 3.4L6 8.1 2.8 9.9l1-3.4L1 4.4h3.9L6 1Z"/></svg><svg width="11" height="11" viewBox="0 0 12 12" fill="#FAAA39"><path d="M6 1l1.1 3.4H11L8.2 6.5l1 3.4L6 8.1 2.8 9.9l1-3.4L1 4.4h3.9L6 1Z"/></svg></div>&amp; up</div>
+            <div class="rating-filter-item" data-label="5★ &amp; up"><div class="form-radio-input"></div><div class="stars" style="gap:2px;"><svg width="11" height="11" viewBox="0 0 12 12" fill="#FAAA39"><path d="M6 1l1.1 3.4H11L8.2 6.5l1 3.4L6 8.1 2.8 9.9l1-3.4L1 4.4h3.9L6 1Z"/></svg><svg width="11" height="11" viewBox="0 0 12 12" fill="#FAAA39"><path d="M6 1l1.1 3.4H11L8.2 6.5l1 3.4L6 8.1 2.8 9.9l1-3.4L1 4.4h3.9L6 1Z"/></svg><svg width="11" height="11" viewBox="0 0 12 12" fill="#FAAA39"><path d="M6 1l1.1 3.4H11L8.2 6.5l1 3.4L6 8.1 2.8 9.9l1-3.4L1 4.4h3.9L6 1Z"/></svg><svg width="11" height="11" viewBox="0 0 12 12" fill="#FAAA39"><path d="M6 1l1.1 3.4H11L8.2 6.5l1 3.4L6 8.1 2.8 9.9l1-3.4L1 4.4h3.9L6 1Z"/></svg><svg width="11" height="11" viewBox="0 0 12 12" fill="#FAAA39"><path d="M6 1l1.1 3.4H11L8.2 6.5l1 3.4L6 8.1 2.8 9.9l1-3.4L1 4.4h3.9L6 1Z"/></svg></div>&amp; up</div>
             <div class="rating-filter-item" data-label="4★ &amp; up"><div class="form-radio-input"></div><div class="stars" style="gap:2px;"><svg width="11" height="11" viewBox="0 0 12 12" fill="#FAAA39"><path d="M6 1l1.1 3.4H11L8.2 6.5l1 3.4L6 8.1 2.8 9.9l1-3.4L1 4.4h3.9L6 1Z"/></svg><svg width="11" height="11" viewBox="0 0 12 12" fill="#FAAA39"><path d="M6 1l1.1 3.4H11L8.2 6.5l1 3.4L6 8.1 2.8 9.9l1-3.4L1 4.4h3.9L6 1Z"/></svg><svg width="11" height="11" viewBox="0 0 12 12" fill="#FAAA39"><path d="M6 1l1.1 3.4H11L8.2 6.5l1 3.4L6 8.1 2.8 9.9l1-3.4L1 4.4h3.9L6 1Z"/></svg><svg width="11" height="11" viewBox="0 0 12 12" fill="#FAAA39"><path d="M6 1l1.1 3.4H11L8.2 6.5l1 3.4L6 8.1 2.8 9.9l1-3.4L1 4.4h3.9L6 1Z"/></svg><svg width="11" height="11" viewBox="0 0 12 12" fill="#E8E5E0"><path d="M6 1l1.1 3.4H11L8.2 6.5l1 3.4L6 8.1 2.8 9.9l1-3.4L1 4.4h3.9L6 1Z"/></svg></div>&amp; up</div>
             <div class="rating-filter-item" data-label="3★ &amp; up"><div class="form-radio-input"></div><div class="stars" style="gap:2px;"><svg width="11" height="11" viewBox="0 0 12 12" fill="#FAAA39"><path d="M6 1l1.1 3.4H11L8.2 6.5l1 3.4L6 8.1 2.8 9.9l1-3.4L1 4.4h3.9L6 1Z"/></svg><svg width="11" height="11" viewBox="0 0 12 12" fill="#FAAA39"><path d="M6 1l1.1 3.4H11L8.2 6.5l1 3.4L6 8.1 2.8 9.9l1-3.4L1 4.4h3.9L6 1Z"/></svg><svg width="11" height="11" viewBox="0 0 12 12" fill="#FAAA39"><path d="M6 1l1.1 3.4H11L8.2 6.5l1 3.4L6 8.1 2.8 9.9l1-3.4L1 4.4h3.9L6 1Z"/></svg><svg width="11" height="11" viewBox="0 0 12 12" fill="#E8E5E0"><path d="M6 1l1.1 3.4H11L8.2 6.5l1 3.4L6 8.1 2.8 9.9l1-3.4L1 4.4h3.9L6 1Z"/></svg><svg width="11" height="11" viewBox="0 0 12 12" fill="#E8E5E0"><path d="M6 1l1.1 3.4H11L8.2 6.5l1 3.4L6 8.1 2.8 9.9l1-3.4L1 4.4h3.9L6 1Z"/></svg></div>&amp; up</div>
           </div>
         </div>
 
         <!-- Size -->
-        <div class="filter-card">
+        <div class="filter-card" data-facet="size">
           <div class="filter-card-head">
             <span class="filter-card-title">Size</span>
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M3 5l3 3 3-3" stroke="#94908A" stroke-width="1.3" stroke-linecap="round"/></svg>
           </div>
           <div class="filter-card-body">
             <div class="size-chips">
-              <div class="size-chip">XS</div><div class="size-chip selected">S</div><div class="size-chip selected">M</div><div class="size-chip selected">L</div><div class="size-chip">XL</div><div class="size-chip">XXL</div>
+              <div class="size-chip">XS</div><div class="size-chip">S</div><div class="size-chip">M</div><div class="size-chip">L</div><div class="size-chip">XL</div><div class="size-chip">XXL</div>
             </div>
           </div>
         </div>
 
         <!-- Color -->
-        <div class="filter-card">
+        <div class="filter-card" data-facet="color">
           <div class="filter-card-head">
             <span class="filter-card-title">Color</span>
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M3 5l3 3 3-3" stroke="#94908A" stroke-width="1.3" stroke-linecap="round"/></svg>
           </div>
           <div class="filter-card-body">
             <div class="color-swatches">
-              <div class="color-swatch selected" data-name="White"><div class="color-swatch-inner" style="background:#fff;border:1px solid #E8E5E0;"></div></div>
+              <div class="color-swatch" data-name="White"><div class="color-swatch-inner" style="background:#fff;border:1px solid #E8E5E0;"></div></div>
               <div class="color-swatch" data-name="Black"><div class="color-swatch-inner" style="background:#1A1A18;"></div></div>
               <div class="color-swatch" data-name="Navy"><div class="color-swatch-inner" style="background:#1e3a5f;"></div></div>
               <div class="color-swatch" data-name="Olive"><div class="color-swatch-inner" style="background:#6b8e5f;"></div></div>
@@ -254,28 +242,16 @@
   if (icons[1]) icons[1].onclick = function() { location.href = '/cart'; };
   var userBtn = document.querySelector('.nav-user-btn');
   if (userBtn) userBtn.onclick = function() { location.href = '/account/profile'; };
-  var searchBtn = document.querySelector('.nav-search-btn');
-  if (searchBtn) searchBtn.onclick = function() { location.href = '/search'; };
   document.querySelectorAll('.subnav-link').forEach(function(l) {
     l.onclick = function() { location.href = '/listing'; };
   });
-  document.querySelectorAll('.product-card').forEach(function(c) {
-    c.onclick = function(e) {
-      if (!e.target.closest('button') && !e.target.closest('.product-card-wish') && !e.target.closest('.product-card-quick')) {
-        location.href = '/product';
-      }
-    };
-  });
-  document.querySelectorAll('.quick-add-btn').forEach(function(b) {
-    b.onclick = function(e) { e.stopPropagation(); location.href = '/cart'; };
-  });
-  document.querySelectorAll('.page-btn:not(.disabled):not(.active)').forEach(function(b) {
-    b.onclick = function() { location.href = '/listing'; };
-  });
+  // Cards, Quick Add, the search box and the pager are all driven by
+  // listing.js against real data now — the placeholder handlers that
+  // used to send every card to /product are gone.
 })();
 </script>
 <script src="/assets/js/select.js"></script>
-<script src="/assets/js/listing.js"></script>
+<script type="module" src="/assets/js/listing.js"></script>
 <script src="/assets/js/skeleton.js"></script>
 </body>
 </html>

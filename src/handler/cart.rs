@@ -202,7 +202,9 @@ pub async fn build_response(db: &Database, cart: &Cart) -> Value {
                 cart_product_ids.push(item.product_id.clone());
             }
 
-            let cover_image_id = product.and_then(|p| p.images.iter().min_by_key(|i| i.position).map(|i| i.image_id.clone()));
+            // The line's own variant, not the product cover — a cart showing
+            // the black one when you added the tan one is just wrong.
+            let line_image_id = variant.map(|v| v.image_id.clone());
 
             json!({
                 "uuid": item.uuid,
@@ -211,7 +213,7 @@ pub async fn build_response(db: &Database, cart: &Cart) -> Value {
                 "title": product.map(|p| p.title.clone()),
                 "size": variant.and_then(|v| v.size.clone()),
                 "color": variant.and_then(|v| v.color.clone()),
-                "image_id": cover_image_id,
+                "image_id": line_image_id,
                 "quantity": item.quantity,
                 "unit_price": variant.map(|v| v.price),
                 "price_when_added": item.price_when_added,

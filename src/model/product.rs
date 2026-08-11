@@ -34,7 +34,6 @@ pub struct Product {
     pub brand_id: Option<String>,
     pub category_id: String,
     pub tags: Vec<String>,
-    pub images: Vec<ProductImage>,
     pub status: ProductStatus,
 
     /*
@@ -42,7 +41,14 @@ pub struct Product {
       across hundreds of products at once; without these it would have to load
       every variant of every product to know what to show. Recomputed whenever
       a variant is written.
+
+      `cover_image_id` is the first variant's image. The product itself owns no
+      images — a photo shows one colourway, which is a variant, not the abstract
+      product — so the card thumbnail has to be borrowed from a variant, and
+      borrowing it on every listing query is the read this field exists to
+      avoid. None only while a product has no variants yet.
     */
+    pub cover_image_id: Option<String>,
     pub price_min: Cents,
     pub price_max: Cents,
     pub in_stock: bool,
@@ -63,16 +69,6 @@ pub struct Product {
     pub deleted_at: Option<i64>,
 }
 
-// One gallery image. `image_id` is an ImageStruct uuid, so the blur hash and
-// generated sizes come from the existing image pipeline rather than a URL
-// pasted into the product.
-#[derive(Debug, Clone, Deserialize, Serialize)]
-pub struct ProductImage {
-    pub image_id: String,
-    pub alt: Option<String>,
-    pub position: u16,
-}
-
 /*
   product_variant — the sellable unit.
 
@@ -90,8 +86,17 @@ pub struct ProductVariant {
     pub color: Option<String>,
     // The swatch shown on the product page, e.g. "#1A1A18".
     pub color_hex: Option<String>,
-    // Gallery image to jump to when this variant is picked.
-    pub image_id: Option<String>,
+    /*
+      The variant's photo — an ImageStruct uuid, so the blur hash and generated
+      sizes come from the existing image pipeline rather than a URL pasted into
+      the product.
+
+      Required, not optional: this is the only image anything has of this
+      variant. The product page's gallery is these ids across the variants, the
+      card thumbnail is one of them, and an order line snapshots one. A variant
+      without it renders as a hole in all three.
+    */
+    pub image_id: String,
 
     pub price: Cents,
     pub compare_at_price: Option<Cents>,

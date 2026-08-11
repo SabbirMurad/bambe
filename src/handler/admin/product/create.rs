@@ -8,7 +8,7 @@ use crate::utils::response::Response;
 use crate::Middleware::Auth::{require_access, AccessRequirement};
 use crate::model::Account::AccountRole;
 use crate::model::Cents;
-use crate::model::Product::{Product, ProductImage, ProductVariant, ProductStatus};
+use crate::model::Product::{Product, ProductVariant, ProductStatus};
 
 #[derive(Debug, Deserialize)]
 pub struct VariantInput {
@@ -16,7 +16,7 @@ pub struct VariantInput {
     size: Option<String>,
     color: Option<String>,
     color_hex: Option<String>,
-    image_id: Option<String>,
+    image_id: String,
     price: Cents,
     compare_at_price: Option<Cents>,
     #[serde(default)]
@@ -35,8 +35,6 @@ pub struct ReqBody {
     category_id: String,
     #[serde(default)]
     tags: Vec<String>,
-    #[serde(default)]
-    images: Vec<ProductImage>,
     #[serde(default)]
     status: ProductStatus,
     compare_at_price: Option<Cents>,
@@ -84,8 +82,11 @@ pub async fn task(req: HttpRequest, body: web::Json<ReqBody>) -> Result<HttpResp
         brand_id: body.brand_id.clone(),
         category_id: body.category_id.clone(),
         tags: body.tags.clone(),
-        images: body.images.clone(),
         status: body.status.clone(),
+        // The variants are written below in the order they arrived, so the
+        // first one is the oldest — the same variant recompute_aggregates will
+        // pick once anything edits them.
+        cover_image_id: body.variants.first().map(|v| v.image_id.clone()),
         price_min: body.variants.iter().map(|v| v.price).min().unwrap_or(0),
         price_max: body.variants.iter().map(|v| v.price).max().unwrap_or(0),
         in_stock: body.variants.iter().any(|v| v.stock > 0),

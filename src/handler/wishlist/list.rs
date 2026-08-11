@@ -49,7 +49,7 @@ pub async fn task(req: HttpRequest) -> Result<HttpResponse, Error> {
 
     let cover_image_ids: Vec<String> = products
         .values()
-        .filter_map(|p| p.images.iter().min_by_key(|i| i.position).map(|i| i.image_id.clone()))
+        .filter_map(|p| p.cover_image_id.clone())
         .collect();
     let images: HashMap<String, ImageStruct> = if cover_image_ids.is_empty() {
         HashMap::new()
@@ -70,7 +70,7 @@ pub async fn task(req: HttpRequest) -> Result<HttpResponse, Error> {
         .iter()
         .map(|w| {
             let product = products.get(&w.product_id);
-            let cover = product.and_then(|p| p.images.iter().min_by_key(|i| i.position)).and_then(|i| images.get(&i.image_id));
+            let cover = product.and_then(|p| p.cover_image_id.as_ref()).and_then(|id| images.get(id));
 
             json!({
                 "uuid": w.uuid,

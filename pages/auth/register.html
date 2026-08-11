@@ -54,31 +54,33 @@
 
       <!-- Step indicator -->
       <div class="reg-progress">
-        <div class="reg-step active">
+        <div class="reg-step active" id="reg-step-1">
           <div class="reg-step-num">1</div>
           Personal Info
         </div>
         <div class="reg-step-line"></div>
-        <div class="reg-step">
+        <div class="reg-step active" id="reg-step-2">
           <div class="reg-step-num">2</div>
           Account Security
         </div>
         <div class="reg-step-line"></div>
-        <div class="reg-step">
+        <div class="reg-step" id="reg-step-3">
           <div class="reg-step-num">3</div>
-          Preferences
+          Verify Email
         </div>
       </div>
+
+      <div id="reg-form">
 
       <!-- Name row -->
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
         <div class="form-group">
           <label class="form-label">First Name <span class="req">*</span></label>
-          <input class="form-input" type="text" placeholder="John" value="John">
+          <input id="reg-first-name" class="form-input" type="text" placeholder="John" autocomplete="given-name">
         </div>
         <div class="form-group">
           <label class="form-label">Last Name <span class="req">*</span></label>
-          <input class="form-input" type="text" placeholder="Doe">
+          <input id="reg-last-name" class="form-input" type="text" placeholder="Doe" autocomplete="family-name">
         </div>
       </div>
 
@@ -87,7 +89,7 @@
         <label class="form-label">Email Address <span class="req">*</span></label>
         <div class="form-input-icon">
           <span class="input-icon"><svg width="16" height="13" viewBox="0 0 16 13" fill="none"><rect x=".5" y=".5" width="15" height="12" rx="2" stroke="#C4C0B9" stroke-width="1.2"/><path d="M1 2l7 5 7-5" stroke="#C4C0B9" stroke-width="1.2" stroke-linecap="round"/></svg></span>
-          <input class="form-input" type="email" placeholder="john@example.com">
+          <input id="reg-email" class="form-input" type="email" placeholder="john@example.com" autocomplete="email">
         </div>
       </div>
 
@@ -100,7 +102,7 @@
             <span style="font-size:13px;color:var(--dark);">+1</span>
             <svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 2l4 4 4-4" stroke="#94908A" stroke-width="1.3" stroke-linecap="round"/></svg>
           </div>
-          <input class="form-input phone-dial-input" type="tel" placeholder="555 000 0000">
+          <input id="reg-phone" class="form-input phone-dial-input" type="tel" placeholder="555 000 0000" autocomplete="tel">
         </div>
       </div>
 
@@ -109,22 +111,32 @@
         <label class="form-label">Password <span class="req">*</span></label>
         <div class="form-input-icon">
           <span class="input-icon"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="2" y="7" width="12" height="8" rx="2" stroke="#C4C0B9" stroke-width="1.3"/><path d="M5 7V5a3 3 0 0 1 6 0v2" stroke="#C4C0B9" stroke-width="1.3" stroke-linecap="round"/></svg></span>
-          <input class="form-input" type="password" placeholder="Create a strong password">
-          <span class="input-icon-right"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M1 8s3-5 7-5 7 5 7 5-3 5-7 5-7-5-7-5Z" stroke="#C4C0B9" stroke-width="1.3"/><circle cx="8" cy="8" r="2" stroke="#C4C0B9" stroke-width="1.3"/></svg></span>
+          <input id="reg-password" class="form-input" type="password" placeholder="Create a strong password" autocomplete="new-password">
+          <span class="input-icon-right" id="reg-password-toggle" style="cursor:pointer;"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M1 8s3-5 7-5 7 5 7 5-3 5-7 5-7-5-7-5Z" stroke="#C4C0B9" stroke-width="1.3"/><circle cx="8" cy="8" r="2" stroke="#C4C0B9" stroke-width="1.3"/></svg></span>
         </div>
         <div class="pw-strength">
           <div class="pw-bars">
-            <div class="pw-bar filled-mid"></div>
-            <div class="pw-bar filled-mid"></div>
-            <div class="pw-bar"></div>
+            <div class="pw-bar" id="reg-pw-bar-1"></div>
+            <div class="pw-bar" id="reg-pw-bar-2"></div>
+            <div class="pw-bar" id="reg-pw-bar-3"></div>
           </div>
-          <span class="pw-label">Medium — add numbers to strengthen</span>
+          <span class="pw-label" id="reg-pw-label">Use 8+ characters</span>
+        </div>
+      </div>
+
+      <!-- Confirm password: the sign-up endpoint takes `confirm_password` and
+           rejects a mismatch, so the field has to exist to be checked. -->
+      <div class="form-group">
+        <label class="form-label">Confirm Password <span class="req">*</span></label>
+        <div class="form-input-icon">
+          <span class="input-icon"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="2" y="7" width="12" height="8" rx="2" stroke="#C4C0B9" stroke-width="1.3"/><path d="M5 7V5a3 3 0 0 1 6 0v2" stroke="#C4C0B9" stroke-width="1.3" stroke-linecap="round"/></svg></span>
+          <input id="reg-confirm-password" class="form-input" type="password" placeholder="Repeat your password" autocomplete="new-password">
         </div>
       </div>
 
       <!-- Terms -->
       <div style="margin-bottom:20px;">
-        <div class="form-check" style="align-items:flex-start;">
+        <div class="form-check" style="align-items:flex-start;cursor:pointer;" id="reg-terms">
           <div class="form-check-input checked" style="margin-top:2px;">
             <svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4l3 3 5-6" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </div>
@@ -132,26 +144,40 @@
         </div>
       </div>
 
-      <button class="btn btn-primary" style="width:100%;height:48px;font-size:15px;border-radius:var(--radius-md);">
+      <button id="reg-submit" class="btn btn-primary" style="width:100%;height:48px;font-size:15px;border-radius:var(--radius-md);">
         Create Account — Free
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="white" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </button>
+
+      </div><!-- /#reg-form -->
+
+      <!-- Shown once sign-up succeeds: the account exists but is unverified,
+           and only validate-email returns the tokens that sign it in. -->
+      <div id="reg-verify" style="display:none;">
+        <div class="auth-form-header" style="margin-bottom:16px;">
+          <h2 class="auth-form-title" style="font-size:22px;">Check your email</h2>
+          <p class="auth-form-sub">We sent a 6-digit code to <strong style="color:var(--dark);" id="reg-verify-email"></strong></p>
+        </div>
+
+        <div class="otp-row" id="reg-otp">
+          <input class="otp-box" inputmode="numeric" maxlength="1" aria-label="Digit 1">
+          <input class="otp-box" inputmode="numeric" maxlength="1" aria-label="Digit 2">
+          <input class="otp-box" inputmode="numeric" maxlength="1" aria-label="Digit 3">
+          <input class="otp-box" inputmode="numeric" maxlength="1" aria-label="Digit 4">
+          <input class="otp-box" inputmode="numeric" maxlength="1" aria-label="Digit 5">
+          <input class="otp-box" inputmode="numeric" maxlength="1" aria-label="Digit 6">
+        </div>
+
+        <p style="text-align:center;font-size:12.5px;color:var(--subtle);margin:12px 0 20px;">Didn't get it? <span id="reg-resend" style="color:var(--blue);font-weight:600;cursor:pointer;">Resend code</span></p>
+
+        <button id="reg-verify-submit" class="btn btn-primary" style="width:100%;height:48px;font-size:15px;border-radius:var(--radius-md);" disabled>Verify &amp; Continue</button>
+      </div>
 
       <div class="auth-footer-link">Already have an account? <a href="/login">Sign in</a></div>
     </div>
   </div>
 
 </div>
-<script>
-(function() {
-  // Create Account button → home
-  var createBtn = document.querySelector('.btn-primary');
-  if (createBtn) createBtn.onclick = function() { location.href = '/'; };
-  // Social buttons → home
-  document.querySelectorAll('.social-btn').forEach(function(b) {
-    b.onclick = function() { location.href = '/'; };
-  });
-})();
-</script>
+<script type="module" src="/assets/js/auth.js"></script>
 </body>
 </html>

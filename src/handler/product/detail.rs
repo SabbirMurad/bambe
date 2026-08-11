@@ -61,13 +61,27 @@ pub async fn task(path: web::Path<String>) -> Result<HttpResponse, Error> {
     while let Some(Ok(v)) = variant_cursor.next().await {
         variants.push(v);
     }
+    // Oldest first, so the swatch row and the gallery below it stay in the
+    // same order across reloads — the cursor has no order of its own.
+    variants.sort_by(|a, b| a.created_at.cmp(&b.created_at).then_with(|| a.uuid.cmp(&b.uuid)));
 
     let brand = match &product.brand_id {
         Some(id) => db.collection::<Brand>("brand").find_one(doc! { "uuid": id }).await.ok().flatten(),
         None => None,
     };
 
-    let image_ids: Vec<String> = product.images.iter().map(|i| i.image_id.clone()).collect();
+    /*
+      The gallery is the variants' images, in variant order. Two variants of
+      one colourway (a size run, say) share a photo, so the ids are deduped —
+      otherwise a shirt in five sizes shows the same picture five times.
+    */
+    let mut image_ids: Vec<String> = Vec::new();
+    for variant in &variants {
+        if !image_ids.contains(&variant.image_id) {
+            image_ids.push(variant.image_id.clone());
+        }
+    }
+
     let images: HashMap<String, ImageStruct> = if image_ids.is_empty() {
         HashMap::new()
     } else {
@@ -83,18 +97,10 @@ pub async fn task(path: web::Path<String>) -> Result<HttpResponse, Error> {
         map
     };
 
-    let mut gallery: Vec<_> = product
-        .images
+    let gallery: Vec<_> = image_ids
         .iter()
-        .map(|pi| {
-            json!({
-                "image": images.get(&pi.image_id),
-                "alt": pi.alt,
-                "position": pi.position,
-            })
-        })
+        .map(|id| json!({ "image_id": id, "image": images.get(id) }))
         .collect();
-    gallery.sort_by_key(|v| v["position"].as_i64().unwrap_or(0));
 
     let breadcrumb = breadcrumb(&db, &product.category_id).await;
 
@@ -112,12 +118,11 @@ pub async fn task(path: web::Path<String>) -> Result<HttpResponse, Error> {
         .expect("related lookup");
     let mut related = Vec::new();
     while let Some(Ok(p)) = related_cursor.next().await {
-        let cover_id = p.images.iter().min_by_key(|i| i.position).map(|i| i.image_id.clone());
         related.push(json!({
             "uuid": p.uuid,
             "slug": p.slug,
             "title": p.title,
-            "image_id": cover_id,
+            "image_id": p.cover_image_id,
             "price_min": p.price_min,
             "price_max": p.price_max,
             "compare_at_price": p.compare_at_price,

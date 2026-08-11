@@ -28,6 +28,10 @@
 
   var DEFAULT_DELAY = 1400;
 
+  /* Live placeholders, keyed by the element each one stands in for,
+     so a page module can clear its own without touching the others. */
+  var mounted = new Map();
+
   /* Elements with no text to strip — they are replaced outright by a
      box of the same size rather than walked into. */
   var REPLACE = {
@@ -198,23 +202,60 @@
     clone.setAttribute('aria-hidden', 'true');
     strip(clone);
 
-    target.parentNode.insertBefore(clone, target);
+    /*
+      After the target, not before it. The clone is a full copy —
+      same classes, same structure — so while it is mounted every
+      `querySelector` on the page can match it. Placed first, it
+      shadowed the real element, and a page module that filled in
+      the product title wrote into the placeholder instead; the
+      swap back then "restored" the wireframe's dummy text over
+      live data. The target is display:none either way, so the two
+      orderings look identical.
+    */
+    target.parentNode.insertBefore(clone, target.nextSibling);
     // Inline display so the swap back restores whatever the
     // stylesheet had — grid, table-row-group, flex.
     target.style.display = 'none';
     target.setAttribute('aria-busy', 'true');
 
-    setTimeout(function() {
-      clone.parentNode.removeChild(clone);
-      target.style.display = '';
-      target.removeAttribute('aria-busy');
-      target.classList.add('is-loaded');
-    }, parseInt(target.getAttribute('data-skeleton-delay'), 10) || DEFAULT_DELAY);
+    var timer = setTimeout(function() { unmount(target); },
+      parseInt(target.getAttribute('data-skeleton-delay'), 10) || DEFAULT_DELAY);
+
+    mounted.set(target, { clone: clone, timer: timer });
+  }
+
+  /* Idempotent: called by the timer, and again by a page module the
+     moment its data lands. Whichever comes first wins. */
+  function unmount(target) {
+    var entry = mounted.get(target);
+    if (!entry) return;
+
+    mounted.delete(target);
+    clearTimeout(entry.timer);
+    if (entry.clone.parentNode) entry.clone.parentNode.removeChild(entry.clone);
+
+    target.style.display = '';
+    target.removeAttribute('aria-busy');
+    target.classList.add('is-loaded');
   }
 
   function start() {
     document.querySelectorAll('[data-skeleton]').forEach(mount);
   }
+
+  /*
+    The delay is a wireframe device — it was the only thing that ever
+    ended the shimmer, because there was no request to wait for. Now
+    that the pages fetch real data, whoever gets the response calls
+    `clear` and the placeholder goes at once instead of sitting there
+    for the rest of a fixed 1.4s.
+  */
+  window.Skeleton = {
+    clear: function(target) {
+      if (!target) return;
+      unmount(target);
+    },
+  };
 
   /* Measuring needs the real layout, so this waits for the document
      rather than running inline. */

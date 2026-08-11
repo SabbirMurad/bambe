@@ -121,6 +121,32 @@ impl std::fmt::Display for AssetUsedAt {
 }
 
 impl AssetUsedAt {
+    /*
+      The strict form, for the upload endpoint. `from_str` below folds an
+      unrecognised slot into `ProductImage`, which is fine where the value
+      came from our own database but wrong at the edge — a client that
+      misspells `ProfilePic` should be told, not have its avatar filed as a
+      product photo.
+    */
+    pub fn parse(s: &str) -> Option<AssetUsedAt> {
+        match s.trim() {
+            "ProductImage" => Some(AssetUsedAt::ProductImage),
+            "CategoryImage" => Some(AssetUsedAt::CategoryImage),
+            "BrandLogo" => Some(AssetUsedAt::BrandLogo),
+            "ReviewImage" => Some(AssetUsedAt::ReviewImage),
+            "ReturnPhoto" => Some(AssetUsedAt::ReturnPhoto),
+            "TicketAttachment" => Some(AssetUsedAt::TicketAttachment),
+            "ProfilePic" => Some(AssetUsedAt::ProfilePic),
+            "StoreLogo" => Some(AssetUsedAt::StoreLogo),
+            _ => None,
+        }
+    }
+
+    pub fn variants() -> &'static str {
+        "ProductImage, CategoryImage, BrandLogo, ReviewImage, ReturnPhoto, \
+         TicketAttachment, ProfilePic, StoreLogo"
+    }
+
     pub fn from_str(s: &str) -> AssetUsedAt {
         match s {
             "ProductImage" => AssetUsedAt::ProductImage,

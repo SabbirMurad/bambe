@@ -168,25 +168,16 @@
   if (userBtn) userBtn.onclick = function() { location.href = '/account/profile'; };
   var searchBtn = document.querySelector('.nav-search-btn');
   if (searchBtn) searchBtn.onclick = function() { location.href = '/search'; };
-  // Add to Cart buttons on wishlist cards
-  document.querySelectorAll('.btn-primary.btn-sm').forEach(function(b) {
-    b.onclick = function(e) { e.stopPropagation(); location.href = '/cart'; };
-  });
-  // Notify Me button → product
-  document.querySelectorAll('.btn-ghost.btn-sm').forEach(function(b) {
-    if (b.textContent.trim() === 'Notify Me') b.onclick = function(e) { e.stopPropagation(); location.href = '/product'; };
-  });
-  // "Add All to Cart"
-  var addAll = Array.from(document.querySelectorAll('.btn-primary')).find(function(b) { return b.textContent.includes('Add All'); });
-  if (addAll) addAll.onclick = function() { location.href = '/cart'; };
-  // Clicking a product card → product page
-  document.querySelectorAll('.product-card').forEach(function(c) {
-    c.onclick = function(e) {
-      if (!e.target.closest('button')) location.href = '/product';
-    };
-  });
+
+  /*
+    The card buttons, the heart, "Add All to Cart" and the card click
+    were all handled here, each navigating to a fixed URL. wishlist.js
+    rebuilds every card from the API: the buttons call the cart, the
+    heart removes the row, and each card links to its own slug.
+  */
 })();
 </script>
 <script src="/assets/js/skeleton.js"></script>
+<script type="module" src="/assets/js/wishlist.js"></script>
 </body>
 </html>

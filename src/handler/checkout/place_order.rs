@@ -298,7 +298,6 @@ pub async fn task(req: HttpRequest, body: web::Json<ReqBody>) -> Result<HttpResp
                 (None, Some(s)) => Some(s.clone()),
                 (None, None) => None,
             };
-            let cover_image_id = product.images.iter().min_by_key(|i| i.position).map(|i| i.image_id.clone());
             let unit_price = variant.price;
             let line_total = unit_price * item.quantity as i64;
 
@@ -308,7 +307,9 @@ pub async fn task(req: HttpRequest, body: web::Json<ReqBody>) -> Result<HttpResp
                 title: product.title.clone(),
                 variant_label,
                 sku: variant.sku.clone(),
-                image_id: cover_image_id.or_else(|| variant.image_id.clone()),
+                // Snapshotted from the variant bought, so the order still shows
+                // the right colourway after the catalogue moves on.
+                image_id: Some(variant.image_id.clone()),
                 brand_name: product.brand_id.as_ref().and_then(|id| brands.get(id)).map(|b| b.name.clone()),
                 unit_price,
                 quantity: item.quantity,

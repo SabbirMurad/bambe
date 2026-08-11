@@ -13,7 +13,9 @@
       "PowerShell(Remove-Item *)",
       "Bash(xargs sed -i 's/ShopEase/Bambe/g')",
       "Bash(cargo --version)",
-      "Bash('/c/Program Files/Google/Chrome/Application/chrome.exe' --headless=new --disable-gpu --hide-scrollbars --default-background-color=00000000 --force-device-scale-factor=2 --window-size=1280,400 --virtual-time-budget=6000 '--screenshot=C:\\\\Users\\\\Sabbir\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--sabbir-ecomerce-wireframe\\\\db920cb7-ba55-45bb-bd93-12d55ab39089\\\\scratchpad\\\\banner.png' /c/Users/Sabbir/AppData/Local/Temp/claude/C--sabbir-ecomerce-wireframe/db920cb7-ba55-45bb-bd93-12d55ab39089/scratchpad/banner.html)"
+      "Bash('/c/Program Files/Google/Chrome/Application/chrome.exe' --headless=new --disable-gpu --hide-scrollbars --default-background-color=00000000 --force-device-scale-factor=2 --window-size=1280,400 --virtual-time-budget=6000 '--screenshot=C:\\\\Users\\\\Sabbir\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--sabbir-ecomerce-wireframe\\\\db920cb7-ba55-45bb-bd93-12d55ab39089\\\\scratchpad\\\\banner.png' /c/Users/Sabbir/AppData/Local/Temp/claude/C--sabbir-ecomerce-wireframe/db920cb7-ba55-45bb-bd93-12d55ab39089/scratchpad/banner.html)",
+      "Bash(cargo check *)",
+      "Bash(cargo run *)"
     ]
   }
 }

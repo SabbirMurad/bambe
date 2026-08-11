@@ -327,28 +327,17 @@
   if (userBtn) userBtn.onclick = function() { location.href = '/account/profile'; };
   var searchBtn = document.querySelector('.nav-search-btn');
   if (searchBtn) searchBtn.onclick = function() { location.href = '/search'; };
-  // Add to Cart
-  var addCart = document.querySelector('.pd-add-cart');
-  if (addCart) addCart.onclick = function() { location.href = '/cart'; };
-  // Buy Now
-  var buyNow = document.querySelector('.btn-secondary');
-  if (buyNow) buyNow.onclick = function() { location.href = '/cart'; };
-  // Wishlist
-  var wishBtn = document.querySelector('.pd-wish-btn');
-  if (wishBtn) wishBtn.onclick = function() { location.href = '/wishlist'; };
-  // "You may also like" cards
-  document.querySelectorAll('.product-card').forEach(function(c) {
-    c.onclick = function(e) {
-      if (!e.target.closest('button') && !e.target.closest('.product-card-wish')) {
-        location.href = '/product';
-      }
-    };
-  });
-  // Review link
-  var reviewLink = document.querySelector('.pd-review-count');
-  if (reviewLink) { reviewLink.style.cursor = 'pointer'; reviewLink.onclick = function() { document.querySelector('.pd-tab') && document.querySelector('.pd-tab:last-child').click(); }; }
+
+  /*
+    Add to Cart, Buy Now, the wishlist heart, the related cards and the
+    review link all used to be handled here, each one navigating to a
+    fixed URL. product.js owns them now: they call the real endpoints
+    for the selected variant, and the related cards are rebuilt as
+    links to their own slug.
+  */
 })();
 </script>
 <script src="/assets/js/skeleton.js"></script>
+<script type="module" src="/assets/js/product.js"></script>
 </body>
 </html>

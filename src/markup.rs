@@ -91,6 +91,15 @@ pub async fn forgot_password(template: web::Data<Tera>) -> Result<HttpResponse, 
 
 /* ── Admin console ───────────────────────────────────────── */
 
+/*
+  The same login markup, served under /admin so the page knows to post to
+  /auth/admin/sign-in instead — admins live in `admin_account`, a different
+  collection with a different route, and auth.js switches on the path.
+*/
+pub async fn admin_sign_in(template: web::Data<Tera>) -> Result<HttpResponse, Error> {
+  render(&template, "auth/login.html")
+}
+
 pub async fn admin_overview(template: web::Data<Tera>) -> Result<HttpResponse, Error> {
   render(&template, "admin/overview.html")
 }
