@@ -57,7 +57,6 @@ pub struct Order {
     pub number: String,
     pub user_id: String,
 
-    pub items: Vec<OrderItem>,
     pub shipping_address: AddressSnapshot,
     // Usually the same as shipping; kept apart because it isn't always, and
     // the invoice needs the billing one.
@@ -92,7 +91,8 @@ pub struct Order {
 }
 
 /*
-  A purchased line.
+  A purchased line — its own collection, one row per line, joined back to the
+  order by `order_id`.
 
   Every display field is copied, not referenced. The catalogue is not a stable
   record of the past: products get renamed, repriced, rephotographed and
@@ -101,6 +101,8 @@ pub struct Order {
 */
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct OrderItem {
+    pub uuid: String,
+    pub order_id: String,
     pub product_id: String,
     pub variant_id: String,
 
@@ -203,17 +205,21 @@ pub struct Tracking {
     pub carrier: String,
     pub tracking_number: String,
     pub tracking_url: Option<String>,
-    /*
-      The shipment timeline on the tracking page. Append-only, and ordered by
-      `at` rather than by position — carrier webhooks arrive out of order, and
-      sorting by arrival puts "Out for delivery" above "Delivered".
-    */
-    pub events: Vec<ShipmentEvent>,
     pub estimated_delivery: Option<i64>,
 }
 
+/*
+  shipment_event — its own collection, one row per event, joined back to the
+  order by `order_id`.
+
+  Append-only, and ordered by `at` rather than by position — carrier webhooks
+  arrive out of order, and sorting by arrival puts "Out for delivery" above
+  "Delivered".
+*/
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct ShipmentEvent {
+    pub uuid: String,
+    pub order_id: String,
     pub status: String,                  // "Out for delivery"
     pub description: Option<String>,
     pub location: Option<String>,
@@ -249,7 +255,6 @@ pub struct ReturnRequest {
     pub uuid: String,
     pub order_id: String,
     pub user_id: String,
-    pub items: Vec<ReturnItem>,
     pub reason: String,
     pub details: Option<String>,
     // Photos of a damaged item — ImageStruct uuids.
@@ -262,8 +267,12 @@ pub struct ReturnRequest {
     pub resolved_by: Option<String>,
 }
 
+// return_item — its own collection, one row per line, joined back to the
+// return request by `return_request_id`.
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct ReturnItem {
+    pub uuid: String,
+    pub return_request_id: String,
     pub variant_id: String,
     pub quantity: u32,
 }

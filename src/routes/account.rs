@@ -5,6 +5,9 @@ pub fn router(cfg: &mut web::ServiceConfig) {
     cfg.service(
         web::scope("/api/v1/account")
             .route("/fcm-token/add", web::post().to(Handler::Account::AddFcmToken::task))
-            .route("/delete", web::post().to(Handler::Account::RequestDeletion::task)),
+            .route("/delete", web::post().to(Handler::Account::RequestDeletion::task))
+            .route("/profile", web::get().to(Handler::Account::GetProfile::task))
+            .route("/profile", web::patch().to(Handler::Account::UpdateProfile::task))
+            .route("/stats", web::get().to(Handler::Account::Stats::task)),
     );
 }

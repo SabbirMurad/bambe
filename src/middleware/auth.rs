@@ -62,3 +62,24 @@ pub fn require_access(
         role: claims.role,
     })
 }
+
+/*
+  Same as `require_access`, but for endpoints a guest may also call — the
+  cart, mainly. Returns `None` on a missing or invalid token instead of
+  erroring, so the caller can fall back to session-based identity.
+*/
+pub fn optional_access(req: &HttpRequest) -> Option<User> {
+    let token = req
+        .headers()
+        .get("Authorization")
+        .and_then(|h| h.to_str().ok())?
+        .trim_start_matches("Bearer ")
+        .to_string();
+
+    let claims = jwt::access_token::verify(&token, jwt::Key::Local).ok()?;
+
+    Some(User {
+        user_id: claims.sub,
+        role: claims.role,
+    })
+}

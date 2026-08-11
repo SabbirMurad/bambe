@@ -12,6 +12,30 @@ pub use admins as Admins;
 pub mod me;
 pub use me as Me;
 
+pub mod product;
+pub use product as Product;
+
+pub mod category;
+pub use category as Category;
+
+pub mod order;
+pub use order as Order;
+
+pub mod coupon;
+pub use coupon as Coupon;
+
+pub mod customer;
+pub use customer as Customer;
+
+pub mod support_ticket;
+pub use support_ticket as SupportTicket;
+
+pub mod settings;
+pub use settings as Settings;
+
+pub mod dashboard;
+pub use dashboard as Dashboard;
+
 /// Resolve a user id to `{ user_id, name }` for display in the console.
 pub async fn display_name(db: &Database, user_id: &str) -> Value {
     let name = db
