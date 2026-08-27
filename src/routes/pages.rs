@@ -65,6 +65,14 @@ pub fn router(cfg: &mut web::ServiceConfig) {
             "/account/notifications",
             web::get().to(Markup::account_notifications)
         )
+        .route(
+            "/account/returns",
+            web::get().to(Markup::account_returns)
+        )
+        .route(
+            "/account/support",
+            web::get().to(Markup::account_support)
+        )
 
         /* ── Auth ───────────────────────────────────────── */
         .route(

@@ -17,9 +17,225 @@ wired, page by page, and what has to exist before any of it can work.
       cart, wishlist, reviews, related. `assets/js/product.js`.
 - [x] **Wishlist** — rows, price-drop callout, remove, add to cart.
       `assets/js/wishlist.js`.
-- [ ] Cart and checkout
-- [ ] Account
-- [ ] Admin console
+- [x] **Cart** — lines, the three per-line flags, quantity, coupon, totals.
+      `assets/js/cart.js`.
+- [x] **Checkout** — address book, delivery, packaging, payment, review and
+      confirmation. `assets/js/checkout.js` (shared draft + summary) plus
+      `address.js`, `payment.js`, `review.js`, `confirmation.js`.
+- [x] **Account** — profile, orders, tracking, notifications, plus the address
+      and payment books the checkout shares. `assets/js/account.js` (shared
+      sidebar chrome) plus `profile.js`, `orders.js`, `tracking.js`,
+      `notifications.js`.
+- [x] **Returns and support** — the two complete APIs that had no page at
+      all. `assets/js/returns.js`, `assets/js/support.js`, and the two new
+      account pages behind them.
+- [x] **Reviews** — writing one, and voting a review helpful.
+      `assets/js/review-form.js` plus the review list on the product page.
+- [x] **Recently viewed** — the row on the home page that reads back what
+      every product visit has been writing.
+- [x] **Admin console** — all nine pages. `assets/js/admin-core.js` (shared
+      chrome and table vocabulary) plus `admin-overview.js`,
+      `admin-products.js`, `admin-orders.js`, `admin-customers.js`,
+      `admin-support.js`, `admin-settings.js`, and rewrites of
+      `categories.js`, `coupons.js` and `product-form.js`.
+
+### What the last of the storefront needed
+
+- **A customer could not write a review.** `POST /v1/review` had been live
+  the whole time; the product page's button sent people to their orders and
+  the orders page's button was wireframe markup, so the trail dead-ended.
+  Both now open the same composer (`review-form.js`), and the product page
+  looks up a delivered order of its own accord so the review earns its
+  Verified Purchase badge without the customer hunting for the order.
+- **`reviewCard` read `review.author_name`.** The list endpoint calls that
+  field `author`, so every review on every product was signed "Anonymous".
+- **A staff reply on a review was stored and never drawn** — a merchant
+  answering a complaint was answering into the void.
+- **`POST /v1/recently-viewed` was write-only.** The product page had been
+  recording every visit since it was wired and nothing ever read the list
+  back. The home page now has the row, built in JS so a visitor with no
+  history sees no empty heading.
+- **Returns and support both existed end to end with no page.** Two new
+  account pages, two new routes, and Returns/Support added to the account
+  sidebar on all six pages. The footer's Help column — five dead links on
+  every page — now points three of them somewhere real.
+
+### What the admin console needed
+
+Three small backend additions, each because a column or a screen could not
+otherwise be honest:
+
+- **`GET /v1/admin/product/{id}`** (new). The console could list and update
+  products but not read one back with its variants — the public
+  `/v1/product/{slug}` filters on `status: "Active"`, so a Draft, the thing
+  most likely to be edited, came back 404.
+- **`admin/product/list` now carries `stock_total`, `variant_count` and
+  `low_stock`.** `Product` holds only an `in_stock` boolean, and a Stock
+  column that can only say yes or no is not a Stock column. One `$in` over
+  the variants per page.
+- **`admin/order/{id}` now carries `refunded_total` and `refundable`.**
+  `refund.rs` works both out from `payment_transaction` before it will
+  accept anything, and answers 400 when there is nothing left — but the
+  console had no way to know that in advance, so it could only offer a
+  refund box and let the operator find out by clicking.
+
+And one correctness fix, the same one as `order/list`: `admin/product/list`
+was written `while let Some(Ok(p))`, so a single bad document truncated the
+catalogue silently while `count_documents` kept counting it.
+
+Three real defects surfaced only once both ends of a screen existed, and are
+fixed:
+
+8. **A staff internal note leaked into the customer's inbox.**
+   `admin/support_ticket/reply.rs` wrote `last_message_preview` and bumped
+   `message_count` for every reply, internal or not — and the customer-facing
+   `GET /v1/support/ticket/list` returns the whole ticket document. So the
+   first 140 characters of a staff-only note appeared as the preview line in
+   the customer's own ticket list, and their thread claimed more messages
+   than `detail.rs` would show them. An internal note now touches none of the
+   ticket's rollup fields.
+
+9. **The store had two settings documents, and checkout read the other one.**
+   `settings.rs` defines `STORE_SETTINGS_ID` precisely so there is one row —
+   but only the console used it. `checkout/quote.rs`, `checkout/place_order.rs`
+   and `support_ticket/create.rs` all read `find_one({})`, whichever row Mongo
+   handed back. A shop seeded under any other uuid therefore charged 8% tax at
+   checkout while the settings screen showed 0%, and the first visit to that
+   screen *inserted a second document* which every subsequent save wrote to and
+   nothing else ever read. There is now one `Settings::load` helper: it reads
+   the canonical id and adopts a legacy row into it rather than starting a
+   second, and all four call sites use it.
+
+10. **Every `<input type="date">` was filled from `toISOString()`**, which is
+    the UTC day, while every rendered date is local. Where the two disagree the
+    edit dialog showed the day before the table did — and saving a coupon
+    without touching the field moved its start date back by one. `dateValue()`
+    formats the local calendar day.
+
+Decisions worth knowing — every one of these is a control the wireframe drew
+that no endpoint can serve, removed or relabelled rather than left to fail on
+click:
+
+- **Import CSV** (products), **Create order**, **Print labels**, **New
+  ticket** (staff cannot open one as a customer without putting the wrong
+  reply-to on the thread), **Email selected**, **Remove customer**, **canned
+  responses**, and the **bulk category move** are all gone.
+- **Export** buttons everywhere now say *Export CSV* and save what is on
+  screen, built in the browser. There is no export endpoint, and a button
+  labelled "Export report" promising a server-made report would be a lie.
+- **The overview's "↑ 12.4% vs last period" deltas are gone.** Nothing
+  returns a previous period. The tiles say which window they cover instead.
+- **The Payments settings panel has no switches.** Nothing stores which
+  payment methods are enabled, and no processor is connected — the panel now
+  says both, and lists what checkout actually accepts.
+- **The Notifications settings panel is replaced** by two panels that do have
+  endpoints and had no screen: the account-deletion queue and the audit log.
+- **Product form: "Track inventory" and "Continue selling at zero" are
+  gone** (nothing stores either), and **Brand is a picker, not a text box** —
+  `/v1/product/brand/list` is read-only and nothing creates a brand, so a
+  typed name could only ever have been discarded.
+- **The orders page's "Refunded" tab filters on `payment_status`**, because
+  `fulfilment_status` has no Refunded variant — which is what that tab was
+  always describing.
+- **Bulk actions are loops over the single-item endpoints.** There is no bulk
+  endpoint anywhere, so each one confirms with how many requests it is about
+  to make, and only ever acts on the page you can see.
+- **The customer list's search and sort narrow the current page only.**
+  `customer/list` takes `segment`, `location`, `page` and `limit` — no `q`,
+  no sort. The placeholder says so; a real one needs the endpoint to grow.
+- **Every `.toggle` an admin module drives is marked `data-readonly`**, so
+  `toggle.js`'s delegated handler leaves it alone. Two owners flip it twice
+  and leave it where it started.
+
+Still unwired, and why:
+
+- `POST /v1/auth/social-login` — the two buttons on the login page need a
+  Google or Facebook client SDK to mint the token it takes.
+- `GET /v1/auth/user/{email_or_username}` — it answers with a verified
+  account's first and last name to anyone who asks. Wiring it into the
+  register page as an availability check would turn a leak into a feature.
+- `POST /v1/account/fcm-token/add` — mobile push; there is no web client for
+  it.
+- `/v1/metadata/*` — SEO plumbing, not a screen.
+- `POST /v1/payment-method` — needs a processor token. Unchanged.
+
+### What the account pages needed
+
+- **`GET /v1/order/list` now returns each order's items** (title, image,
+  quantity). The cards show thumbnails and a unit count, and the list returned
+  bare order documents — so drawing four cards meant four extra detail calls.
+- **The list silently dropped orders it couldn't deserialise.** `while let
+  Some(Ok(o))` stops at the first bad document without a word, while the tab
+  counts come from `count_documents` — which is how a page ends up reading
+  "All (4)" above one card. It now logs and skips.
+- **`toggle.js` respects `data-readonly`**, for switches that show a state
+  nothing can change (two-factor).
+
+Decisions worth knowing:
+
+- **Date of birth, gender and language are gone from the profile.** Nothing
+  stores them; a Save that accepted and discarded them is worse than not
+  offering them. Marketing consent — which is a real field — took their place.
+- **Email is read-only.** Changing it means re-verifying it, and there is no
+  endpoint for that.
+- **Two-factor shows its state but cannot be switched** — `two_factor_enabled`
+  is on the account record and nothing exposes a way to set it.
+- **The order cards only offer Cancel while the backend will honour it**
+  (Pending or Packing); past that the endpoint refuses, and a button that only
+  ever errors is worse than no button.
+- **Addresses and payment methods got their own sections on the profile**, so
+  the sidebar's two settings links go somewhere and the books can be managed
+  outside a checkout.
+- The three notification switches each own a group of the nine backend flags
+  (order+delivery, promotions+digest, price drops+back in stock).
+
+### What checkout needed on the backend
+
+- **`GET /v1/checkout/quote`** (new). The three checkout pages each show a
+  running total, and nothing could tell them one: `/v1/cart` knows the
+  merchandise and the coupon, but shipping comes from the delivery method and
+  tax from the store's rate. The alternative was reimplementing `place_order`'s
+  arithmetic in JavaScript, which is the bug this avoids.
+- **`utils::pricing::totals`** (new). One pure function for shipping waivers,
+  packaging and tax; `place_order` and the quote both call it, so the number
+  shown is the number charged.
+- **Cart lines now carry `slug`, `brand_name` and `stock`** — the page links
+  each line to its product, names the brand, and caps the stepper at what is
+  actually left.
+- **`coupon::evaluate` printed raw cents** in its minimum-spend message
+  ("a minimum spend of 2000").
+- The reference data these read — store settings, delivery methods, packaging
+  options, coupons — had never been seeded. There is no admin UI for delivery
+  methods or packaging either (see gap 7).
+
+Decisions worth knowing:
+
+- **The cart's per-item tick boxes are gone.** `place-order` takes the cart
+  whole; there is no way to check out three of five lines, so the boxes
+  promised something the backend cannot do.
+- **The card form is gone.** `POST /v1/payment-method` takes a
+  `provider_token` from a processor's client SDK, and no processor is
+  connected — a form posting a PAN to this backend would collect card data the
+  system is built not to hold. The page says so. Saved cards, PayPal, Apple Pay
+  and cash on delivery all work.
+- **The cart shows no shipping or tax**, because neither is decided yet; the
+  last line says "Estimated total" and why.
+- The checkout draft lives in `sessionStorage` (`bambe.checkout`) and holds
+  ids only — every figure is re-fetched from the quote.
+
+Four more pre-existing bugs were fixed on the way through:
+
+6. **An expired access token silently swapped a signed-in cart for an empty
+   one.** `fetcher.js` only refreshed after a 401, but the cart, the quote and
+   the product page read the caller through `optional_access`, which treats an
+   unverifiable token as no token and answers 200 with a guest's empty cart —
+   and the next add-to-cart minted a fresh anonymous cart while the real one
+   sat there. It now refreshes before sending when the token has expired.
+7. **The guest cart was never merged on sign-in.** `completeSignIn` calls
+   `POST /v1/cart/merge` with the guest id in a header and no body — but the
+   handler takes `web::Json<ReqBody>`, which rejects a bodyless request, so
+   every merge 400'd behind `showError: false`. It sends `session_id` in the
+   body now.
 
 Three more pre-existing bugs were fixed on the way through:
 
@@ -375,4 +591,18 @@ deciding before the wiring reaches them.
 5. **Image upload cannot go through `Fetcher`** — different prefix, different
    content type.
 6. **Payment is mocked end to end.** Everything except cash on delivery is
-   recorded as an immediate success with provider `"mock"`.
+   recorded as an immediate success with provider `"mock"`. Nothing can create
+   a saved card either, because that needs a processor's tokeniser — so the
+   payment step offers saved cards, PayPal, Apple Pay and cash on delivery, and
+   says plainly why a new card can't be added.
+7. **Nothing ever writes a notification.** The list, read, read-all and
+   preference endpoints are all complete, and no handler inserts a row — so
+   placing an order, shipping it or dropping a wishlisted item's price produces
+   nothing. The page was verified against seeded rows. `place_order`,
+   `admin/order/status` and the price-drop path are where they belong.
+8. **No endpoint to change an email, toggle two-factor, or upload an avatar.**
+   All three are fields on the account; none has a route.
+9. **No admin screen for delivery methods or packaging options.** Both are
+   required to check out and both can only be inserted straight into Mongo.
+   `settings.html` covers shipping *zones*, which is a different collection
+   that nothing reads at checkout.

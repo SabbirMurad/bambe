@@ -57,6 +57,11 @@ async function completeSignIn(payload, destination) {
     // still there next time, which is better than refusing to let them in.
     await Fetcher.post({
       endpoint: '/v1/cart/merge',
+      // The id goes in the body, not only the header: the handler takes
+      // `web::Json<ReqBody>`, which rejects a request with no body at all
+      // — so the header-only version 400'd every time, silently, and the
+      // guest cart was never folded in.
+      body: { session_id: session.peekGuestId() },
       headers: { 'X-Guest-Session': session.peekGuestId() },
       showError: false,
     });

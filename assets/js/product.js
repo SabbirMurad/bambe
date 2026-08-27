@@ -19,6 +19,7 @@ import {
   money, paintImage, stars, renderGrid, toggleWishlist, loadWishlist, isWished,
   showSkeleton, hideSkeleton, emptyState,
 } from './catalog.js';
+import { openReviewComposer } from './review-form.js';
 
 /* ── State ────────────────────────────────────────────────────  */
 let product = null;
@@ -452,10 +453,17 @@ function reviewCard(review) {
       + '</div>'
       + '<div class="stars">' + stars(review.rating) + '</div>'
     + '</div>'
+    + '<p class="review-title" style="font-size:13.5px;font-weight:700;color:var(--dark);margin:0 0 6px;"></p>'
     + '<p class="review-text"></p>';
 
-  card.querySelector('.reviewer-name').textContent = review.author_name || 'Anonymous';
-  card.querySelector('.review-text').textContent = review.body || review.comment || '';
+  // The list endpoint calls this field `author` (review/list.rs), not
+  // `author_name` — reading the wrong one signed every review "Anonymous".
+  card.querySelector('.reviewer-name').textContent = review.author || 'Anonymous';
+  card.querySelector('.review-text').textContent = review.body || '';
+
+  const headline = card.querySelector('.review-title');
+  if (review.title) headline.textContent = review.title;
+  else headline.remove();
 
   const bought = [];
   if (review.size) bought.push('Size ' + review.size);
@@ -473,7 +481,77 @@ function reviewCard(review) {
     card.appendChild(badge);
   }
 
+  /* A staff reply is stored on the review itself and was never drawn —
+     so a merchant who answered a complaint answered into the void. */
+  if (review.reply && review.reply.body) {
+    const reply = document.createElement('div');
+    reply.style.cssText = 'margin-top:12px;padding:12px 14px;background:var(--input-bg);'
+      + 'border-radius:var(--radius-sm);border-left:2px solid var(--blue);';
+    reply.innerHTML = '<div style="font-size:12px;font-weight:700;color:var(--blue);margin-bottom:4px;">'
+      + 'Response from Bambe</div>'
+      + '<div class="review-reply-body" style="font-size:13px;color:var(--subtle);line-height:1.6;"></div>';
+    reply.querySelector('.review-reply-body').textContent = review.reply.body;
+    card.appendChild(reply);
+  }
+
+  card.appendChild(helpfulButton(review));
   return card;
+}
+
+/* ── Helpful votes ────────────────────────────
+   `POST /v1/review/{id}/vote` toggles the caller's vote and answers
+   with `{ helpful }` — the state *after* the click — so the count moves
+   by what the server says happened rather than by what was assumed.
+
+   The list endpoint returns `helpful_count` but not whether this
+   caller has already voted, so a freshly loaded card always starts
+   unpressed. Clicking it twice still withdraws the vote correctly;
+   it just cannot be drawn as pressed on load.                       */
+function helpfulButton(review) {
+  const row = document.createElement('div');
+  row.style.cssText = 'display:flex;align-items:center;gap:8px;margin-top:12px;';
+
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = 'btn btn-ghost btn-sm';
+  button.setAttribute('aria-pressed', 'false');
+  button.style.cssText = 'display:inline-flex;align-items:center;gap:6px;';
+  button.innerHTML = '<svg width="13" height="13" viewBox="0 0 14 14" fill="none">'
+    + '<path d="M4 6.5v6H2v-6h2Zm0 0L7 1a1.6 1.6 0 0 1 1.6 1.6V5h3a1.2 1.2 0 0 1 1.2 1.4l-.8 4.4A1.6 1.6 0 0 1 10.4 12H4"'
+    + ' stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg>'
+    + '<span class="helpful-label"></span>';
+
+  let count = review.helpful_count || 0;
+  let voted = false;
+
+  const paint = () => {
+    button.querySelector('.helpful-label').textContent =
+      'Helpful' + (count > 0 ? ' (' + count + ')' : '');
+    button.setAttribute('aria-pressed', String(voted));
+    button.style.color = voted ? 'var(--blue)' : '';
+  };
+  paint();
+
+  button.addEventListener('click', async () => {
+    if (!session.isSignedIn()) {
+      toast.info('Sign in to vote on reviews');
+      setTimeout(() => session.requireSignedIn(), 700);
+      return;
+    }
+
+    button.disabled = true;
+    const response = await Fetcher.post({ endpoint: '/v1/review/' + review.uuid + '/vote', body: {} });
+    button.disabled = false;
+    if (!response.ok) return;
+
+    const nowVoted = !!response.data.helpful;
+    if (nowVoted !== voted) count += nowVoted ? 1 : -1;
+    voted = nowVoted;
+    paint();
+  });
+
+  row.appendChild(button);
+  return row;
 }
 
 function renderRatingSummary(total, breakdown) {
@@ -549,21 +627,54 @@ async function loadReviews(append = false) {
   if (tab) tab.textContent = 'Reviews (' + data.total + ')';
 }
 
-/* Writing a review needs an account and, server-side, a delivered
-   order for the product — so the button explains rather than opening
-   a form that would be refused on submit. */
+/*
+  Writing a review.
+
+  `POST /v1/review` accepts one from any signed-in customer; naming an
+  order is what earns the Verified Purchase badge, and the backend
+  re-checks that the order is the caller's own and contains this
+  product. So the page goes looking for a delivered order itself
+  rather than sending the customer off to find one — and when there
+  isn't one, the review is still accepted, just unbadged.
+*/
+async function findPurchase() {
+  if (!session.isSignedIn()) return null;
+
+  const response = await Fetcher.get({
+    endpoint: '/v1/order/list',
+    query: { status: 'delivered', limit: 50 },
+    showError: false,
+  });
+  if (!response.ok) return null;
+
+  const order = (response.data.items || [])
+    .find((o) => (o.items || []).some((i) => i.product_id === product.uuid));
+  return order ? order.uuid : null;
+}
+
 function wireWriteReview() {
   const button = $('.section-head .btn-outline');
   if (!button) return;
 
-  button.onclick = () => {
+  button.onclick = async () => {
     if (!session.isSignedIn()) {
       toast.info('Sign in to write a review');
       setTimeout(() => session.requireSignedIn(), 700);
       return;
     }
-    toast.info('You can review this from the order it arrived in');
-    setTimeout(() => { location.href = '/account/orders'; }, 900);
+
+    button.disabled = true;
+    const orderId = await findPurchase();
+    button.disabled = false;
+
+    openReviewComposer({
+      productId: product.uuid,
+      productTitle: product.title,
+      orderId,
+      variantId: selected ? selected.uuid : null,
+      image: (product.gallery || [])[0] || product.cover_image_id,
+      onDone: () => { reviewPage = 1; loadReviews(); },
+    });
   };
 }
 

@@ -16,6 +16,7 @@ pub fn router(cfg: &mut web::ServiceConfig) {
             .route("/deletion-requests/{id}/dismiss", web::post().to(Handler::Admin::DeletionRequests::dismiss))
             .route("/product/list", web::get().to(Handler::Admin::Product::List::task))
             .route("/product", web::post().to(Handler::Admin::Product::Create::task))
+            .route("/product/{id}", web::get().to(Handler::Admin::Product::Detail::task))
             .route("/product/{id}", web::patch().to(Handler::Admin::Product::Update::task))
             .route("/product/{id}", web::delete().to(Handler::Admin::Product::Remove::task))
             .route("/product/{id}/variant", web::post().to(Handler::Admin::Product::AddVariant::task))

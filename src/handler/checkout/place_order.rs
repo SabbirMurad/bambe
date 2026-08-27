@@ -175,17 +175,27 @@ pub async fn task(req: HttpRequest, body: web::Json<ReqBody>) -> Result<HttpResp
     let discount = applied_discount.as_ref().map(|a| a.discount).unwrap_or(0);
     let free_shipping = applied_discount.as_ref().map(|a| a.free_shipping).unwrap_or(false);
 
-    let store_settings = db.collection::<StoreSettings>("store_settings").find_one(doc! {}).await.ok().flatten();
+    let store_settings = crate::Handler::Admin::Settings::load(&db).await;
     let currency = store_settings.as_ref().map(|s| s.default_currency.clone()).unwrap_or_else(|| "USD".to_string());
     let order_number_prefix = store_settings.as_ref().map(|s| s.order_number_prefix.clone()).unwrap_or_else(|| "OR".to_string());
     let tax_rate_bps = store_settings.as_ref().map(|s| s.tax_rate_bps as i64).unwrap_or(0);
     let prices_include_tax = store_settings.as_ref().map(|s| s.prices_include_tax).unwrap_or(false);
 
-    let shipping_waived = free_shipping || delivery_method.free_above.map(|t| subtotal >= t).unwrap_or(false);
-    let shipping_price = if shipping_waived { 0 } else { delivery_method.price };
-    let packaging_price = packaging_option.as_ref().map(|p| p.price).unwrap_or(0);
-    let tax = if prices_include_tax { 0 } else { (subtotal - discount) * tax_rate_bps / 10_000 };
-    let grand_total = subtotal - discount + shipping_price + packaging_price + tax;
+    // Shared with GET /v1/checkout/quote, which is what the review page
+    // showed the shopper a moment ago. One function, one answer.
+    let quote = crate::utils::pricing::totals(
+        subtotal,
+        discount,
+        free_shipping,
+        Some(&delivery_method),
+        packaging_option.as_ref(),
+        tax_rate_bps,
+        prices_include_tax,
+    );
+    let shipping_price = quote.shipping;
+    let packaging_price = quote.packaging;
+    let tax = quote.tax;
+    let grand_total = quote.grand_total;
 
     let totals = OrderTotals {
         subtotal,

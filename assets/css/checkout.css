@@ -132,7 +132,8 @@
   border-top: 1px solid var(--border);
 }
 /* The last cart item already draws a bottom border — don't double it up */
-.cart-item + .coupon-row {
+.cart-item + .coupon-row,
+.cart-items + .coupon-row {
   border-top: none;
   margin-top: 0;
 }

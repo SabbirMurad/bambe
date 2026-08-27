@@ -8,6 +8,7 @@ use crate::utils::response::Response;
 use crate::Middleware::Auth::{require_access, AccessRequirement};
 use crate::model::Account::{AccountRole, AccountCore};
 use crate::model::Order::{Order, OrderItem, ShipmentEvent};
+use crate::model::Payment::{PaymentTransaction, TransactionKind, TransactionStatus};
 use crate::model::ImageStruct;
 
 pub async fn task(req: HttpRequest, path: web::Path<String>) -> Result<HttpResponse, Error> {
@@ -20,6 +21,8 @@ pub async fn task(req: HttpRequest, path: web::Path<String>) -> Result<HttpRespo
         Some(o) => o,
         None => return Ok(Response::not_found("Order not found")),
     };
+
+    let order_total = order.totals.grand_total;
 
     let customer = db.collection::<AccountCore>("account_core").find_one(doc! { "uuid": &order.user_id }).await.ok().flatten();
 
@@ -67,10 +70,32 @@ pub async fn task(req: HttpRequest, path: web::Path<String>) -> Result<HttpRespo
         events.push(e);
     }
 
+    /*
+      How much of this order has already gone back.
+
+      `refund.rs` works this out from payment_transaction before it will
+      accept anything, and answers 400 when there is nothing left — but
+      the console had no way to know that in advance, so it could only
+      offer a refund box and let the operator find out by clicking.
+    */
+    let mut tx_cursor = db
+        .collection::<PaymentTransaction>("payment_transaction")
+        .find(doc! { "order_id": &order_id })
+        .await
+        .expect("payment transaction lookup");
+    let mut refunded_total: i64 = 0;
+    while let Some(Ok(t)) = tx_cursor.next().await {
+        if t.kind == TransactionKind::Refund && t.status == TransactionStatus::Succeeded {
+            refunded_total += t.amount;
+        }
+    }
+
     Ok(HttpResponse::Ok().content_type("application/json").json(json!({
         "order": order,
         "customer": customer.map(|c| json!({ "user_id": c.uuid, "email": c.email_address, "username": c.username })),
         "items": item_views,
         "shipment_events": events,
+        "refunded_total": refunded_total,
+        "refundable": (order_total - refunded_total).max(0),
     })))
 }

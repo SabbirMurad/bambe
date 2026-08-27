@@ -24,3 +24,4 @@ status.log
 .DS_Store
 Thumbs.db
 *.swp
+/target

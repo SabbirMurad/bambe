@@ -1,7 +1,7 @@
 use chrono::Utc;
 use uuid::Uuid;
 use serde::Deserialize;
-use mongodb::bson::doc;
+use mongodb::bson::{doc, Document};
 use actix_web::{web, Error, HttpResponse, HttpRequest};
 use crate::BuiltIns::mongo::MongoDB;
 use crate::utils::response::Response;
@@ -65,19 +65,44 @@ pub async fn task(req: HttpRequest, path: web::Path<String>, body: web::Json<Req
         return Ok(Response::internal_server_error(&error.to_string()));
     }
 
-    let mut set_doc = doc! {
-        "last_message_preview": preview(&body.body),
-        "last_message_at": now,
-    };
-    // A customer-facing reply is what "Pending — waiting on the customer"
-    // means; an internal note doesn't move the conversation forward.
-    if !body.is_internal && !matches!(ticket.status, TicketStatus::Closed) {
-        set_doc.insert("status", "Pending");
+    /*
+      An internal note touches none of the ticket's rollup fields.
+
+      `detail.rs` filters `is_internal` out of the thread it hands the
+      customer, but `list.rs` returns the whole SupportTicket document —
+      preview included — so writing the note into `last_message_preview`
+      put the first 140 characters of a staff-only note straight into the
+      customer's own ticket list. `message_count` is the same story: it is
+      what the customer's thread claims to hold, and counting messages they
+      cannot see makes it wrong.
+    */
+    let mut set_doc = Document::new();
+    let mut inc_doc = Document::new();
+
+    if !body.is_internal {
+        set_doc.insert("last_message_preview", preview(&body.body));
+        set_doc.insert("last_message_at", now);
+        inc_doc.insert("message_count", 1);
+
+        // A customer-facing reply is what "Pending — waiting on the
+        // customer" means; an internal note doesn't move the conversation
+        // forward.
+        if !matches!(ticket.status, TicketStatus::Closed) {
+            set_doc.insert("status", "Pending");
+        }
     }
+
+    if set_doc.is_empty() && inc_doc.is_empty() {
+        return Ok(HttpResponse::Ok().content_type("application/json").json(message));
+    }
+
+    let mut update = Document::new();
+    if !set_doc.is_empty() { update.insert("$set", set_doc); }
+    if !inc_doc.is_empty() { update.insert("$inc", inc_doc); }
 
     let result = db
         .collection::<SupportTicket>("support_ticket")
-        .update_one(doc! { "uuid": &ticket_id }, doc! { "$set": set_doc, "$inc": { "message_count": 1 } })
+        .update_one(doc! { "uuid": &ticket_id }, update)
         .await;
     if let Err(error) = result {
         log::error!("{:?}", error);

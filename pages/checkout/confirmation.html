@@ -19,12 +19,12 @@
       </div>
 
       <div class="confirm-title">Order Placed Successfully!</div>
-      <p style="font-size:15px;color:var(--mid);text-align:center;max-width:420px;line-height:1.7;margin:0 auto 8px;">
+      <p id="confirm-greeting" style="font-size:15px;color:var(--mid);text-align:center;max-width:420px;line-height:1.7;margin:0 auto 8px;">
         Thank you, <strong style="color:var(--dark);">John</strong>! Your order has been confirmed and will be packed shortly.
       </p>
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:32px;">
         <span style="font-size:13px;color:var(--mid);">Confirmation sent to</span>
-        <span style="font-size:13px;font-weight:700;color:var(--blue);">john.doe@email.com</span>
+        <span id="confirm-email" style="font-size:13px;font-weight:700;color:var(--blue);"></span>
       </div>
 
       <!-- Order box -->
@@ -85,8 +85,9 @@
         </div>
       </div>
 
-      <!-- Status tracker preview -->
-      <div style="width:100%;max-width:560px;margin:0 auto 32px;">
+      <!-- Status tracker. confirmation.js lights the nodes from the order's
+           real fulfilment status; the markup below is the Pending state. -->
+      <div id="order-tracker" style="width:100%;max-width:560px;margin:0 auto 32px;">
         <div style="font-size:13px;font-weight:700;color:var(--dark);margin-bottom:16px;text-align:center;">Track Your Order</div>
         <div style="display:flex;align-items:center;justify-content:space-between;gap:0;position:relative;">
           <!-- Step 1: Confirmed -->
@@ -176,11 +177,11 @@
     </div>
     <div>
       <div class="footer-col-title">Help</div>
-      <a class="footer-link">Help Center</a>
-      <a class="footer-link">Track Order</a>
-      <a class="footer-link">Returns</a>
+      <a class="footer-link" href="/account/support">Help Center</a>
+      <a class="footer-link" href="/account/orders">Track Order</a>
+      <a class="footer-link" href="/account/returns">Returns</a>
       <a class="footer-link">Shipping Info</a>
-      <a class="footer-link">Contact Us</a>
+      <a class="footer-link" href="/account/support">Contact Us</a>
     </div>
     <div>
       <div class="footer-col-title">Company</div>
@@ -218,5 +219,6 @@
   });
 })();
 </script>
+<script type="module" src="/assets/js/confirmation.js"></script>
 </body>
 </html>

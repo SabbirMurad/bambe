@@ -175,6 +175,21 @@ class Fetcher {
             ...headers,
         };
 
+        /*
+          Refresh before sending, not only after a 401.
+
+          The cart, the quote and the product page read the caller through
+          `optional_access`, which treats a token it cannot verify as no
+          token at all — so an expired one comes back 200 with somebody
+          else's answer: an empty guest cart. Nothing 401s, nothing
+          retries, and the next add-to-cart mints a fresh anonymous cart
+          while the real one sits there. Waiting for a 401 only works on
+          the endpoints that insist on a token; this covers the rest.
+        */
+        if (session.token() && session.isExpired() && !isRetry) {
+            await session.refresh();
+        }
+
         // Every protected handler reads `Authorization: Bearer <token>`
         // (Middleware::Auth::require_access). Stamped here so no caller has
         // to remember it. An explicit header in `headers` still wins.

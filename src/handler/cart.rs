@@ -187,6 +187,26 @@ pub async fn build_response(db: &Database, cart: &Cart) -> Value {
         map
     };
 
+    /* The cart page links each line back to its product and names the
+       brand, and a line only carries ids — so the slug and the brand name
+       are resolved here rather than leaving the page to fetch a product
+       detail per line just to build an href. */
+    let brand_ids: Vec<String> = products.values().filter_map(|p| p.brand_id.clone()).collect();
+    let brands: HashMap<String, crate::model::Product::Brand> = if brand_ids.is_empty() {
+        HashMap::new()
+    } else {
+        let mut cursor = db
+            .collection::<crate::model::Product::Brand>("brand")
+            .find(doc! { "uuid": { "$in": &brand_ids } })
+            .await
+            .expect("brand lookup");
+        let mut map = HashMap::new();
+        while let Some(Ok(b)) = cursor.next().await {
+            map.insert(b.uuid.clone(), b);
+        }
+        map
+    };
+
     let mut subtotal: i64 = 0;
     let mut cart_product_ids: Vec<String> = Vec::new();
 
@@ -211,6 +231,11 @@ pub async fn build_response(db: &Database, cart: &Cart) -> Value {
                 "product_id": item.product_id,
                 "variant_id": item.variant_id,
                 "title": product.map(|p| p.title.clone()),
+                "slug": product.map(|p| p.slug.clone()),
+                "brand_name": product
+                    .and_then(|p| p.brand_id.as_ref())
+                    .and_then(|id| brands.get(id))
+                    .map(|b| b.name.clone()),
                 "size": variant.and_then(|v| v.size.clone()),
                 "color": variant.and_then(|v| v.color.clone()),
                 "image_id": line_image_id,
@@ -220,6 +245,9 @@ pub async fn build_response(db: &Database, cart: &Cart) -> Value {
                 "price_changed": variant.map(|v| v.price != item.price_when_added).unwrap_or(false),
                 "line_total": variant.map(|v| v.price * item.quantity as i64),
                 "in_stock": variant.map(|v| v.stock >= item.quantity as i32).unwrap_or(false),
+                // The ceiling the quantity stepper has to respect. `in_stock`
+                // only answers whether the line as it stands is fillable.
+                "stock": variant.map(|v| v.stock),
                 "available": available,
                 "added_at": item.added_at,
             })

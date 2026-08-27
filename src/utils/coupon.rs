@@ -50,7 +50,13 @@ pub async fn evaluate(
     }
     if let Some(min_spend) = coupon.min_spend {
         if subtotal < min_spend {
-            return Err(format!("This coupon needs a minimum spend of {}", min_spend));
+            // Cents are the wire format, not something to show a shopper —
+            // this read "a minimum spend of 2000".
+            return Err(format!(
+                "This coupon needs a minimum spend of ${}.{:02}",
+                min_spend / 100,
+                min_spend % 100,
+            ));
         }
     }
 

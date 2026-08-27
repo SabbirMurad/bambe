@@ -56,6 +56,8 @@
             </div>
           </a>
 
+          <a href="/account/returns" style="text-decoration:none;"><div class="account-nav-item"><div class="account-nav-icon"><svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M6 2.5 2.5 6 6 9.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.5 6h8.5a4.5 4.5 0 0 1 0 9H6.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg></div>Returns</div></a>
+          <a href="/account/support" style="text-decoration:none;"><div class="account-nav-item"><div class="account-nav-icon"><svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M2.5 4.5a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2H7l-3.5 3v-3a1 1 0 0 1-1-1v-7Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg></div>Support</div></a>
           <div class="account-nav-group-label">Settings</div>
           <div class="account-nav-item">
             <div class="account-nav-icon"><svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M9 1l1.5 3h3l-2.5 2 1 3L9 7.5 6 9l1-3L4.5 4h3L9 1Z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/><circle cx="9" cy="12" r="4" stroke="currentColor" stroke-width="1.3"/><path d="M9 10v4M7 12h4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg></div>
@@ -130,44 +132,35 @@
             <div class="form-grid-2" style="margin-bottom:18px;">
               <div class="form-group">
                 <label class="form-label">First Name</label>
-                <input class="form-input" value="John">
+                <input class="form-input" id="p-first">
               </div>
               <div class="form-group">
                 <label class="form-label">Last Name</label>
-                <input class="form-input" value="Doe">
+                <input class="form-input" id="p-last">
               </div>
             </div>
             <div class="form-grid-2" style="margin-bottom:18px;">
               <div class="form-group">
                 <label class="form-label">Email Address</label>
-                <input class="form-input" value="john.doe@email.com" type="email">
+                <!-- Read-only: changing it means re-verifying it, and there is
+                     no endpoint for that yet. -->
+                <input class="form-input" id="p-email" type="email" readonly style="background:var(--input-bg);color:var(--mid);">
               </div>
               <div class="form-group">
                 <label class="form-label">Phone Number</label>
-                <input class="form-input" value="+1 (917) 555-0142" type="tel">
+                <input class="form-input" id="p-phone" type="tel" placeholder="+1 (917) 555-0142">
               </div>
             </div>
-            <div class="form-grid-3">
-              <div class="form-group">
-                <label class="form-label">Date of Birth</label>
-                <input class="form-input" value="1990-05-14" type="date">
+            <!-- Date of birth, gender and language were here. The account
+                 model stores none of them, so a Save would have accepted the
+                 input and dropped it. Marketing consent is a real field, and
+                 takes their place. -->
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <div>
+                <div style="font-size:14px;font-weight:600;color:var(--dark);">Marketing emails</div>
+                <div style="font-size:12px;color:var(--subtle);">Offers and new arrivals, at most once a week</div>
               </div>
-              <div class="form-group">
-                <label class="form-label">Gender</label>
-                <select class="form-select">
-                  <option>Male</option>
-                  <option>Female</option>
-                  <option>Prefer not to say</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label class="form-label">Language</label>
-                <select class="form-select">
-                  <option>English (US)</option>
-                  <option>Spanish</option>
-                  <option>French</option>
-                </select>
-              </div>
+              <div class="toggle" id="p-marketing"></div>
             </div>
           </div>
         </div>
@@ -182,11 +175,17 @@
             <div class="form-grid-2" style="margin-bottom:18px;">
               <div class="form-group">
                 <label class="form-label">Current Password</label>
-                <input class="form-input" type="password" value="••••••••••">
+                <input class="form-input" id="p-current-password" type="password" placeholder="Your current password">
               </div>
               <div class="form-group">
                 <label class="form-label">New Password</label>
-                <input class="form-input" type="password" placeholder="Enter new password">
+                <input class="form-input" id="p-new-password" type="password" placeholder="Enter new password">
+              </div>
+              <div class="form-group">
+                <!-- change-password takes all three; the wireframe asked for two
+                     and the third would have failed the request. -->
+                <label class="form-label">Confirm New Password</label>
+                <input class="form-input" id="p-confirm-password" type="password" placeholder="Repeat new password">
               </div>
             </div>
             <div style="display:flex;justify-content:space-between;align-items:center;">
@@ -203,7 +202,7 @@
         </div>
 
         <!-- Notifications preferences -->
-        <div class="profile-form-card">
+        <div class="profile-form-card" id="notifications">
           <div class="profile-form-head">
             <div class="profile-form-title">Notification Preferences</div>
           </div>
@@ -230,6 +229,92 @@
                 <div style="font-size:12px;color:var(--subtle);">Price drops, back in stock</div>
               </div>
               <div class="toggle"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Saved addresses. Same book the checkout picks from, so an
+             address added here shows up there and vice versa. -->
+        <div class="profile-form-card" id="addresses">
+          <div class="profile-form-head">
+            <div class="profile-form-title">Saved Addresses</div>
+            <button class="btn btn-outline btn-sm" id="addr-add-btn" type="button">Add address</button>
+          </div>
+          <div class="profile-form-body">
+            <div id="address-list"></div>
+
+            <div id="addr-editor" hidden style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border);">
+              <div class="addr-editor-title" style="font-size:14px;font-weight:700;color:var(--dark);margin-bottom:14px;">Add a new address</div>
+              <div class="form-grid-2" style="margin-bottom:14px;">
+                <div class="form-group">
+                  <label class="form-label" for="pa-label">Label</label>
+                  <input class="form-input" id="pa-label" placeholder="Home, Office…">
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="pa-recipient_name">Full name</label>
+                  <input class="form-input" id="pa-recipient_name" placeholder="Jane Doe">
+                </div>
+              </div>
+              <div class="form-group" style="margin-bottom:14px;">
+                <label class="form-label" for="pa-street">Street address</label>
+                <input class="form-input" id="pa-street" placeholder="42 Maple Street, Apt 3B">
+              </div>
+              <div class="form-grid-3" style="margin-bottom:14px;">
+                <div class="form-group">
+                  <label class="form-label" for="pa-city">City</label>
+                  <input class="form-input" id="pa-city" placeholder="Brooklyn">
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="pa-state">State / Region</label>
+                  <input class="form-input" id="pa-state" placeholder="New York">
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="pa-zip">ZIP / Postcode</label>
+                  <input class="form-input" id="pa-zip" placeholder="11201">
+                </div>
+              </div>
+              <div class="form-grid-2" style="margin-bottom:14px;">
+                <div class="form-group">
+                  <label class="form-label" for="pa-country">Country</label>
+                  <input class="form-input" id="pa-country" placeholder="United States">
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="pa-phone">Phone</label>
+                  <input class="form-input" id="pa-phone" placeholder="+1 (917) 555-0142">
+                </div>
+              </div>
+              <div style="display:flex;gap:8px;justify-content:flex-end;">
+                <button class="btn btn-ghost btn-sm" id="addr-editor-cancel" type="button">Cancel</button>
+                <button class="btn btn-primary btn-sm" id="addr-editor-save" type="button">Save address</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Payment methods. Read and remove only — see payment.js for why
+             nothing here can add one. -->
+        <div class="profile-form-card" id="payment">
+          <div class="profile-form-head">
+            <div class="profile-form-title">Payment Methods</div>
+          </div>
+          <div class="profile-form-body">
+            <div id="payment-list"></div>
+          </div>
+        </div>
+
+        <!-- Account deletion. POST /v1/account/delete raises a request an
+             administrator actions; it is not an immediate delete, and the
+             wording says so. -->
+        <div class="profile-form-card" style="border-color:rgba(211,47,47,0.25);">
+          <div class="profile-form-head">
+            <div class="profile-form-title" style="color:var(--error);">Close Account</div>
+            <button class="btn btn-ghost btn-sm" id="delete-account" type="button" style="color:var(--error);">Request deletion</button>
+          </div>
+          <div class="profile-form-body">
+            <div style="font-size:13px;color:var(--mid);line-height:1.7;">
+              Requesting deletion sends your account to an administrator for review. Your orders and
+              their invoices are kept for as long as the law requires, and your account stays active
+              until the request is actioned.
             </div>
           </div>
         </div>
@@ -272,11 +357,11 @@
     </div>
     <div>
       <div class="footer-col-title">Help</div>
-      <a class="footer-link">Help Center</a>
-      <a class="footer-link">Track Order</a>
-      <a class="footer-link">Returns</a>
+      <a class="footer-link" href="/account/support">Help Center</a>
+      <a class="footer-link" href="/account/orders">Track Order</a>
+      <a class="footer-link" href="/account/returns">Returns</a>
       <a class="footer-link">Shipping Info</a>
-      <a class="footer-link">Contact Us</a>
+      <a class="footer-link" href="/account/support">Contact Us</a>
     </div>
     <div>
       <div class="footer-col-title">Company</div>
@@ -305,8 +390,8 @@
   if (icons[1]) icons[1].onclick = function() { location.href = '/cart'; };
   var searchBtn = document.querySelector('.nav-search-btn');
   if (searchBtn) searchBtn.onclick = function() { location.href = '/search'; };
-  var logout = document.querySelector('.account-nav-logout');
-  if (logout) logout.onclick = function() { location.href = '/login'; };
+  // Log out is account.js — it clears the tokens rather than just
+  // navigating away from them.
   // Stat cards → orders/wishlist/etc
   var stats = document.querySelectorAll('.stat-card');
   if (stats[0]) stats[0].onclick = function() { location.href = '/account/orders'; };
@@ -314,22 +399,13 @@
   if (stats[2]) stats[2].onclick = function() { location.href = '/account/orders'; };
   if (stats[3]) stats[3].onclick = function() { location.href = '/account/orders'; };
 
-  /* The word beside the two-factor switch is the thing that actually
-     says what the state is, so it has to follow the switch. This
-     listener is registered before toggle.js's, so the class hasn't
-     flipped yet when it runs — read the state it is moving to. */
-  var twofa = document.getElementById('twofa');
-  var state = document.getElementById('twofa-state');
-  if (twofa && state) {
-    twofa.addEventListener('click', function() {
-      var on = !twofa.classList.contains('on');
-      state.textContent = on ? 'Enabled' : 'Disabled';
-      state.style.color = on ? 'var(--success)' : 'var(--subtle)';
-    });
-  }
+  /* The two-factor row used to flip its own label on click. It is a
+     read-only state now — profile.js paints it from the account and
+     toggle.js leaves it alone — because nothing can change it. */
 })();
 </script>
 <script src="/assets/js/select.js"></script>
 <script src="/assets/js/toggle.js"></script>
+<script type="module" src="/assets/js/profile.js"></script>
 </body>
 </html>

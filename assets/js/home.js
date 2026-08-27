@@ -12,7 +12,8 @@
    console has no way to fill.
 ═══════════════════════════════════════════════════════════════ */
 import { Fetcher } from './fetcher.js';
-import { renderGrid, showSkeleton, hideSkeleton, emptyState } from './catalog.js';
+import { renderGrid, showSkeleton, hideSkeleton, emptyState, loadWishlist } from './catalog.js';
+import { session } from './session.js';
 
 /* ── Category strip ───────────────────────────────────────────
    The wireframe drew a different line-art icon per category. The
@@ -123,6 +124,64 @@ function pointViewAllLinks() {
   });
 }
 
+
+/* ── Recently viewed ──────────────────────────────────────────
+   Every product page has been posting to `/v1/recently-viewed`
+   since the detail page was wired, and nothing ever read the
+   list back — so the trail was being written into a drawer no
+   one opened.
+
+   The section is built here rather than drawn in the markup
+   because it has no signed-out and no empty state: a visitor
+   with nothing behind them should see the page they saw before,
+   not a heading over a blank strip. Appended after the last
+   product row so the two positional lookups above are unaffected. */
+function recentlySection() {
+  const section = document.createElement('section');
+  section.className = 'products-section';
+  section.innerHTML =
+    '<div class="section-head">'
+      + '<span class="section-head-title">Recently Viewed</span>'
+      + '<a href="/listing" class="section-head-link">Browse all '
+      + '<svg width="14" height="14" viewBox="0 0 14 14" fill="none">'
+      + '<path d="M3 7h8M7 3l4 4-4 4" stroke="var(--blue)" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>'
+      + '</svg></a>'
+    + '</div>'
+    + '<div class="product-grid product-grid-5"></div>';
+  return section;
+}
+
+async function loadRecentlyViewed() {
+  // The endpoint is `require_access` — there is no guest history to read.
+  if (!session.isSignedIn()) return;
+
+  const response = await Fetcher.get({
+    endpoint: '/v1/recently-viewed',
+    query: { limit: 5 },
+    showError: false,
+  });
+  if (!response.ok || !(response.data || []).length) return;
+
+  // The row is keyed on `product_id`; the card (and the wishlist heart
+  // it carries) expects `uuid`.
+  const items = response.data.map((item) => ({
+    ...item,
+    uuid: item.product_id,
+    rating_count: item.rating_count || 0,
+    in_stock: true,
+  }));
+
+  const sections = [...document.querySelectorAll('.products-section')];
+  const last = sections[sections.length - 1];
+  if (!last) return;
+
+  const section = recentlySection();
+  last.after(section);
+
+  await loadWishlist();
+  renderGrid(section.querySelector('.product-grid'), items);
+}
+
 (function init() {
   const [trending, arrivals] = productRows();
 
@@ -130,4 +189,5 @@ function pointViewAllLinks() {
   loadCategories();
   loadRow(trending, 'best_selling', 8, 'Nothing trending yet');
   loadRow(arrivals, 'newest', 5, 'No new arrivals yet');
+  loadRecentlyViewed();
 })();

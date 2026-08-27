@@ -75,6 +75,14 @@ pub async fn account_notifications(template: web::Data<Tera>) -> Result<HttpResp
   render(&template, "account/notifications.html")
 }
 
+pub async fn account_returns(template: web::Data<Tera>) -> Result<HttpResponse, Error> {
+  render(&template, "account/returns.html")
+}
+
+pub async fn account_support(template: web::Data<Tera>) -> Result<HttpResponse, Error> {
+  render(&template, "account/support.html")
+}
+
 /* ── Auth ────────────────────────────────────────────────── */
 
 pub async fn sign_in(template: web::Data<Tera>) -> Result<HttpResponse, Error> {
