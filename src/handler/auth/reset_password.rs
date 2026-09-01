@@ -41,7 +41,7 @@ pub async fn task(form_data: web::Json<ResetPasswordFormData>) -> Result<HttpRes
 
     let result = collection.find_one(
         doc!{"user_id": &post_data.user_id},
-    ).await;
+    ).session(&mut session).await;
 
     if let Err(error) = result {
         log::error!("{:?}", error);
@@ -82,7 +82,7 @@ pub async fn task(form_data: web::Json<ResetPasswordFormData>) -> Result<HttpRes
         doc!{"$set": {
             "password": &post_data.new_password
         }},
-    ).await;
+    ).session(&mut session).await;
 
     if let Err(error) = result {
         log::error!("{:?}", error);
@@ -96,7 +96,7 @@ pub async fn task(form_data: web::Json<ResetPasswordFormData>) -> Result<HttpRes
 
     let result = collection.delete_one(
         doc!{"uuid": &reset.uuid, "user_id": &post_data.user_id},
-    ).await;
+    ).session(&mut session).await;
 
     if let Err(error) = result {
         log::error!("{:?}", error);

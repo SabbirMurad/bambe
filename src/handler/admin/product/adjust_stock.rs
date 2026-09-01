@@ -2,6 +2,7 @@ use chrono::Utc;
 use uuid::Uuid;
 use serde::Deserialize;
 use mongodb::bson::doc;
+use mongodb::options::ReturnDocument;
 use actix_web::{web, Error, HttpResponse, HttpRequest};
 use crate::BuiltIns::mongo::MongoDB;
 use crate::utils::response::Response;
@@ -35,15 +36,32 @@ pub async fn task(req: HttpRequest, path: web::Path<String>, body: web::Json<Req
     }
 
     let now = Utc::now().timestamp_millis();
-    let new_stock = variant.stock + body.delta;
 
-    let result = col
-        .update_one(doc! { "uuid": &variant_id }, doc! { "$set": { "stock": new_stock, "modified_at": now } })
-        .await;
-    if let Err(error) = result {
-        log::error!("{:?}", error);
-        return Ok(Response::internal_server_error(&error.to_string()));
+    // Atomic `$inc` rather than read-then-`$set`, so a checkout landing between
+    // the read above and this write isn't silently undone. A write-off is also
+    // guarded on there being enough to write off, which a `$set` couldn't do —
+    // otherwise two concurrent -5s against 8 units leave the variant at -2.
+    let mut filter = doc! { "uuid": &variant_id };
+    if body.delta < 0 {
+        filter.insert("stock", doc! { "$gte": -body.delta });
     }
+
+    let updated = col
+        .find_one_and_update(
+            filter,
+            doc! { "$inc": { "stock": body.delta }, "$set": { "modified_at": now } },
+        )
+        .return_document(ReturnDocument::After)
+        .await;
+
+    let new_stock = match updated {
+        Ok(Some(v)) => v.stock,
+        Ok(None) => return Ok(Response::bad_request("Not enough stock to remove")),
+        Err(error) => {
+            log::error!("{:?}", error);
+            return Ok(Response::internal_server_error(&error.to_string()));
+        }
+    };
 
     let movement = StockMovement {
         uuid: Uuid::now_v7().to_string(),

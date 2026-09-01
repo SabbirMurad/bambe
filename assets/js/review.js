@@ -13,6 +13,11 @@
    the shape `place-order` takes; there is no server-side draft to
    have been building up. On success the draft is cleared, so a back
    button or a second tab cannot replay it.
+
+   **The order is not paid when this returns.** Cash on delivery owes
+   nothing yet; every other method comes back with a `payment_url` and
+   the browser goes to SSLCommerz. Only their validated callback marks
+   the order paid, so there is no path from this file to a paid order.
 ═══════════════════════════════════════════════════════════════ */
 import { Fetcher } from './fetcher.js';
 import { toast } from './toast.js';
@@ -261,7 +266,28 @@ async function placeOrder(e) {
   // Cleared only once the order exists: a failed attempt must leave the
   // draft intact so the shopper can fix one thing and retry.
   draft.clear();
-  location.href = '/checkout/confirmation?id=' + encodeURIComponent(response.data.uuid);
+
+  const { order, payment_url: paymentUrl, requires_payment: requiresPayment } = response.data;
+
+  /* Cash on delivery is done — the order stands and nothing is owed yet.
+     Everything else is unpaid until SSLCommerz says otherwise, so the
+     browser goes to the gateway rather than to a receipt. */
+  if (requiresPayment && paymentUrl) {
+    if (label) label.textContent = 'Taking you to payment…';
+    location.href = paymentUrl;
+    return;
+  }
+
+  if (requiresPayment) {
+    /* The order exists but the gateway couldn't be reached. Saying so
+       beats a confirmation page for an order nobody has paid for; the
+       order sits Pending and can be paid or cancelled from the account. */
+    toast.error('Your order was placed but payment couldn’t be started. You can pay it from your orders.');
+    location.href = '/account/orders';
+    return;
+  }
+
+  location.href = '/checkout/confirmation?id=' + encodeURIComponent(order.uuid);
 }
 
 /* ── Boot ─────────────────────────────────────────────────────  */

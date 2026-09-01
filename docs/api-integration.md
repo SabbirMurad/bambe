@@ -606,3 +606,283 @@ deciding before the wiring reaches them.
    required to check out and both can only be inserted straight into Mongo.
    `settings.html` covers shipping *zones*, which is a different collection
    that nothing reads at checkout.
+
+---
+
+## Closing the backlog (2026-09-01)
+
+Everything below was on the "what's left" list and is now done and verified
+against a running server. The one item deliberately untouched is the payment
+gateway, which needs a processor chosen first — see the end.
+
+### Correctness
+
+- **Stock no longer oversells.** `place_order` took stock with a
+  read-then-`$set`, so two checkouts racing for the last unit both wrote the
+  same total and both shipped. It now reserves with `$inc` guarded by
+  `stock: { $gte: qty }` — the test and the decrement are one atomic
+  operation, and the loser matches no document. The same read-modify-write
+  was in `order/cancel`, `admin/order/update_status` and
+  `admin/product/adjust_stock`; all four use `find_one_and_update` now, and
+  the movement log records the balance the write returned rather than one
+  computed beforehand. `adjust_stock` also refuses a write-off larger than
+  the stock on hand, which a `$set` could not express.
+
+  Reservation happens *before* the order document is written, and every
+  failure path after it releases what it took. **Verified**: two concurrent
+  checkouts for a variant with one unit — one 200, one 400, stock 0 (not −1),
+  one order created.
+
+- **Order numbers are a counter, not a dice roll.** `random_range(10_000..99_999)`
+  with no uniqueness check collides about half the time by ~350 orders a
+  year. `utils::counter::next` advances a per-year counter with one `$inc`
+  upsert and returns the post-increment value, so concurrent checkouts cannot
+  draw the same sequence. Drawn after the stock reservation, so a sold-out
+  attempt doesn't burn a number.
+
+- **`refunded_quantity` finally has a writer.** It was initialised to 0, read
+  in three places, and incremented nowhere — so a customer could open a return
+  for the same line over and over. Two halves:
+
+  1. `return_request/create` now counts what is already claimed by any
+     non-rejected return on the order, not just what has been refunded.
+     Between filing and resolution a line is spoken for.
+  2. `admin/return_request/resolve` (new) writes `refunded_quantity` and
+     `refunded_amount` when a return is refunded.
+
+- **The auth transactions actually roll back now.** `.session(...)` appeared
+  zero times in the codebase, and the mongodb Rust driver requires it on each
+  operation for that operation to join the transaction — so
+  `start_transaction` / `abort_transaction` wrapped operations that were never
+  enrolled. 31 operations across the seven auth handlers are enrolled.
+  **Verified**: a sign-up whose email send fails (Resend rejects
+  `example.com`) used to leave its `account_core` row behind; all three
+  inserts now roll back and the collections come back empty.
+
+- **One Mongo client for the process.** `MongoDB.connect()` built a fresh
+  `Client` per call and every handler calls it, so each request stood up its
+  own pool (`min_pool_size: 8`) and dropped it. A `OnceLock` behind the same
+  signature fixes it without touching a call site.
+
+- **Cursor loops log instead of truncating.** 77 `while let Some(Ok(x))` loops
+  across 45 files ended silently on the first undeserialisable document while
+  `count_documents` kept counting it. Each now skips the row and logs it with
+  `module_path!()`, so the log names the list that dropped something.
+
+- **Indexes exist.** `builtins/indexes.rs` creates the uniqueness constraints
+  that were documented in model comments and enforced nowhere — `product.slug`,
+  `order.number`, `coupon.code`, `payment_transaction.provider_transaction_id`,
+  `(coupon_id, order_id)` on redemptions, `(review_id, user_id)` on votes —
+  plus 18 lookup indexes behind filters that were collection-scanning. Unique
+  indexes are sparse so pre-existing documents without the field don't collide
+  on a shared `null`. Idempotent, run at startup, failures logged not fatal.
+
+- **Coupon fixes.** `first_order_only` counted orders with
+  `payment_status: "Paid"`, which cash-on-delivery never reaches until the
+  courier collects — so a COD customer reused a first-order coupon forever. It
+  now counts any non-cancelled order. `value` is validated on create *and*
+  update (a percentage over 10000 bps or a negative one produced a discount
+  bigger than the basket, and `place_order` has no floor); the update checks
+  the values the coupon will end up with, since changing type without touching
+  `value` reinterprets it. Cancelling an order now deletes the redemption and
+  decrements `used_count`, so a cancelled order stops burning the per-user
+  limit.
+
+- **An unresolvable `billing_address_id` is a 400**, not a silent fall back to
+  the shipping address under a different address's id.
+
+### Returns, end to end
+
+Returns were a dead end: the customer could file one and nothing could act on
+it. Three endpoints and a screen close that.
+
+- `GET /v1/admin/return/list` — status filter, order-number search, paging,
+  and an `open` count for the badge.
+- `GET /v1/admin/return/{id}` — joins the return lines to the order lines for
+  title, price and what's already refunded.
+- `PATCH /v1/admin/return/{id}` — the status move. Refunded is terminal and
+  the endpoint refuses a second attempt; rejected can't be reopened.
+
+Refunding marks the order lines, restocks (unless staff say the goods came
+back damaged), writes the refund transaction, flips the order to `Returned`
+once every unit is back, and mails the customer.
+
+**The refund ceiling is what was captured, not what the order is worth.** An
+uncollected cash-on-delivery order has no Sale transaction, so nothing is
+given back — the lines are still marked and the stock still returns. The
+detail endpoint computes the same ceiling, so the dialog can't offer an amount
+the server will clamp away; it says "no payment was ever captured" instead.
+
+`pages/admin/returns.html` + `admin-returns.js` are the screen, with Returns
+added to the sidebar of all ten admin pages and a badge showing the open
+queue.
+
+### Mail and notifications
+
+`notification` had list / read / read-all / preferences and **no writer at
+all**, so the bell was permanently empty. `utils/notify.rs` is that writer and
+the single place that decides whether a user wants a given message: a topic
+goes out only where its own preference flag allows it, and email additionally
+needs `email_enabled`. The in-app row is not a channel — it *is* the list the
+bell reads — so only the topic gates it. Defaults match the `None` branch of
+`get_preferences`, which had always promised "the defaults the sender
+applies".
+
+Wired at: order placed, shipped, delivered, cancelled (both the customer's own
+cancel and the console's), refund issued, return resolved, and support reply.
+A staff **internal note** returns before the notify, so it still can't reach
+the customer. A guest ticket has no account to hang a notification on and is
+skipped.
+
+Six order-lifecycle email templates were added to `resend.rs` on the same
+`shell` the auth codes use. All mail is Resend now; `smtp.rs` and `lettre` are
+gone.
+
+**Verified**: placing an order produced the row *and* the email; shipping and
+delivering each produced theirs; resolving a return produced its own. No mail
+errors in the log.
+
+### Delivery methods and packaging
+
+The two collections checkout actually charges from had no admin endpoint at
+all — the only way to add or reprice one was to insert it into Mongo by hand.
+`settings.html` covered shipping *zones*, a different collection nothing reads
+at checkout, and the panel had a footnote apologising for it.
+
+Eight endpoints under `/v1/admin/settings/delivery-method/*` and
+`/v1/admin/settings/packaging-option/*`, and two panels on the Shipping tab
+above the zones. Prices and delivery windows are validated on both create and
+update, and **the last enabled delivery method can't be disabled or deleted** —
+checkout cannot quote a price without one, and that failure would show up as
+an empty delivery step rather than as anything pointing back at settings.
+
+**Verified**: an inverted window and a negative price are both refused; a
+created method appears at `/v1/checkout/delivery-methods` and vanishes when
+disabled; the last-method guard fires on both disable and delete.
+
+### Still not done
+
+- ~~The payment gateway.~~ **Done — SSLCommerz**, see below.
+- **Social login** needs a Google or Facebook client SDK to mint the token
+  `/v1/auth/social-login` takes.
+- **Brand CRUD** endpoints.
+- **No test suite, CI, or seed script.** One `#[cfg(test)]` module in the
+  whole crate.
+- The home page still has no merchandising model behind its hero and promo
+  copy.
+
+### The payment gateway (SSLCommerz)
+
+The mock is gone. **No code path on this server can mark an order paid on its
+own say-so.**
+
+`place_order` writes every order unpaid. Cash on delivery stays `Pending`
+until the courier collects; everything else gets an SSLCommerz session and the
+browser is redirected to their hosted page, so no card number ever reaches
+this server. Only a validated callback flips an order to `Paid` and writes its
+`Sale` row — and `payment_transaction` is the ledger every refund path sums,
+so a row in it now means money actually moved.
+
+**Callbacks are not believed.** All four arrive unauthenticated — anyone can
+POST `status=VALID` at `/payment/sslcommerz/ipn`. The only field taken from
+the body is `val_id`, which is presented to SSLCommerz's validation API over a
+server-to-server call authenticated with the store password; the status,
+amount and currency that come back from *that* are what decide anything. Three
+further checks: the validation's own `tran_id` must match the callback's (so a
+valid `val_id` from one order can't be replayed against another), the amount
+must cover the order's `grand_total` in the order's currency, and the flip to
+Paid is a conditional update on `payment_status: "Pending"` — two callbacks
+racing both reach it and only one matches, so the Sale row cannot be written
+twice. SSLCommerz sends both a browser redirect and a server IPN with no
+promise about ordering, so that idempotency is load-bearing rather than
+defensive.
+
+A declined, cancelled or unverifiable payment releases the order:
+`utils::order::release_order_holds` puts the stock back with an atomic `$inc`,
+logs the movement, and hands back the coupon redemption. That helper is now
+shared with both cancel paths, which had grown their own copies.
+
+Configuration is four environment variables — `SSLCZ_STORE_ID`,
+`SSLCZ_STORE_PASSWD`, `SSLCZ_SANDBOX` (defaults true), and `SITE_URL` for the
+callback base. **With none of them set the shop degrades rather than breaks**:
+`GET /v1/checkout/quote` reports `card_payment_available: false`, the payment
+step offers only cash on delivery and says why, and `place_order` refuses a
+card outright instead of redirecting into a 500.
+
+What the checkout step lost, because nothing behind it was real: PayPal and
+Apple Pay (no route sent them anywhere), and the saved-card rows. SSLCommerz's
+hosted checkout returns no reusable token, so picking a saved card would send
+the shopper to the same page to type the same number having implied otherwise.
+The rows stay on the profile, where they are a record rather than a promise.
+One option now covers cards, mobile banking and net banking, because that is
+what one SSLCommerz redirect actually is.
+
+**Verified against the real sandbox**, not mocked:
+
+- Unconfigured: `card_payment_available: false` and a card order is refused
+  with a message pointing at cash on delivery.
+- Configured: a card order came back with a genuine
+  `https://sandbox.sslcommerz.com/EasyCheckOut/...` URL. The first attempt was
+  refused by SSLCommerz for a missing `ship_postcode`, which is exactly the
+  kind of thing a mock would never have caught — `cus_state`, `cus_postcode`,
+  `ship_state` and `ship_postcode` are all sent now.
+- A forged IPN (`status=VALID`, `amount=99999.00`) left the order Pending with
+  no Sale row, and logged why.
+- A forged success callback with a plausible `val_id` was answered
+  `INVALID_TRANSACTION` by the live validator; the order was released — stock
+  back, cancellation movement logged, redirected to
+  `/checkout/payment?error=verification`.
+- Cash on delivery: order `Pending`, `paid_at` null, no Sale row.
+
+Still open on payments: `POST /v1/payment-method` cannot create a card,
+because that needs a tokeniser this integration doesn't use; and there is no
+"pay now" action on an order left unpaid by an abandoned session, only
+`POST /v1/payment/abandon` to cancel one.
+
+### Two-step sign-in and the avatar (2026-09-01)
+
+**Changing an email address is deliberately not offered.** An address is where
+password reset and the two-step code are sent, so changing it means
+re-verifying it, and the product doesn't do that. The field stays read-only by
+decision, not omission — it is not a gap waiting to be filled.
+
+**Two-factor turned out to be broken, not just unwired.** `sign_in.rs` checked
+`two_a_factor_auth_enabled`, wrote a `sign_in_verification_request`, emailed
+the code — and then **fell straight through to minting the access token
+anyway**. There was also no endpoint to submit the code, so the request row was
+written and nothing could consume it. Enabling the flag bought a spare email
+and no second factor at all. It went unnoticed because nothing could set the
+flag; adding the switch is what made it reachable.
+
+Three parts:
+
+- `PATCH /v1/account/two-factor` — the writer that never existed. Turning it
+  **on** is free; turning it **off** costs the current password, because an
+  attacker holding a live token must not be able to strip a factor off the
+  account quietly. Enabling is refused on an unverified address, which would
+  otherwise send the code somewhere the owner hasn't proven they can read.
+  Either direction sends a Security notification.
+- `sign_in.rs` now **returns** at the second factor — the request id and no
+  token.
+- `POST /v1/auth/verify-sign-in-code` exchanges the id and the code for the
+  session. The request is deleted before the token is minted, so one code buys
+  one session and a replay finds nothing. An unknown id and a wrong code give
+  the same 403, so neither can be probed to learn about the other, and
+  suspension is re-checked between the two steps.
+
+The login page swaps the password form for a code field in place rather than
+opening a dialog — same act of signing in — and clears the password so a stale
+value can't be resubmitted from behind it.
+
+**The avatar needed no new endpoint.** `ProfilePic` was already a valid image
+slot and `update_profile` already accepted `profile_picture`; what was missing
+was the picker. The pencil on the profile hero now uploads through `POST
+/image` (raw fetch — multipart, outside `/api`, no explicit Content-Type) and
+PATCHes the returned uuid, with a 5 MB and image-type check before the upload.
+
+**Verified end to end:** sign-in withholds the token with 2FA on; a wrong code,
+an unknown request id and a replay of a spent code all give the same 403; the
+correct code mints a session; the login page's code step appears, hides the
+password form and preserves the sign-up link; the toggle refuses to switch off
+on a wrong password and does nothing on a cancelled prompt; and an uploaded
+avatar renders from `/image/webp/{id}` on the profile hero.

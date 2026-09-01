@@ -2,7 +2,7 @@ use rand::Rng;
 use chrono::Utc;
 use mongodb::bson::doc;
 use crate::Model::Account;
-use crate::Integrations::Smtp;
+use crate::Integrations::Resend;
 use crate::BuiltIns::mongo::MongoDB;
 use serde::{ Serialize, Deserialize };
 use crate::utils::response::Response;
@@ -32,7 +32,7 @@ pub async fn task(form_data: web::Json<ReqBody>) -> Result<HttpResponse, Error> 
     let collection = db.collection::<Account::AccountCore>("account_core");
     let result = collection.find_one(
         doc!{"uuid": &post_data.user_id},
-    ).await;
+    ).session(&mut session).await;
 
     if let Err(error) = result {
         log::error!("{:?}", error);
@@ -57,7 +57,7 @@ pub async fn task(form_data: web::Json<ReqBody>) -> Result<HttpResponse, Error> 
     <Account::AccountVerificationRequest>("account_verification_request");
     let result = collection.find_one(
         doc!{"user_id": &post_data.user_id},
-    ).await;
+    ).session(&mut session).await;
 
     if let Err(error) = result {
         log::error!("{:?}", error);
@@ -93,7 +93,7 @@ pub async fn task(form_data: web::Json<ReqBody>) -> Result<HttpResponse, Error> 
                 "expires_at": created_at + CODE_EXPIRE_TIME * 60 * 1000,
             }
         },
-    ).await;
+    ).session(&mut session).await;
 
     if let Err(error) = result {
         log::error!("{:?}", error);
@@ -101,12 +101,15 @@ pub async fn task(form_data: web::Json<ReqBody>) -> Result<HttpResponse, Error> 
         return Ok(Response::internal_server_error(&error.to_string()));
     }
 
-    let message = Smtp::sign_up_verification_code_template(
-        &user.email_address,
+    let message = Resend::sign_up_verification_code_template(
         &validation_code.to_string()
     );
 
-    let result = Smtp::send_email(message);
+    let result = Resend::send_email(
+        &user.email_address,
+        "Verify your account",
+        &message
+    ).await;
     if let Err(_) = result {
         session.abort_transaction().await.ok().unwrap();
         return Ok(Response::internal_server_error("Failed to send email"));

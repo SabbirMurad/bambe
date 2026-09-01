@@ -109,5 +109,27 @@ pub async fn task(req: HttpRequest, path: web::Path<String>, body: web::Json<Req
         return Ok(Response::internal_server_error(&error.to_string()));
     }
 
+    // Only a customer-facing reply reaches the customer. The internal-note
+    // path returns above, before this.
+    // `user_id` is optional — a ticket can be opened by a guest, who has no
+    // account to hang a notification on.
+    if let Some(user_id) = &ticket.user_id {
+        crate::utils::notify::send(
+            &db,
+            user_id,
+            crate::utils::notify::Notice {
+                kind: crate::model::Notification::NotifType::SupportReply,
+                title: format!("Reply on ticket {}", ticket.number),
+                body: preview(&body.body),
+                image_id: None,
+                related_id: Some(ticket_id.clone()),
+                link: Some(format!("/account/support?id={}", ticket_id)),
+                // The thread lives behind a login and can hold personal detail, so
+                // the email says there's a reply rather than quoting it.
+                email: None,
+            },
+        ).await;
+    }
+
     Ok(HttpResponse::Ok().content_type("application/json").json(message))
 }

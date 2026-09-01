@@ -86,7 +86,14 @@ pub async fn task(req: HttpRequest, query: web::Query<ReqQuery>) -> Result<HttpR
             .find(doc! { "order_id": { "$in": &order_ids } })
             .await
             .expect("order item lookup");
-        while let Some(Ok(item)) = cursor.next().await {
+        while let Some(result) = cursor.next().await {
+            let item = match result {
+                Ok(item) => item,
+                Err(error) => {
+                    log::error!("{}: skipping unreadable document: {:?}", module_path!(), error);
+                    continue;
+                }
+            };
             items_by_order.entry(item.order_id.clone()).or_default().push(json!({
                 "title": item.title,
                 "image_id": item.image_id,

@@ -8,6 +8,7 @@ pub fn router(cfg: &mut web::ServiceConfig) {
             .route("/delete", web::post().to(Handler::Account::RequestDeletion::task))
             .route("/profile", web::get().to(Handler::Account::GetProfile::task))
             .route("/profile", web::patch().to(Handler::Account::UpdateProfile::task))
+            .route("/two-factor", web::patch().to(Handler::Account::TwoFactor::task))
             .route("/stats", web::get().to(Handler::Account::Stats::task)),
     );
 }

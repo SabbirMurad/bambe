@@ -4,6 +4,12 @@ pub use get_store as GetStore;
 pub mod update_store;
 pub use update_store as UpdateStore;
 
+pub mod delivery_method;
+pub use delivery_method as DeliveryMethod;
+
+pub mod packaging_option;
+pub use packaging_option as PackagingOption;
+
 pub mod shipping_zone;
 pub use shipping_zone as ShippingZone;
 

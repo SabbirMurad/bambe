@@ -31,7 +31,14 @@ pub async fn task(req: HttpRequest, path: web::Path<String>) -> Result<HttpRespo
         .await
         .expect("order lookup");
     let mut orders = Vec::new();
-    while let Some(Ok(o)) = order_cursor.next().await {
+    while let Some(result) = order_cursor.next().await {
+        let o = match result {
+            Ok(o) => o,
+            Err(error) => {
+                log::error!("{}: skipping unreadable document: {:?}", module_path!(), error);
+                continue;
+            }
+        };
         orders.push(json!({
             "uuid": o.uuid,
             "number": o.number,

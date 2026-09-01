@@ -139,5 +139,11 @@ pub async fn task(req: HttpRequest, query: web::Query<ReqQuery>) -> Result<HttpR
         "packaging_option": packaging.as_ref().map(|p| json!({
             "uuid": p.uuid, "name": p.name, "price": p.price,
         })),
+        /*
+          Whether the payment step can offer anything but cash on delivery.
+          Without gateway credentials `place_order` refuses a card, so the
+          option is hidden rather than shown and then rejected.
+        */
+        "card_payment_available": crate::Integrations::SslCommerz::is_configured(),
     })))
 }

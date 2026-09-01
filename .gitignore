@@ -25,3 +25,6 @@ status.log
 Thumbs.db
 *.swp
 /target
+
+# Per-machine Claude Code permissions (absolute paths inside)
+.claude/settings.local.json

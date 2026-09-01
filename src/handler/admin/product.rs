@@ -44,7 +44,14 @@ pub async fn recompute_aggregates(db: &Database, product_id: &str) {
         .await
         .expect("variant lookup");
     let mut variants = Vec::new();
-    while let Some(Ok(v)) = cursor.next().await {
+    while let Some(result) = cursor.next().await {
+        let v = match result {
+            Ok(v) => v,
+            Err(error) => {
+                log::error!("{}: skipping unreadable document: {:?}", module_path!(), error);
+                continue;
+            }
+        };
         variants.push(v);
     }
 

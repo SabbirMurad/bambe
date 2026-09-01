@@ -58,7 +58,14 @@ pub async fn task(path: web::Path<String>) -> Result<HttpResponse, Error> {
         .await
         .expect("variant lookup");
     let mut variants = Vec::new();
-    while let Some(Ok(v)) = variant_cursor.next().await {
+    while let Some(result) = variant_cursor.next().await {
+        let v = match result {
+            Ok(v) => v,
+            Err(error) => {
+                log::error!("{}: skipping unreadable document: {:?}", module_path!(), error);
+                continue;
+            }
+        };
         variants.push(v);
     }
     // Oldest first, so the swatch row and the gallery below it stay in the
@@ -91,7 +98,14 @@ pub async fn task(path: web::Path<String>) -> Result<HttpResponse, Error> {
             .await
             .expect("image lookup");
         let mut map = HashMap::new();
-        while let Some(Ok(i)) = cursor.next().await {
+        while let Some(result) = cursor.next().await {
+            let i = match result {
+                Ok(i) => i,
+                Err(error) => {
+                    log::error!("{}: skipping unreadable document: {:?}", module_path!(), error);
+                    continue;
+                }
+            };
             map.insert(i.uuid.clone(), i);
         }
         map
@@ -117,7 +131,14 @@ pub async fn task(path: web::Path<String>) -> Result<HttpResponse, Error> {
         .await
         .expect("related lookup");
     let mut related = Vec::new();
-    while let Some(Ok(p)) = related_cursor.next().await {
+    while let Some(result) = related_cursor.next().await {
+        let p = match result {
+            Ok(p) => p,
+            Err(error) => {
+                log::error!("{}: skipping unreadable document: {:?}", module_path!(), error);
+                continue;
+            }
+        };
         related.push(json!({
             "uuid": p.uuid,
             "slug": p.slug,

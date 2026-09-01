@@ -277,6 +277,355 @@ function rebuildPayments(panel) {
   panel.appendChild(body);
 }
 
+/* ── Delivery methods and packaging ───────────────────────────
+   These are the two collections checkout actually charges from —
+   `delivery_method` sets the shipping line, `packaging_option`
+   the packaging line. Neither had an admin endpoint until now, so
+   the only way to add or reprice one was to insert it into Mongo
+   by hand, and the Shipping tab could only show *zones*, which
+   checkout never reads.
+
+   Both live under the Shipping tab because that is where someone
+   goes looking for them. The zones panel keeps its footnote, but
+   it no longer has to apologise for being the only thing there.  */
+
+let deliveryMethods = [];
+let packagingOptions = [];
+
+function daysLabel(method) {
+  if (method.min_days === method.max_days) {
+    return method.min_days === 1 ? '1 day' : method.min_days + ' days';
+  }
+  return method.min_days + '–' + method.max_days + ' days';
+}
+
+function cutoffLabel(minutes) {
+  if (minutes === null || minutes === undefined) return null;
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  return 'Order by ' + String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0');
+}
+
+function methodRow(method) {
+  const row = document.createElement('div');
+  row.className = 'zone-row';
+  if (!method.enabled) row.style.opacity = '.55';
+
+  const text = document.createElement('div');
+  text.style.flex = '1';
+  const name = document.createElement('div');
+  name.className = 'zone-name';
+  name.textContent = method.name;
+  const detail = document.createElement('div');
+  detail.className = 'zone-desc';
+  const bits = [daysLabel(method)];
+  if (method.description) bits.unshift(method.description);
+  const cutoff = cutoffLabel(method.cutoff_minutes);
+  if (cutoff) bits.push(cutoff);
+  detail.textContent = bits.join(' · ');
+  text.append(name, detail);
+  row.appendChild(text);
+
+  row.appendChild(tag(method.price === 0 ? 'Free' : money(method.price),
+    method.price === 0 ? 'tag-green' : 'tag-blue'));
+  if (method.free_above) row.appendChild(tag('Free over ' + money(method.free_above), 'tag-green'));
+  if (!method.enabled) row.appendChild(tag('Disabled', 'tag-red'));
+
+  row.appendChild(rowButton('Edit', () => editMethod(method)));
+  row.appendChild(rowButton(method.enabled ? 'Disable' : 'Enable',
+    () => toggleMethod(method)));
+  row.appendChild(rowButton('Delete', () => removeMethod(method), { danger: true }));
+
+  return row;
+}
+
+function methodForm(method) {
+  const form = document.createElement('div');
+
+  const name = textInput({ value: method ? method.name : '', placeholder: 'Express Delivery' });
+  form.appendChild(field('Name', name));
+
+  const description = textInput({
+    value: method ? method.description : '',
+    placeholder: 'Estimated 1–2 business days',
+  });
+  form.appendChild(field('Description', description, 'Shown to the shopper at checkout.'));
+
+  const price = textInput({ value: method ? (method.price / 100).toFixed(2) : '0.00' });
+  form.appendChild(field('Price', price));
+
+  const freeAbove = textInput({
+    value: method && method.free_above ? (method.free_above / 100).toFixed(2) : '',
+  });
+  form.appendChild(field('Free above', freeAbove, 'Blank means the price always applies.'));
+
+  const minDays = textInput({ value: method ? String(method.min_days) : '1' });
+  form.appendChild(field('Earliest (days)', minDays));
+
+  const maxDays = textInput({ value: method ? String(method.max_days) : '3' });
+  form.appendChild(field('Latest (days)', maxDays));
+
+  const cutoff = document.createElement('input');
+  cutoff.type = 'time';
+  cutoff.className = 'form-input';
+  if (method && method.cutoff_minutes !== null && method.cutoff_minutes !== undefined) {
+    const h = Math.floor(method.cutoff_minutes / 60);
+    const m = method.cutoff_minutes % 60;
+    cutoff.value = String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0');
+  }
+  form.appendChild(field('Same-day cutoff', cutoff,
+    'Blank for none. Orders after this time ship the next day.'));
+
+  return {
+    form,
+    read: () => {
+      const [h, m] = (cutoff.value || '').split(':');
+      return {
+        name: name.value.trim(),
+        description: description.value.trim(),
+        price: Math.round(Number(price.value || 0) * 100),
+        free_above: freeAbove.value.trim() ? Math.round(Number(freeAbove.value) * 100) : null,
+        min_days: Number(minDays.value || 0),
+        max_days: Number(maxDays.value || 0),
+        cutoff_minutes: cutoff.value ? Number(h) * 60 + Number(m) : null,
+        enabled: method ? method.enabled : true,
+        position: method ? method.position : deliveryMethods.length,
+      };
+    },
+    /* The endpoint checks all of this too — this is only so a
+       mistake is caught before a round trip. */
+    validate: () => {
+      if (!name.value.trim()) return 'The method needs a name.';
+      if (Number(minDays.value) > Number(maxDays.value)) {
+        return 'The earliest day can’t be after the latest.';
+      }
+      if (Number(price.value) < 0) return 'Price can’t be negative.';
+      return null;
+    },
+  };
+}
+
+function editMethod(method) {
+  const { form, read, validate } = methodForm(method);
+
+  openModal({
+    title: method ? 'Edit ' + method.name : 'Add a delivery method',
+    body: form,
+    width: '500px',
+    actions: [
+      { label: 'Cancel', className: 'btn-ghost', onClick: (close) => close() },
+      {
+        label: method ? 'Save' : 'Add method',
+        className: 'btn-primary',
+        onClick: async (close, button) => {
+          const problem = validate();
+          if (problem) { toast.error(problem); return; }
+
+          button.disabled = true;
+          const response = method
+            ? await Fetcher.patch({ endpoint: '/v1/admin/settings/delivery-method/' + method.uuid, body: read() })
+            : await Fetcher.post({ endpoint: '/v1/admin/settings/delivery-method', body: read() });
+          button.disabled = false;
+          if (!response.ok) return;
+
+          close();
+          toast.success(method ? 'Method updated' : 'Method added');
+          loadFulfilment();
+        },
+      },
+    ],
+  });
+}
+
+async function toggleMethod(method) {
+  const response = await Fetcher.patch({
+    endpoint: '/v1/admin/settings/delivery-method/' + method.uuid,
+    body: { enabled: !method.enabled },
+  });
+  if (!response.ok) return;
+  toast.success(method.enabled ? 'Method disabled' : 'Method enabled');
+  loadFulfilment();
+}
+
+async function removeMethod(method) {
+  const confirmed = await confirmModal({
+    title: 'Delete ' + method.name + '?',
+    message: 'Orders already placed keep the delivery they were charged for.',
+    confirmLabel: 'Delete method',
+  });
+  if (!confirmed) return;
+
+  const response = await Fetcher.delete({ endpoint: '/v1/admin/settings/delivery-method/' + method.uuid });
+  if (!response.ok) return;
+  toast.success('Method deleted');
+  loadFulfilment();
+}
+
+function packagingRow(option) {
+  const row = document.createElement('div');
+  row.className = 'zone-row';
+  if (!option.enabled) row.style.opacity = '.55';
+
+  const text = document.createElement('div');
+  text.style.flex = '1';
+  const name = document.createElement('div');
+  name.className = 'zone-name';
+  name.textContent = option.name;
+  const detail = document.createElement('div');
+  detail.className = 'zone-desc';
+  detail.textContent = option.description || 'No description';
+  text.append(name, detail);
+  row.appendChild(text);
+
+  row.appendChild(tag(option.price === 0 ? 'Free' : money(option.price),
+    option.price === 0 ? 'tag-green' : 'tag-blue'));
+  if (!option.enabled) row.appendChild(tag('Disabled', 'tag-red'));
+
+  row.appendChild(rowButton('Edit', () => editPackaging(option)));
+  row.appendChild(rowButton('Delete', () => removePackaging(option), { danger: true }));
+
+  return row;
+}
+
+function editPackaging(option) {
+  const form = document.createElement('div');
+
+  const name = textInput({ value: option ? option.name : '', placeholder: 'Gift wrapping' });
+  form.appendChild(field('Name', name));
+
+  const description = textInput({
+    value: option ? option.description : '',
+    placeholder: 'Kraft paper, ribbon and a handwritten card',
+  });
+  form.appendChild(field('Description', description));
+
+  const price = textInput({ value: option ? (option.price / 100).toFixed(2) : '0.00' });
+  form.appendChild(field('Price', price));
+
+  openModal({
+    title: option ? 'Edit ' + option.name : 'Add a packaging option',
+    body: form,
+    width: '460px',
+    actions: [
+      { label: 'Cancel', className: 'btn-ghost', onClick: (close) => close() },
+      {
+        label: option ? 'Save' : 'Add option',
+        className: 'btn-primary',
+        onClick: async (close, button) => {
+          if (!name.value.trim()) { toast.error('The option needs a name.'); return; }
+
+          const payload = {
+            name: name.value.trim(),
+            description: description.value.trim(),
+            price: Math.round(Number(price.value || 0) * 100),
+            enabled: option ? option.enabled : true,
+            position: option ? option.position : packagingOptions.length,
+          };
+
+          button.disabled = true;
+          const response = option
+            ? await Fetcher.patch({ endpoint: '/v1/admin/settings/packaging-option/' + option.uuid, body: payload })
+            : await Fetcher.post({ endpoint: '/v1/admin/settings/packaging-option', body: payload });
+          button.disabled = false;
+          if (!response.ok) return;
+
+          close();
+          toast.success(option ? 'Option updated' : 'Option added');
+          loadFulfilment();
+        },
+      },
+    ],
+  });
+}
+
+async function removePackaging(option) {
+  const confirmed = await confirmModal({
+    title: 'Delete ' + option.name + '?',
+    message: 'Orders already placed keep the packaging they were charged for.',
+    confirmLabel: 'Delete option',
+  });
+  if (!confirmed) return;
+
+  const response = await Fetcher.delete({ endpoint: '/v1/admin/settings/packaging-option/' + option.uuid });
+  if (!response.ok) return;
+  toast.success('Option deleted');
+  loadFulfilment();
+}
+
+/** An empty `.admin-panel` with a head, a body and an "Add" link. */
+function buildPanel(title, addLabel, onAdd, blurb) {
+  const panel = document.createElement('div');
+  panel.className = 'admin-panel';
+
+  const head = document.createElement('div');
+  head.className = 'admin-panel-head';
+  const heading = document.createElement('div');
+  heading.className = 'admin-panel-title';
+  heading.textContent = title;
+  head.appendChild(heading);
+
+  const link = document.createElement('span');
+  link.className = 'admin-panel-link';
+  link.tabIndex = 0;
+  link.textContent = addLabel;
+  link.addEventListener('click', onAdd);
+  link.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onAdd(); }
+  });
+  head.appendChild(link);
+  panel.appendChild(head);
+
+  const body = document.createElement('div');
+  body.className = 'admin-panel-body';
+  panel.appendChild(body);
+
+  if (blurb) {
+    const note = document.createElement('div');
+    note.style.cssText = 'padding:0 18px 14px;font-size:12px;color:var(--subtle);line-height:1.6;';
+    note.textContent = blurb;
+    body.appendChild(note);
+  }
+
+  return { panel, body };
+}
+
+async function loadFulfilment() {
+  const [methods, packaging] = await Promise.all([
+    Fetcher.get({ endpoint: '/v1/admin/settings/delivery-method/list' }),
+    Fetcher.get({ endpoint: '/v1/admin/settings/packaging-option/list' }),
+  ]);
+
+  deliveryMethods = methods.ok ? (methods.data || []) : [];
+  packagingOptions = packaging.ok ? (packaging.data || []) : [];
+
+  const methodBody = $('#delivery-body');
+  const packagingBody = $('#packaging-body');
+  if (!methodBody || !packagingBody) return;
+
+  $$('.zone-row', methodBody).forEach((row) => row.remove());
+  $$('.zone-row', packagingBody).forEach((row) => row.remove());
+
+  if (deliveryMethods.length) {
+    deliveryMethods.forEach((m) => methodBody.appendChild(methodRow(m)));
+  } else {
+    const empty = document.createElement('div');
+    empty.className = 'zone-row';
+    empty.style.cssText = 'color:var(--subtle);font-size:13px;';
+    empty.textContent = 'No delivery methods — checkout cannot quote a price until there is one.';
+    methodBody.appendChild(empty);
+  }
+
+  if (packagingOptions.length) {
+    packagingOptions.forEach((o) => packagingBody.appendChild(packagingRow(o)));
+  } else {
+    const empty = document.createElement('div');
+    empty.className = 'zone-row';
+    empty.style.cssText = 'color:var(--subtle);font-size:13px;';
+    empty.textContent = 'No packaging options. Checkout offers “No packaging” regardless.';
+    packagingBody.appendChild(empty);
+  }
+}
+
 /* ── Shipping panel ───────────────────────────────────────────  */
 
 function rateLabel(zone) {
@@ -401,16 +750,18 @@ async function removeZone(zone) {
 
 async function loadZones() {
   const response = await Fetcher.get({ endpoint: '/v1/admin/settings/shipping-zone/list' });
-  const panel = panels[2];
+  // panels[2] is the Shipping wrapper; the zones panel is its last child.
+  const panel = panels[2] && panels[2].lastElementChild;
   if (!panel) return;
 
   zones = response.ok ? (response.data || []) : [];
 
   $$('.zone-row', panel).forEach((row) => row.remove());
 
-  /* Zones are not what checkout charges. `delivery_method` is, and
-     it has no admin endpoint at all — so the panel says where the
-     real numbers come from rather than implying these are them.
+  /* Zones are still not what checkout charges — `delivery_method`
+     is, and it now has its own panel directly above this one. The
+     footnote stays so nobody edits a zone expecting the shipping
+     line to move.
 
      Created once and kept as the last child: the rows are rebuilt on
      every load, so appending them would otherwise leave the footnote
@@ -741,7 +1092,22 @@ async function loadStore() {
   const notifications = panels[4];
   const activity = buildActivityPanel();
   if (notifications) notifications.replaceWith(activity);
-  panels = [panels[0], panels[1], panels[2], panels[3], activity];
+  /* The Shipping tab holds three panels now, so index 2 becomes a
+     wrapper — `showPanel` only toggles `display` on whatever is in
+     the array, so one container works as well as one panel. */
+  const zonesPanel = panels[2];
+  const delivery = buildPanel('Delivery methods', 'Add method', () => editMethod(null),
+    'What checkout charges for shipping. A shopper picks one of these at the delivery step.');
+  const packaging = buildPanel('Packaging options', 'Add option', () => editPackaging(null),
+    'Optional extras at checkout — gift wrapping and the like. “No packaging” is always offered.');
+  delivery.body.id = 'delivery-body';
+  packaging.body.id = 'packaging-body';
+
+  const shipping = document.createElement('div');
+  zonesPanel.replaceWith(shipping);
+  shipping.append(delivery.panel, packaging.panel, zonesPanel);
+
+  panels = [panels[0], panels[1], shipping, panels[3], activity];
 
   rebuildPayments(panels[1]);
 
@@ -774,6 +1140,7 @@ async function loadStore() {
 
   await loadStore();
   addStoreExtras(panels[0]);
+  loadFulfilment();
   loadZones();
   loadStaff();
   loadDeletions();

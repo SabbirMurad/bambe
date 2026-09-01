@@ -8,16 +8,27 @@
    Three of the wireframe's fields are gone rather than wired:
    date of birth, gender and language. Nothing on the backend
    stores them, so a Save that appeared to accept them and then
-   dropped them on the floor is worse than not offering them. The
-   email field stays, read-only, because changing an email means
-   re-verifying it and there is no endpoint for that yet.
+   dropped them on the floor is worse than not offering them.
 
-   Two-factor is shown, not switched: `two_factor_enabled` is on
-   the account record but nothing exposes a way to change it.
+   The email field is read-only by decision, not by omission: an
+   address is what password reset and the two-step code are sent to,
+   so changing it means re-verifying it, and the product doesn't
+   offer that. It is not a gap waiting to be filled.
+
+   Two-factor is a real switch now, against
+   `PATCH /v1/account/two-factor`. Turning it off asks for the
+   password, because a live token alone shouldn't be able to strip a
+   factor off the account.
+
+   The avatar is a real upload: `POST /image` with a `ProfilePic`
+   slot, then the returned uuid goes to the profile PATCH that has
+   always accepted `profile_picture`.
 ═══════════════════════════════════════════════════════════════ */
 import { Fetcher } from './fetcher.js';
 import { toast } from './toast.js';
 import { mountAccountChrome, currentProfile } from './account.js';
+import { imageUrl } from './catalog.js';
+import { session } from './session.js';
 
 const $ = (sel) => document.querySelector(sel);
 const $$ = (sel) => Array.prototype.slice.call(document.querySelectorAll(sel));
@@ -48,11 +59,8 @@ function renderHeader(profile, stats) {
   const segment = stats && stats.segment ? SEGMENT_LABEL[stats.segment] || stats.segment : '';
   $('.profile-member-since').textContent = [since, segment].filter(Boolean).join(' · ');
 
-  /* Uploading an avatar needs POST /image with a ProfilePic slot and
-     then a PATCH — worth doing, but it is a feature rather than a
-     wiring job, so the pencil is hidden instead of lying. */
-  const avatarEdit = $('.profile-avatar-edit');
-  if (avatarEdit) avatarEdit.style.display = 'none';
+  paintAvatar(profile.profile_picture);
+  wireAvatar();
 
   const editBtn = $('.profile-edit-btn');
   if (editBtn) {
@@ -113,23 +121,184 @@ function renderPersonal(profile) {
   };
 }
 
+/* ── Avatar ───────────────────────────────────────────────────  */
+
+const MAX_AVATAR_BYTES = 5 * 1024 * 1024;
+
+/** Show the stored picture, or leave the placeholder silhouette. */
+function paintAvatar(imageId) {
+  const wrap = $('.profile-avatar');
+  if (!wrap) return;
+
+  const url = imageUrl(imageId);
+  if (!url) {
+    wrap.style.backgroundImage = '';
+    return;
+  }
+
+  // Painted as a background so the SVG placeholder underneath stays as
+  // the fallback if the image 404s.
+  wrap.style.backgroundImage = "url('" + url + "')";
+  wrap.style.backgroundSize = 'cover';
+  wrap.style.backgroundPosition = 'center';
+  const svg = wrap.querySelector('svg');
+  if (svg) svg.style.display = 'none';
+}
+
+function wireAvatar() {
+  const edit = $('.profile-avatar-edit');
+  if (!edit) return;
+
+  /* `POST /image` sits outside `/api`, takes multipart and must not have
+     an explicit Content-Type — the browser has to set the boundary. So
+     this is a raw fetch rather than a Fetcher call, the same as the
+     admin console's uploader. */
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'image/*';
+  input.hidden = true;
+  document.body.appendChild(input);
+
+  edit.style.cursor = 'pointer';
+  edit.tabIndex = 0;
+  edit.setAttribute('role', 'button');
+  edit.setAttribute('aria-label', 'Change your profile picture');
+  const open = () => input.click();
+  edit.addEventListener('click', open);
+  edit.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); }
+  });
+
+  input.addEventListener('change', async () => {
+    const file = input.files && input.files[0];
+    input.value = '';
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      toast.error('That file isn’t an image.');
+      return;
+    }
+    if (file.size > MAX_AVATAR_BYTES) {
+      toast.error('That image is over 5 MB — please pick a smaller one.');
+      return;
+    }
+
+    edit.style.opacity = '0.5';
+    try {
+      const form = new FormData();
+      form.append('image_0', file);
+      form.append('used_at_0', 'ProfilePic');
+
+      const headers = {};
+      const token = session.token();
+      if (token) headers.Authorization = 'Bearer ' + token;
+
+      const response = await fetch((window.projectDomain || '') + '/image', {
+        method: 'POST',
+        headers,
+        body: form,
+      });
+
+      if (!response.ok) {
+        toast.error('That image couldn’t be uploaded.');
+        return;
+      }
+
+      // The endpoint answers with a bare array of new image uuids.
+      const ids = await response.json();
+      const id = Array.isArray(ids) ? ids[0] : null;
+      if (!id) {
+        toast.error('That image couldn’t be uploaded.');
+        return;
+      }
+
+      const saved = await Fetcher.patch({
+        endpoint: '/v1/account/profile',
+        body: { profile_picture: id },
+      });
+      if (!saved.ok) return;
+
+      paintAvatar(id);
+      toast.success('Profile picture updated');
+    } catch (error) {
+      toast.error('That image couldn’t be uploaded.');
+    } finally {
+      edit.style.opacity = '';
+    }
+  });
+}
+
 /* ── Security ─────────────────────────────────────────────────  */
 
 function renderSecurity(profile) {
   const state = $('#twofa-state');
   const toggle = $('#twofa');
   if (state && toggle) {
-    const on = !!profile.two_factor_enabled;
-    toggle.classList.toggle('on', on);
-    state.textContent = on ? 'Enabled' : 'Not enabled';
-    state.style.color = on ? 'var(--success)' : 'var(--subtle)';
-    /* Nothing exposes a way to turn this on or off, so the switch is
-       shown as a state rather than a control that silently does
-       nothing. toggle.js is told to leave it alone. */
+    let on = !!profile.two_factor_enabled;
+
+    const paint = () => {
+      toggle.classList.toggle('on', on);
+      state.textContent = on ? 'Enabled' : 'Not enabled';
+      state.style.color = on ? 'var(--success)' : 'var(--subtle)';
+    };
+    paint();
+
+    /* This module owns the switch, so toggle.js's delegated listener
+       must not also flip it — its handler runs after ours and would
+       undo the repaint on a failed request. */
     toggle.dataset.readonly = 'true';
-    toggle.style.cursor = 'default';
-    toggle.style.opacity = '0.6';
-    toggle.title = 'Managed from account security settings';
+    toggle.style.cursor = 'pointer';
+    toggle.tabIndex = 0;
+    toggle.setAttribute('role', 'switch');
+    toggle.setAttribute('aria-checked', String(on));
+
+    let busy = false;
+    const flip = async () => {
+      if (busy) return;
+
+      const wanted = !on;
+      const payload = { enabled: wanted };
+
+      /* Turning it off costs the password. Asking here rather than
+         letting the endpoint 400 keeps the round trip out of the way
+         of someone who simply mis-clicked. */
+      if (!wanted) {
+        const password = window.prompt('Enter your password to turn off two-step sign-in:');
+        if (password === null) return;
+        if (!password) {
+          toast.error('Your password is required to turn this off.');
+          return;
+        }
+        payload.password = password;
+      }
+
+      busy = true;
+      toggle.style.opacity = '0.6';
+      const response = await Fetcher.patch({
+        endpoint: '/v1/account/two-factor',
+        body: payload,
+        showError: false,
+      });
+      busy = false;
+      toggle.style.opacity = '';
+
+      if (!response.ok) {
+        toast.error(response.error || "That couldn't be changed");
+        return;
+      }
+
+      on = !!response.data.two_factor_enabled;
+      paint();
+      toggle.setAttribute('aria-checked', String(on));
+      toast.success(on
+        ? 'Two-step sign-in is on — you’ll get a code by email next time'
+        : 'Two-step sign-in is off');
+    };
+
+    toggle.addEventListener('click', flip);
+    toggle.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); flip(); }
+    });
   }
 
   const button = $$('.profile-form-card')[1].querySelector('.btn-outline');

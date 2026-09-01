@@ -172,6 +172,82 @@ function wireOtp(rowId, onComplete) {
 
 /* ── Login ────────────────────────────────────────────────── */
 
+/* ── Two-step sign-in ─────────────────────────────────────────
+   Swaps the password form for a code field rather than opening a
+   dialog: this is the same act of signing in, not a detour, and the
+   browser's password manager should not be asked to fill anything
+   here.                                                            */
+function askForCode(requestId, destination) {
+  /* The login page has no single form element to swap — it's a flat run
+     of `.form-group` blocks, a social block and a divider, all siblings
+     of the submit button, with the "create an account" link after it.
+     So: hide everything before the button, and the button, and put the
+     code step in its place. The link below stays. */
+  const anchor = $('login-submit');
+  if (!anchor || !anchor.parentElement) {
+    toast.error('Enter the code from your email to finish signing in');
+    return;
+  }
+  const parent = anchor.parentElement;
+  const hidden = [];
+  for (let node = anchor.previousElementSibling; node; node = node.previousElementSibling) {
+    if (node.style.display !== 'none') { hidden.push(node); node.style.display = 'none'; }
+  }
+  anchor.style.display = 'none';
+
+  const step = document.createElement('div');
+  step.className = 'auth-2fa-step';
+
+  const heading = document.createElement('h2');
+  heading.style.cssText = 'margin:0 0 6px;font-size:19px;font-weight:800;color:var(--black);';
+  heading.textContent = 'Check your email';
+
+  const blurb = document.createElement('p');
+  blurb.style.cssText = 'margin:0 0 18px;font-size:13.5px;line-height:1.6;color:var(--mid);';
+  blurb.textContent = 'We sent you a 6-digit code. It expires in 15 minutes.';
+
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.className = 'form-input';
+  input.inputMode = 'numeric';
+  input.autocomplete = 'one-time-code';
+  input.maxLength = 6;
+  input.placeholder = '000000';
+  input.setAttribute('aria-label', 'Six-digit sign-in code');
+  input.style.cssText = 'letter-spacing:6px;font-size:20px;text-align:center;';
+
+  const button = document.createElement('button');
+  button.className = 'btn btn-primary';
+  button.style.cssText = 'width:100%;margin-top:14px;';
+  button.textContent = 'Verify and sign in';
+
+  step.append(heading, blurb, input, button);
+
+  /* The password field is emptied as well as hidden, so a stale value
+     can't be resubmitted from behind the code step. */
+  const password = $('login-password');
+  if (password) password.value = '';
+
+  parent.insertBefore(step, anchor);
+  input.focus();
+
+  const submit = () => withBusy(button, 'Verifying…', async () => {
+    const code = input.value.trim();
+    if (code.length < 6) { toast.error('Enter the 6-digit code'); input.focus(); return; }
+
+    const res = await Fetcher.post({
+      endpoint: '/v1/auth/verify-sign-in-code',
+      body: { request_id: requestId, validation_code: code },
+    });
+    if (!res.ok) { input.select(); return; }
+
+    await completeSignIn(res.data, destination);
+  });
+
+  button.onclick = submit;
+  input.addEventListener('keydown', (e) => { if (e.key === 'Enter') submit(); });
+}
+
 function initLogin() {
   const submit = $('login-submit');
   if (!submit) return false;
@@ -195,9 +271,15 @@ function initLogin() {
     });
     if (!res.ok) return;
 
-    // Both sign-in routes wrap the tokens in `auth_payload` alongside a
-    // two_afa_enabled flag; 2FA is not implemented server-side yet, so the
-    // payload is always present.
+    /* Both sign-in routes wrap the tokens in `auth_payload` alongside a
+       `two_afa_enabled` flag. When that flag is set there is no payload:
+       the account has two-step sign-in on, a code has just been emailed,
+       and the request id is what exchanges it for a session. */
+    if (res.data && res.data.two_afa_enabled) {
+      askForCode(res.data.request_id, nextPath(isAdmin ? '/admin' : '/'));
+      return;
+    }
+
     const payload = res.data && res.data.auth_payload;
     if (!payload) { toast.error('Sign-in returned no session'); return; }
 

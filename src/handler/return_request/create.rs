@@ -1,5 +1,7 @@
+use std::collections::HashMap;
 use chrono::Utc;
 use uuid::Uuid;
+use futures::StreamExt;
 use serde::Deserialize;
 use mongodb::bson::doc;
 use actix_web::{web, Error, HttpResponse, HttpRequest};
@@ -47,8 +49,43 @@ pub async fn task(req: HttpRequest, body: web::Json<ReqBody>) -> Result<HttpResp
         return Ok(Response::bad_request("Only a delivered order can be returned"));
     }
 
-    // Each requested line has to be a real line on this order, and not ask
-    // for more than what hasn't already been returned.
+    // What the customer has already claimed on this order. `refunded_quantity`
+    // alone isn't enough: it is only written when a return is actually
+    // refunded, so between filing and resolution the same line would otherwise
+    // be returnable again and again. Anything not rejected counts as spoken
+    // for.
+    let mut claimed: HashMap<String, u32> = HashMap::new();
+    {
+        let mut request_cursor = db
+            .collection::<ReturnRequest>("return_request")
+            .find(doc! { "order_id": &body.order_id, "status": { "$ne": "Rejected" } })
+            .await
+            .expect("return request lookup");
+        let mut request_ids = Vec::new();
+        while let Some(result) = request_cursor.next().await {
+            match result {
+                Ok(r) => request_ids.push(r.uuid),
+                Err(error) => log::error!("skipping unreadable return_request: {:?}", error),
+            }
+        }
+
+        if !request_ids.is_empty() {
+            let mut item_cursor = db
+                .collection::<ReturnItem>("return_item")
+                .find(doc! { "return_request_id": { "$in": &request_ids } })
+                .await
+                .expect("return item lookup");
+            while let Some(result) = item_cursor.next().await {
+                match result {
+                    Ok(i) => *claimed.entry(i.variant_id).or_insert(0) += i.quantity,
+                    Err(error) => log::error!("skipping unreadable return_item: {:?}", error),
+                }
+            }
+        }
+    }
+
+    // Each requested line has to be a real line on this order, and not ask for
+    // more than what is left once refunds and open requests are taken off.
     for line in &body.items {
         let order_item = db
             .collection::<OrderItem>("order_item")
@@ -57,9 +94,16 @@ pub async fn task(req: HttpRequest, body: web::Json<ReqBody>) -> Result<HttpResp
             .ok()
             .flatten();
 
-        match order_item {
-            Some(oi) if line.quantity > 0 && line.quantity <= (oi.quantity - oi.refunded_quantity) => {}
-            _ => return Ok(Response::bad_request("One of the selected items can't be returned in that quantity")),
+        let order_item = match order_item {
+            Some(oi) => oi,
+            None => return Ok(Response::bad_request("One of the selected items isn't on this order")),
+        };
+
+        let spoken_for = order_item.refunded_quantity + claimed.get(&line.variant_id).copied().unwrap_or(0);
+        let returnable = order_item.quantity.saturating_sub(spoken_for);
+
+        if line.quantity == 0 || line.quantity > returnable {
+            return Ok(Response::bad_request("One of the selected items can't be returned in that quantity"));
         }
     }
 

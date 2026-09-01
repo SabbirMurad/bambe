@@ -86,7 +86,14 @@ pub async fn task(req: HttpRequest, query: web::Query<ReqQuery>) -> Result<HttpR
             .find(doc! { "product_id": { "$in": &product_ids } })
             .await
             .expect("variant lookup");
-        while let Some(Ok(v)) = variant_cursor.next().await {
+        while let Some(result) = variant_cursor.next().await {
+            let v = match result {
+                Ok(v) => v,
+                Err(error) => {
+                    log::error!("{}: skipping unreadable document: {:?}", module_path!(), error);
+                    continue;
+                }
+            };
             let entry = stock_by_product.entry(v.product_id.clone()).or_insert((0, 0, 0));
             entry.0 += v.stock;
             // The lowest headroom over any one variant is what "low stock"

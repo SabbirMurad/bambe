@@ -71,7 +71,14 @@ pub async fn task(req: HttpRequest, query: web::Query<ReqQuery>) -> Result<HttpR
 
     let mut cursor = result.unwrap();
     let mut orders = Vec::new();
-    while let Some(Ok(o)) = cursor.next().await {
+    while let Some(result) = cursor.next().await {
+        let o = match result {
+            Ok(o) => o,
+            Err(error) => {
+                log::error!("{}: skipping unreadable document: {:?}", module_path!(), error);
+                continue;
+            }
+        };
         orders.push(o);
     }
 

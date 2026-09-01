@@ -38,7 +38,14 @@ async fn resolve_category_ids(db: &mongodb::Database, key: &str) -> Vec<String> 
     let all: Vec<Category> = match db.collection::<Category>("category").find(doc! {}).await {
         Ok(mut cursor) => {
             let mut out = Vec::new();
-            while let Some(Ok(c)) = cursor.next().await {
+            while let Some(result) = cursor.next().await {
+                let c = match result {
+                    Ok(c) => c,
+                    Err(error) => {
+                        log::error!("{}: skipping unreadable document: {:?}", module_path!(), error);
+                        continue;
+                    }
+                };
                 out.push(c);
             }
             out
@@ -145,7 +152,14 @@ pub async fn task(query: web::Query<ReqQuery>) -> Result<HttpResponse, Error> {
         {
             Ok(mut cursor) => {
                 let mut ids = HashSet::new();
-                while let Some(Ok(v)) = cursor.next().await {
+                while let Some(result) = cursor.next().await {
+                    let v = match result {
+                        Ok(v) => v,
+                        Err(error) => {
+                            log::error!("{}: skipping unreadable document: {:?}", module_path!(), error);
+                            continue;
+                        }
+                    };
                     ids.insert(v.product_id);
                 }
                 ids
@@ -191,7 +205,14 @@ pub async fn task(query: web::Query<ReqQuery>) -> Result<HttpResponse, Error> {
 
     let mut cursor = result.unwrap();
     let mut products = Vec::new();
-    while let Some(Ok(p)) = cursor.next().await {
+    while let Some(result) = cursor.next().await {
+        let p = match result {
+            Ok(p) => p,
+            Err(error) => {
+                log::error!("{}: skipping unreadable document: {:?}", module_path!(), error);
+                continue;
+            }
+        };
         products.push(p);
     }
 
@@ -206,7 +227,14 @@ pub async fn task(query: web::Query<ReqQuery>) -> Result<HttpResponse, Error> {
             .await
             .expect("brand lookup");
         let mut map = HashMap::new();
-        while let Some(Ok(b)) = cursor.next().await {
+        while let Some(result) = cursor.next().await {
+            let b = match result {
+                Ok(b) => b,
+                Err(error) => {
+                    log::error!("{}: skipping unreadable document: {:?}", module_path!(), error);
+                    continue;
+                }
+            };
             map.insert(b.uuid.clone(), b);
         }
         map
@@ -222,7 +250,14 @@ pub async fn task(query: web::Query<ReqQuery>) -> Result<HttpResponse, Error> {
             .await
             .expect("image lookup");
         let mut map = HashMap::new();
-        while let Some(Ok(i)) = cursor.next().await {
+        while let Some(result) = cursor.next().await {
+            let i = match result {
+                Ok(i) => i,
+                Err(error) => {
+                    log::error!("{}: skipping unreadable document: {:?}", module_path!(), error);
+                    continue;
+                }
+            };
             map.insert(i.uuid.clone(), i);
         }
         map

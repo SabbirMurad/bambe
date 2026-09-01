@@ -36,7 +36,14 @@ pub async fn list(req: HttpRequest, query: web::Query<ListQuery>) -> Result<Http
 
     let mut out: Vec<Value> = Vec::new();
     if let Ok(mut cursor) = cursor {
-        while let Some(Ok(r)) = cursor.next().await {
+        while let Some(result) = cursor.next().await {
+            let r = match result {
+                Ok(r) => r,
+                Err(error) => {
+                    log::error!("{}: skipping unreadable document: {:?}", module_path!(), error);
+                    continue;
+                }
+            };
             let who = super::display_name(&db, &r.user_id).await;
             out.push(json!({
                 "user_id": r.user_id,

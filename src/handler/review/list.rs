@@ -52,7 +52,14 @@ pub async fn task(query: web::Query<ReqQuery>) -> Result<HttpResponse, Error> {
 
     let mut cursor = result.unwrap();
     let mut reviews = Vec::new();
-    while let Some(Ok(r)) = cursor.next().await {
+    while let Some(result) = cursor.next().await {
+        let r = match result {
+            Ok(r) => r,
+            Err(error) => {
+                log::error!("{}: skipping unreadable document: {:?}", module_path!(), error);
+                continue;
+            }
+        };
         reviews.push(r);
     }
 
@@ -66,7 +73,14 @@ pub async fn task(query: web::Query<ReqQuery>) -> Result<HttpResponse, Error> {
             .await
             .expect("author lookup");
         let mut map = HashMap::new();
-        while let Some(Ok(a)) = cursor.next().await {
+        while let Some(result) = cursor.next().await {
+            let a = match result {
+                Ok(a) => a,
+                Err(error) => {
+                    log::error!("{}: skipping unreadable document: {:?}", module_path!(), error);
+                    continue;
+                }
+            };
             map.insert(a.uuid.clone(), a.username);
         }
         map
@@ -99,7 +113,14 @@ pub async fn task(query: web::Query<ReqQuery>) -> Result<HttpResponse, Error> {
     ];
     let mut breakdown = [0u64; 5];
     if let Ok(mut cursor) = db.collection::<Document>("product_review").aggregate(pipeline).await {
-        while let Some(Ok(d)) = cursor.next().await {
+        while let Some(result) = cursor.next().await {
+            let d = match result {
+                Ok(d) => d,
+                Err(error) => {
+                    log::error!("{}: skipping unreadable document: {:?}", module_path!(), error);
+                    continue;
+                }
+            };
             if let (Some(star), Some(count)) = (d.get_i32("_id").ok(), d.get_i32("count").ok()) {
                 if (1..=5).contains(&star) {
                     breakdown[(star - 1) as usize] = count as u64;

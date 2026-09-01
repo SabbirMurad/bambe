@@ -108,7 +108,14 @@ pub async fn compute_subtotal(db: &Database, cart_id: &str) -> (i64, Vec<String>
         .await
         .expect("cart item lookup");
     let mut items = Vec::new();
-    while let Some(Ok(i)) = cursor.next().await {
+    while let Some(result) = cursor.next().await {
+        let i = match result {
+            Ok(i) => i,
+            Err(error) => {
+                log::error!("{}: skipping unreadable document: {:?}", module_path!(), error);
+                continue;
+            }
+        };
         items.push(i);
     }
 
@@ -122,7 +129,14 @@ pub async fn compute_subtotal(db: &Database, cart_id: &str) -> (i64, Vec<String>
             .await
             .expect("variant lookup");
         let mut map = HashMap::new();
-        while let Some(Ok(v)) = cursor.next().await {
+        while let Some(result) = cursor.next().await {
+            let v = match result {
+                Ok(v) => v,
+                Err(error) => {
+                    log::error!("{}: skipping unreadable document: {:?}", module_path!(), error);
+                    continue;
+                }
+            };
             map.insert(v.uuid.clone(), v);
         }
         map
@@ -151,7 +165,14 @@ pub async fn build_response(db: &Database, cart: &Cart) -> Value {
         .await
         .expect("cart item lookup");
     let mut cart_items = Vec::new();
-    while let Some(Ok(i)) = item_cursor.next().await {
+    while let Some(result) = item_cursor.next().await {
+        let i = match result {
+            Ok(i) => i,
+            Err(error) => {
+                log::error!("{}: skipping unreadable document: {:?}", module_path!(), error);
+                continue;
+            }
+        };
         cart_items.push(i);
     }
 
@@ -165,7 +186,14 @@ pub async fn build_response(db: &Database, cart: &Cart) -> Value {
             .await
             .expect("variant lookup");
         let mut map = HashMap::new();
-        while let Some(Ok(v)) = cursor.next().await {
+        while let Some(result) = cursor.next().await {
+            let v = match result {
+                Ok(v) => v,
+                Err(error) => {
+                    log::error!("{}: skipping unreadable document: {:?}", module_path!(), error);
+                    continue;
+                }
+            };
             map.insert(v.uuid.clone(), v);
         }
         map
@@ -181,7 +209,14 @@ pub async fn build_response(db: &Database, cart: &Cart) -> Value {
             .await
             .expect("product lookup");
         let mut map = HashMap::new();
-        while let Some(Ok(p)) = cursor.next().await {
+        while let Some(result) = cursor.next().await {
+            let p = match result {
+                Ok(p) => p,
+                Err(error) => {
+                    log::error!("{}: skipping unreadable document: {:?}", module_path!(), error);
+                    continue;
+                }
+            };
             map.insert(p.uuid.clone(), p);
         }
         map
@@ -201,7 +236,14 @@ pub async fn build_response(db: &Database, cart: &Cart) -> Value {
             .await
             .expect("brand lookup");
         let mut map = HashMap::new();
-        while let Some(Ok(b)) = cursor.next().await {
+        while let Some(result) = cursor.next().await {
+            let b = match result {
+                Ok(b) => b,
+                Err(error) => {
+                    log::error!("{}: skipping unreadable document: {:?}", module_path!(), error);
+                    continue;
+                }
+            };
             map.insert(b.uuid.clone(), b);
         }
         map

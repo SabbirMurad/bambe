@@ -33,6 +33,9 @@ pub use sign_out as SignOut;
 pub mod forgot_password;
 pub use forgot_password as ForgotPassword;
 
+pub mod verify_sign_in_code;
+pub use verify_sign_in_code as VerifySignInCode;
+
 pub mod verify_reset_code;
 pub use verify_reset_code as VerifyResetCode;
 
@@ -90,7 +93,7 @@ pub async fn delete_account(
     let collection = db.collection::<Account::AccountCore>("account_core");
     let result = collection.delete_one(
         doc!{"uuid": user_id},
-    ).await;
+    ).session(&mut *session).await;
 
     if let Err(error) = result {
         log::error!("{:?}", error);
@@ -102,7 +105,7 @@ pub async fn delete_account(
     <Account::AccountProfile>("account_profile");
     let result = collection.delete_one(
         doc!{"uuid": user_id},
-    ).await;
+    ).session(&mut *session).await;
 
     if let Err(error) = result {
         log::error!("{:?}", error);
@@ -114,7 +117,7 @@ pub async fn delete_account(
     <Account::AccountVerificationRequest>("account_verification_request");
     let result = collection.delete_one(
         doc!{"uuid": user_id},
-    ).await;
+    ).session(&mut *session).await;
 
     if let Err(error) = result {
         log::error!("{:?}", error);

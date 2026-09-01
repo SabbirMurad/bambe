@@ -33,7 +33,14 @@ pub async fn task(req: HttpRequest, query: web::Query<ReqQuery>) -> Result<HttpR
 
     let mut cursor = result.unwrap();
     let mut categories = Vec::new();
-    while let Some(Ok(c)) = cursor.next().await {
+    while let Some(result) = cursor.next().await {
+        let c = match result {
+            Ok(c) => c,
+            Err(error) => {
+                log::error!("{}: skipping unreadable document: {:?}", module_path!(), error);
+                continue;
+            }
+        };
         categories.push(c);
     }
 

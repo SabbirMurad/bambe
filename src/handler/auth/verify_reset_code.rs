@@ -39,7 +39,7 @@ pub async fn task(form_data: web::Json<ValidateResetFormData>) -> Result<HttpRes
 
     let result = collection.find_one(
         doc!{"uuid": user_id},
-    ).await;
+    ).session(&mut session).await;
 
     if let Err(error) = result {
         log::error!("{:?}", error);
@@ -61,7 +61,7 @@ pub async fn task(form_data: web::Json<ValidateResetFormData>) -> Result<HttpRes
     <Account::PasswordResetRequest>("password_reset_request");
     let result = collection.find_one(
         doc!{"user_id": &user.uuid},
-    ).await;
+    ).session(&mut session).await;
 
     if let Err(error) = result {
         log::error!("{:?}", error);
@@ -94,7 +94,7 @@ pub async fn task(form_data: web::Json<ValidateResetFormData>) -> Result<HttpRes
     let result = collection.update_one(
         doc!{ "uuid": reset_request.uuid },
         doc!{"$set": { "code_validated": true }},
-    ).await;
+    ).session(&mut session).await;
 
     if let Err(error) = result {
         log::error!("{:?}", error);

@@ -46,7 +46,14 @@ pub async fn task(req: HttpRequest, query: web::Query<ReqQuery>) -> Result<HttpR
     let mut order_cursor = order_col.find(revenue_filter).await.expect("order lookup");
     let mut revenue: i64 = 0;
     let mut order_count: i64 = 0;
-    while let Some(Ok(o)) = order_cursor.next().await {
+    while let Some(result) = order_cursor.next().await {
+        let o = match result {
+            Ok(o) => o,
+            Err(error) => {
+                log::error!("{}: skipping unreadable document: {:?}", module_path!(), error);
+                continue;
+            }
+        };
         revenue += o.totals.grand_total;
         order_count += 1;
     }
@@ -69,7 +76,14 @@ pub async fn task(req: HttpRequest, query: web::Query<ReqQuery>) -> Result<HttpR
         "placed_at": { "$gte": from, "$lte": now },
         "payment_status": { "$in": ["Paid", "PartiallyRefunded", "Refunded"] },
     }).await.expect("order lookup");
-    while let Some(Ok(o)) = cursor.next().await {
+    while let Some(result) = cursor.next().await {
+        let o = match result {
+            Ok(o) => o,
+            Err(error) => {
+                log::error!("{}: skipping unreadable document: {:?}", module_path!(), error);
+                continue;
+            }
+        };
         let day = Utc.timestamp_millis_opt(o.placed_at).unwrap().format("%Y-%m-%d").to_string();
         *daily.entry(day).or_insert(0) += o.totals.grand_total;
     }
@@ -77,7 +91,14 @@ pub async fn task(req: HttpRequest, query: web::Query<ReqQuery>) -> Result<HttpR
 
     let mut recent_cursor = order_col.find(doc! {}).sort(doc! { "placed_at": -1 }).limit(10).await.expect("order lookup");
     let mut recent_orders = Vec::new();
-    while let Some(Ok(o)) = recent_cursor.next().await {
+    while let Some(result) = recent_cursor.next().await {
+        let o = match result {
+            Ok(o) => o,
+            Err(error) => {
+                log::error!("{}: skipping unreadable document: {:?}", module_path!(), error);
+                continue;
+            }
+        };
         recent_orders.push(json!({
             "uuid": o.uuid,
             "number": o.number,
@@ -96,7 +117,14 @@ pub async fn task(req: HttpRequest, query: web::Query<ReqQuery>) -> Result<HttpR
         .await
         .expect("variant lookup");
     let mut low_stock = Vec::new();
-    while let Some(Ok(v)) = low_stock_cursor.next().await {
+    while let Some(result) = low_stock_cursor.next().await {
+        let v = match result {
+            Ok(v) => v,
+            Err(error) => {
+                log::error!("{}: skipping unreadable document: {:?}", module_path!(), error);
+                continue;
+            }
+        };
         let product = db.collection::<Product>("product").find_one(doc! { "uuid": &v.product_id }).await.ok().flatten();
         low_stock.push(json!({
             "variant_id": v.uuid,

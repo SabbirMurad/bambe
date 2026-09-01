@@ -76,6 +76,9 @@ async fn main() -> io::Result<()> {
     // Unique email indexes on account_core (users) and admin_account (admins).
     Handler::Auth::ensure_indexes().await;
 
+    // Uniqueness and lookup indexes for the storefront collections.
+    BuiltIns::indexes::ensure_indexes(&BuiltIns::mongo::MongoDB.connect()).await;
+
     let mut listenfd = ListenFd::from_env();
 
     let host = env::var("APP_HOST").expect("APP_HOST must be set on .env file");
@@ -296,6 +299,7 @@ async fn main() -> io::Result<()> {
             .configure(Routes::Checkout::router)
             .configure(Routes::Order::router)
             .configure(Routes::PaymentMethod::router)
+            .configure(Routes::Payment::router)
             .configure(Routes::ReturnRequest::router)
             .configure(Routes::SupportTicket::router)
             /* Page routes last: its scope("") matches everything, so an API

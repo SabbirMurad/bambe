@@ -27,8 +27,9 @@ import { draft, guard, paintSummary, selectIn, wireKeyboardActivation } from './
 
 const $ = (sel) => document.querySelector(sel);
 
-let methods = [];
 let addresses = [];
+// From GET /v1/checkout/quote — false when the gateway has no credentials.
+let gatewayAvailable = true;
 
 /* ── Icons ────────────────────────────────────────────────────  */
 
@@ -88,16 +89,7 @@ function paintRadios(rows) {
   });
 }
 
-function cardLabel(method) {
-  if (method.card_brand && method.last4) return method.card_brand + ' ending ' + method.last4;
-  if (method.account_email) return method.account_email;
-  return method.kind;
-}
 
-function expiryNote(method) {
-  if (!method.exp_month || !method.exp_year) return '';
-  return 'Expires ' + String(method.exp_month).padStart(2, '0') + '/' + String(method.exp_year).slice(-2);
-}
 
 /* ── Render ───────────────────────────────────────────────────  */
 
@@ -105,32 +97,50 @@ function render() {
   const host = $('.payment-methods');
   host.innerHTML = '';
 
-  methods.forEach((method) => {
-    host.appendChild(methodRow({
-      icon: method.kind === 'PayPal' ? ICONS.paypal : ICONS.card,
-      name: cardLabel(method),
-      note: expiryNote(method),
-      kind: method.kind,
-      methodId: method.uuid,
-      badge: method.is_default ? 'Default' : null,
-    }));
+  /* Saved cards are not offered here.
+
+     SSLCommerz's hosted checkout takes the card on its own page and
+     returns no reusable token, so there is nothing on this server that
+     could charge a saved row — picking one would send the shopper to
+     the same page to type the same number, having implied otherwise.
+     The rows still live on the profile, where they are a record rather
+     than a promise. */
+
+  /* PayPal and Apple Pay are gone: nothing routes them. Everything that
+     isn't cash on delivery goes to SSLCommerz, whose hosted page covers
+     cards, mobile banking and net banking in one redirect — so it is one
+     option here, described as what it actually is. */
+  const options = [];
+  if (gatewayAvailable) {
+    options.push({
+      icon: ICONS.card,
+      name: 'Card, mobile banking or net banking',
+      note: "You'll pay on SSLCommerz's secure page, then come back here",
+      kind: 'Card',
+    });
+  }
+  options.push({
+    icon: ICONS.cash,
+    name: 'Cash on Delivery',
+    note: 'Pay the courier when it arrives',
+    kind: 'CashOnDelivery',
   });
+  options.forEach((option) => host.appendChild(methodRow(option)));
 
-  [
-    { icon: ICONS.paypal, name: 'PayPal', note: "You'll be redirected to approve the payment", kind: 'PayPal' },
-    { icon: ICONS.apple, name: 'Apple Pay', note: 'Confirm with Touch ID or Face ID', kind: 'ApplePay' },
-    { icon: ICONS.cash, name: 'Cash on Delivery', note: 'Pay the courier when it arrives', kind: 'CashOnDelivery' },
-  ].forEach((option) => host.appendChild(methodRow(option)));
-
-  /* Saying why the card form is missing, rather than leaving a gap
-     where every other shop has one. */
+  /* Still no card *form* — SSLCommerz's hosted page is where the number
+     is typed, which is the point of using them. What changed is that
+     paying by card now works; only saving one for next time doesn't. */
   const notice = document.createElement('div');
   notice.style.cssText = 'display:flex;gap:10px;padding:14px 16px;margin-top:4px;border:1px dashed var(--border);border-radius:var(--radius-md);font-size:12.5px;color:var(--mid);line-height:1.6;';
   notice.innerHTML =
     '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="flex-shrink:0;margin-top:1px;"><circle cx="8" cy="8" r="6.5" stroke="#94908A" stroke-width="1.2"/><path d="M8 7.5v3.5M8 5.2v.6" stroke="#94908A" stroke-width="1.4" stroke-linecap="round"/></svg>'
-    + '<span><strong style="color:var(--dark);">Adding a new card isn’t available yet.</strong> '
-    + 'Card details are tokenised by the payment processor, and none is connected to this store yet — '
-    + 'so no card number is ever typed into, or stored by, Bambe. Cards already on your account still work.</span>';
+    + (gatewayAvailable
+      ? '<span><strong style="color:var(--dark);">No card number is typed into Bambe.</strong> '
+        + 'You’ll finish paying on SSLCommerz’s own page and come back here. '
+        + 'Cards aren’t saved for next time yet.</span>'
+      : '<span><strong style="color:var(--dark);">Card payment is unavailable right now.</strong> '
+        + 'The payment gateway isn’t reachable, so cash on delivery is the only option '
+        + 'at the moment. Nothing is charged until the courier arrives.</span>');
   host.appendChild(notice);
 
   const rows = Array.prototype.slice.call(host.querySelectorAll('.payment-method'));
@@ -228,9 +238,28 @@ function wireContinue() {
 }
 
 /* ── Boot ─────────────────────────────────────────────────────  */
+/* Why the shopper is back here rather than on a receipt. SSLCommerz
+   redirects to `/checkout/payment?error=...` on a decline, a cancel, or
+   a callback we couldn't verify — in every case the order was released
+   and they can try again. */
+const RETURN_MESSAGE = {
+  failed: 'That payment didn’t go through. Nothing was charged — you can try again or pay on delivery.',
+  cancelled: 'Payment was cancelled. Your basket is still here.',
+  verification: 'We couldn’t confirm that payment with the gateway, so nothing was charged. Please try again.',
+};
+
 (async function init() {
+  const returned = new URLSearchParams(location.search).get('error');
+  if (returned && RETURN_MESSAGE[returned]) {
+    toast.error(RETURN_MESSAGE[returned]);
+    // Drop the parameter so a refresh doesn't repeat the message.
+    history.replaceState(null, '', location.pathname);
+  }
+
   const quote = await guard();
   if (!quote) return;
+
+  gatewayAvailable = quote.card_payment_available !== false;
 
   // Step one is what makes this step answerable: no address, no
   // delivery method, nothing to bill.
@@ -241,12 +270,7 @@ function wireContinue() {
 
   paintSummary(quote, { showItems: false });
 
-  const [methodList, addressList] = await Promise.all([
-    Fetcher.get({ endpoint: '/v1/payment-method/list' }),
-    Fetcher.get({ endpoint: '/v1/address/list' }),
-  ]);
-
-  methods = methodList.ok ? (methodList.data || []) : [];
+  const addressList = await Fetcher.get({ endpoint: '/v1/address/list' });
   addresses = addressList.ok ? (addressList.data || []) : [];
 
   render();

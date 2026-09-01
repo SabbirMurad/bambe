@@ -263,6 +263,7 @@ async function paintNavCounts() {
     else if (label.startsWith('customers')) items.customers = count;
     else if (label.startsWith('coupons')) items.coupons = count;
     else if (label.startsWith('support')) items.support = count;
+    else if (label.startsWith('returns')) items.returns = count;
   });
 
   const set = (el, value) => {
@@ -271,13 +272,14 @@ async function paintNavCounts() {
     el.style.display = value ? '' : 'none';
   };
 
-  const [orders, products, categories, customers, coupons, tickets] = await Promise.all([
+  const [orders, products, categories, customers, coupons, tickets, returns] = await Promise.all([
     Fetcher.get({ endpoint: '/v1/admin/order/list', query: { limit: 1 }, showError: false }),
     Fetcher.get({ endpoint: '/v1/admin/product/list', query: { limit: 1 }, showError: false }),
     Fetcher.get({ endpoint: '/v1/admin/category/list', showError: false }),
     Fetcher.get({ endpoint: '/v1/admin/customer/list', query: { limit: 1 }, showError: false }),
     Fetcher.get({ endpoint: '/v1/admin/coupon/list', query: { limit: 1 }, showError: false }),
     Fetcher.get({ endpoint: '/v1/admin/support/ticket/list', query: { status: 'open', limit: 1 }, showError: false }),
+    Fetcher.get({ endpoint: '/v1/admin/return/list', query: { limit: 1 }, showError: false }),
   ]);
 
   set(items.orders, orders.ok ? orders.data.total : 0);
@@ -285,6 +287,14 @@ async function paintNavCounts() {
   set(items.categories, categories.ok ? (categories.data || []).length : 0);
   set(items.customers, customers.ok ? customers.data.total : 0);
   set(items.coupons, coupons.ok ? coupons.data.total : 0);
+
+  /* The badge is the open queue, not the lifetime total — a count of
+     every return ever filed tells staff nothing about today. */
+  set(items.returns, returns.ok ? ((returns.data.stats && returns.data.stats.open) || 0) : 0);
+  if (items.returns) {
+    items.returns.classList.toggle('alert',
+      returns.ok && ((returns.data.stats && returns.data.stats.open) || 0) > 0);
+  }
 
   const open = tickets.ok ? tickets.data.total : 0;
   set(items.support, open);

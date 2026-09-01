@@ -128,6 +128,10 @@ pub async fn admin_orders(template: web::Data<Tera>) -> Result<HttpResponse, Err
   render(&template, "admin/orders.html")
 }
 
+pub async fn admin_returns(template: web::Data<Tera>) -> Result<HttpResponse, Error> {
+  render(&template, "admin/returns.html")
+}
+
 pub async fn admin_customers(template: web::Data<Tera>) -> Result<HttpResponse, Error> {
   render(&template, "admin/customers.html")
 }

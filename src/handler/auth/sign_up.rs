@@ -99,7 +99,7 @@ pub async fn task(form_data: web::Json<ReqBody>) -> Result<HttpResponse, Error> 
     let collection = db.collection::<Account::AccountCore>("account_core");
     let result = collection.insert_one(
         account_core,
-    ).await;
+    ).session(&mut session).await;
 
     if let Err(error) = result {
       log::error!("{:?}", error);
@@ -122,7 +122,7 @@ pub async fn task(form_data: web::Json<ReqBody>) -> Result<HttpResponse, Error> 
 
     let result = collection.insert_one(
         account_profile,
-    ).await;
+    ).session(&mut session).await;
 
     if let Err(error) = result {
         log::error!("{:?}", error);
@@ -146,7 +146,7 @@ pub async fn task(form_data: web::Json<ReqBody>) -> Result<HttpResponse, Error> 
     <Account::AccountVerificationRequest>("account_verification_request");
     let result = collection.insert_one(
         request,
-    ).await;
+    ).session(&mut session).await;
 
     if let Err(error) = result {
         log::error!("{:?}", error);
@@ -190,7 +190,7 @@ async fn account_already_exist(
     let collection = db.collection::<Account::AccountCore>("account_core");
     let result = collection.find_one(
       doc!{"email_address": email_address, "role": "User"},
-    ).await;
+    ).session(&mut *session).await;
 
     if let Err(error) = result {
       log::error!("{:?}", error);
@@ -224,7 +224,7 @@ async fn account_already_exist(
     <Account::AccountProfile>("account_profile");
     let result = collection.find_one(
       doc!{"username": username},
-    ).await;
+    ).session(&mut *session).await;
 
     if let Err(error) = result {
       log::error!("{:?}", error);
@@ -238,7 +238,7 @@ async fn account_already_exist(
         let collection = db.collection::<Account::AccountCore>("account_core");
         let result = collection.find_one(
           doc!{"uuid": &account_profile.uuid},
-        ).await;
+        ).session(&mut *session).await;
     
         if let Err(error) = result {
           log::error!("{:?}", error);
@@ -279,7 +279,7 @@ async fn delete_account(
     let collection = db.collection::<Account::AccountCore>("account_core");
     let result = collection.delete_one(
         doc!{"uuid": user_id},
-    ).await;
+    ).session(&mut *session).await;
 
     if let Err(error) = result {
         log::error!("{:?}", error);
@@ -291,7 +291,7 @@ async fn delete_account(
     <Account::AccountProfile>("account_profile");
     let result = collection.delete_one(
         doc!{"uuid": user_id},
-    ).await;
+    ).session(&mut *session).await;
 
     if let Err(error) = result {
         log::error!("{:?}", error);
@@ -303,7 +303,7 @@ async fn delete_account(
     <Account::AccountVerificationRequest>("account_verification_request");
     let result = collection.delete_one(
         doc!{"uuid": user_id},
-    ).await;
+    ).session(&mut *session).await;
 
     if let Err(error) = result {
         log::error!("{:?}", error);

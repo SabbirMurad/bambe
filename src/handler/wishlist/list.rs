@@ -27,7 +27,14 @@ pub async fn task(req: HttpRequest) -> Result<HttpResponse, Error> {
 
     let mut cursor = result.unwrap();
     let mut wishlist_items = Vec::new();
-    while let Some(Ok(w)) = cursor.next().await {
+    while let Some(result) = cursor.next().await {
+        let w = match result {
+            Ok(w) => w,
+            Err(error) => {
+                log::error!("{}: skipping unreadable document: {:?}", module_path!(), error);
+                continue;
+            }
+        };
         wishlist_items.push(w);
     }
 
@@ -41,7 +48,14 @@ pub async fn task(req: HttpRequest) -> Result<HttpResponse, Error> {
             .await
             .expect("product lookup");
         let mut map = HashMap::new();
-        while let Some(Ok(p)) = cursor.next().await {
+        while let Some(result) = cursor.next().await {
+            let p = match result {
+                Ok(p) => p,
+                Err(error) => {
+                    log::error!("{}: skipping unreadable document: {:?}", module_path!(), error);
+                    continue;
+                }
+            };
             map.insert(p.uuid.clone(), p);
         }
         map
@@ -60,7 +74,14 @@ pub async fn task(req: HttpRequest) -> Result<HttpResponse, Error> {
             .await
             .expect("image lookup");
         let mut map = HashMap::new();
-        while let Some(Ok(i)) = cursor.next().await {
+        while let Some(result) = cursor.next().await {
+            let i = match result {
+                Ok(i) => i,
+                Err(error) => {
+                    log::error!("{}: skipping unreadable document: {:?}", module_path!(), error);
+                    continue;
+                }
+            };
             map.insert(i.uuid.clone(), i);
         }
         map
