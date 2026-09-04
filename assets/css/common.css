@@ -482,7 +482,7 @@ body::-webkit-scrollbar-corner {
   font-size: 11.5px;
   color: rgba(255,255,255,0.4);
 }
-.footer-pay-icons { display: flex; gap: 8px; align-items: center; }
+.footer-pay-icons { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 .pay-icon {
   height: 20px;
   padding: 0 8px;

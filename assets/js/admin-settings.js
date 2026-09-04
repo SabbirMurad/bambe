@@ -13,8 +13,9 @@
    were pure decoration: nothing in the model stores which payment
    methods are enabled, and `place_order.rs` accepts whatever the
    checkout sends. Rather than leave switches that flip and mean
-   nothing, the panel now reports what the backend actually
-   supports and says plainly that no processor is connected.
+   nothing, the panel reports what checkout can actually complete —
+   SSLCommerz and cash on delivery — and says which of the two is
+   real money.
 
    The Notifications panel goes the same way: nothing sends staff
    email, and `notification` rows are never written by any handler
@@ -238,23 +239,23 @@ function rebuildPayments(panel) {
   notice.style.cssText = 'padding:16px 18px;border:1px dashed var(--border);'
     + 'border-radius:var(--radius-md);background:var(--input-bg);'
     + 'font-size:13px;color:var(--subtle);line-height:1.7;';
-  notice.textContent = 'No payment processor is connected to this store. '
-    + 'Checkout accepts saved cards, PayPal, Apple Pay and cash on delivery as '
-    + 'labels on the order — nothing is charged, and refunds recorded in the '
-    + 'order drawer are bookkeeping only. There is no setting here to change '
-    + 'that: which methods are offered is not stored anywhere, and connecting '
-    + 'a processor is a server-side change.';
+  notice.textContent = 'Checkout offers two things: SSLCommerz, whose hosted page '
+    + 'takes cards, mobile banking and net banking, and cash on delivery. '
+    + 'An SSLCommerz payment is real — the order is only marked paid once their '
+    + 'callback validates it — while a refund recorded in the order drawer is '
+    + 'still bookkeeping and does not reach the gateway. There is no setting '
+    + 'here to change that: which methods are offered is not stored anywhere, '
+    + 'and the gateway credentials are server-side configuration.';
   body.appendChild(notice);
 
   const list = document.createElement('div');
   list.style.cssText = 'margin-top:18px;display:flex;flex-direction:column;gap:10px;';
 
   [
-    ['Saved cards', 'Offered at checkout. A card can only be added through a processor SDK, so no card can be added today.'],
-    ['PayPal', 'Offered at checkout as a payment label.'],
-    ['Apple Pay', 'Offered at checkout as a payment label.'],
-    ['Cash on delivery', 'Offered at checkout. The order stays unpaid until collection.'],
-  ].forEach(([name, detail]) => {
+    ['SSLCommerz', 'Card, mobile banking and net banking, on their hosted page. Shown at checkout only while the server has credentials for it.', 'Available'],
+    ['Cash on delivery', 'Always offered. The order stays unpaid until the courier collects.', 'Available'],
+    ['Saved cards', 'Not offered. The hosted page returns no reusable token, so a saved row could never be charged.', 'Not offered'],
+  ].forEach(([name, detail, state]) => {
     const row = document.createElement('div');
     row.style.cssText = 'display:flex;justify-content:space-between;align-items:center;'
       + 'gap:16px;padding:10px 0;border-bottom:1px solid var(--border);';
@@ -269,7 +270,7 @@ function rebuildPayments(panel) {
     text.append(heading, description);
 
     row.appendChild(text);
-    row.appendChild(tag('Available', 'tag-green'));
+    row.appendChild(tag(state, state === 'Available' ? 'tag-green' : 'tag-gray'));
     list.appendChild(row);
   });
 

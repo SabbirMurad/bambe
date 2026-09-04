@@ -7,16 +7,18 @@
    Visa number typed into it. That form is not wired up here, and
    deliberately so. `POST /v1/payment-method` takes a
    `provider_token`: an opaque handle a processor's own client SDK
-   mints in the browser, and the endpoint stores nothing else. There
-   is no processor connected, so there is nothing to mint one, and a
-   form that posted a real card number to this backend would be
-   collecting card data the system is built specifically not to hold.
-   The page says that plainly instead.
+   mints in the browser, and the endpoint stores nothing else.
+   SSLCommerz's hosted page mints no such token — it takes the number
+   on its own domain and hands back a one-off transaction — so there
+   is still nothing to save, and a form that posted a real card number
+   to this backend would be collecting card data the system is built
+   specifically not to hold. The page says that plainly instead.
 
-   What does work: any card already saved on the account, PayPal,
-   Apple Pay and cash on delivery. `place_order` records everything
-   except cash on delivery as a mock success — so the flow is real
-   end to end, and the money is not.
+   What is offered is what the server can actually complete: the
+   SSLCommerz hosted page — cards, mobile banking, net banking, all
+   one redirect — and cash on delivery. The gateway row appears only
+   while the server has credentials for it; cash on delivery is
+   always there, and is the whole list when it isn't.
 
    Billing address defaults to the delivery address, which is what
    `place_order` does when `billing_address_id` is left out.
@@ -35,8 +37,6 @@ let gatewayAvailable = true;
 
 const ICONS = {
   card: '<rect x="1" y="4" width="18" height="12" rx="2.5" stroke="var(--blue)" stroke-width="1.4"/><path d="M1 8h18" stroke="var(--blue)" stroke-width="1.4"/><circle cx="5" cy="13" r="1.5" fill="var(--blue)" opacity=".4"/><circle cx="8" cy="13" r="1.5" fill="var(--blue)"/>',
-  paypal: '<path d="M6 15H4.5a1.5 1.5 0 0 1-1.48-1.74L5 6h6a3.5 3.5 0 0 1 3.5 3.5C14.5 11.5 13 13 11 13H9L8 15H6Z" stroke="#94908A" stroke-width="1.3" stroke-linejoin="round"/><path d="M9 13l-1 4h2l1-2h1.5a3.5 3.5 0 0 0 3.5-3.5" stroke="#94908A" stroke-width="1.3" stroke-linejoin="round"/>',
-  apple: '<path d="M13 3c.5 1 .2 2-.5 2.5C11.8 6.1 11 6 10.5 5.5 10 4.5 10.3 3.5 11 3c.6-.4 1.6-.4 2 0Z" stroke="#94908A" stroke-width="1.2"/><path d="M6 8c1-1.5 2.5-2 4-2 1.2 0 2 .5 3 .5 1 0 2-.5 3.5-.2C18 7 19 9 19 11c0 2.5-1.5 5-3 6.5-.8.8-1.5 1-2.5 1-1 0-1.5-.5-2.5-.5s-1.5.5-2.5.5c-1 0-1.8-.4-2.5-1.5C4.5 15.5 3 12.5 3 10c0-1.8.5-3 3-2Z" stroke="#94908A" stroke-width="1.2"/>',
   cash: '<rect x="2" y="5" width="16" height="11" rx="2" stroke="#94908A" stroke-width="1.3"/><circle cx="10" cy="10.5" r="2.5" stroke="#94908A" stroke-width="1.2"/><path d="M5 5V4a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v1" stroke="#94908A" stroke-width="1.2"/>',
 };
 
