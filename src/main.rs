@@ -76,6 +76,10 @@ async fn main() -> io::Result<()> {
     // Unique email indexes on account_core (users) and admin_account (admins).
     Handler::Auth::ensure_indexes().await;
 
+    // Upgrades any password still stored as plaintext by the old scheme.
+    // Idempotent, so it costs one scan on a database that is already clean.
+    Handler::Auth::migrate_plaintext_passwords().await;
+
     // Uniqueness and lookup indexes for the storefront collections.
     BuiltIns::indexes::ensure_indexes(&BuiltIns::mongo::MongoDB.connect()).await;
 

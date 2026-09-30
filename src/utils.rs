@@ -2,6 +2,7 @@ pub mod response;
 pub mod blurhash;
 pub mod string;
 pub mod validation;
+pub mod password;
 pub mod mongo;
 pub mod coupon;
 pub mod pricing;

@@ -237,9 +237,17 @@ input.otp-box:focus { border-color: var(--primary-text); background: var(--white
 .terms-row { font-size: 12px; color: var(--subtle); line-height: 1.55; }
 .terms-row a { color: var(--primary-text); font-weight: 600; }
 
-/* Phone input with dial code */
+/* Phone input with dial code.
+
+   The dial code is a <select>, and select.js replaces it with a button
+   carrying the same class — so these rules target the button. The
+   native element it leaves behind is styled by .select-native alone.
+
+   The min-width keeps the field boundary still: dial codes run from
+   two characters to five, and the input beside it shouldn't resize
+   every time the country changes. */
 .phone-input-group { display: flex; gap: 0; }
-.phone-dial {
+button.phone-dial {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -252,7 +260,12 @@ input.otp-box:focus { border-color: var(--primary-text); background: var(--white
   color: var(--dark);
   cursor: pointer;
   flex-shrink: 0;
+  min-width: 92px;
 }
+/* The focus ring is drawn on all four sides, so it needs to sit above
+   the input's border rather than under the seam between them. */
+button.phone-dial[aria-expanded="true"],
+button.phone-dial:focus-visible { position: relative; z-index: 1; }
 .phone-dial-input {
   border-radius: 0 var(--radius-sm) var(--radius-sm) 0 !important;
 }

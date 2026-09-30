@@ -107,9 +107,8 @@ export async function mountAccountChrome() {
   if (name) name.textContent = displayName(profile);
   if (email) email.textContent = profile.email || '';
 
-  const navName = document.querySelector('.nav-user-name');
-  if (navName) navName.textContent = displayName(profile);
-
+  // The navbar above is navbar.js's, on every page that carries it;
+  // this module owns the sidebar card below it.
   paintBadges();
   return profile;
 }

@@ -8,6 +8,7 @@ use serde::{ Serialize, Deserialize };
 use actix_web::{ web, Error, HttpResponse };
 use crate::utils::response::Response;
 use crate::utils::validation::{validate_email, validate_password};
+use crate::utils::password;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ReqBody {
@@ -28,6 +29,16 @@ struct Payload { user_id: String }
 /// Gated by ADMIN_SIGNUP_SECRET. Admins are entirely separate from app users,
 /// so an admin email may also exist as a separate app account.
 pub async fn task(form_data: web::Json<ReqBody>) -> Result<HttpResponse, Error> {
+    /*
+      This endpoint is unauthenticated — an existing admin is not required to
+      create another one — so this secret is the whole of its access control.
+      The value shipped in .env.example is refused outright: it is public, and
+      a deployment still carrying it would let anyone who has read the repo
+      make themselves an administrator.
+    */
+    const PLACEHOLDER: &str = "change-me-to-a-long-random-string";
+    const MIN_SECRET_LEN: usize = 24;
+
     let secret = match env::var("ADMIN_SIGNUP_SECRET") {
         Ok(s) if !s.trim().is_empty() => s,
         _ => {
@@ -35,6 +46,19 @@ pub async fn task(form_data: web::Json<ReqBody>) -> Result<HttpResponse, Error> 
             return Ok(Response::internal_server_error("Admin sign-up is not configured"));
         }
     };
+    if secret.trim() == PLACEHOLDER {
+        log::error!(
+            "ADMIN_SIGNUP_SECRET is still the example value; refusing admin sign-up. \
+             Set it to a long random string."
+        );
+        return Ok(Response::internal_server_error("Admin sign-up is not configured"));
+    }
+    if secret.trim().len() < MIN_SECRET_LEN {
+        log::error!(
+            "ADMIN_SIGNUP_SECRET is shorter than {MIN_SECRET_LEN} characters; refusing admin sign-up"
+        );
+        return Ok(Response::internal_server_error("Admin sign-up is not configured"));
+    }
     if form_data.secret_key.trim() != secret.trim() {
         return Ok(Response::forbidden("Invalid secret key"));
     }
@@ -72,11 +96,19 @@ pub async fn task(form_data: web::Json<ReqBody>) -> Result<HttpResponse, Error> 
         Ok(None) => {}
     }
 
+    let hashed_password = match password::hash(&password) {
+        Ok(h) => h,
+        Err(error) => {
+            log::error!("{error}");
+            return Ok(Response::internal_server_error("Could not create the account"));
+        }
+    };
+
     let admin = Account::AdminAccount {
         uuid: Uuid::now_v7().to_string(),
         email_address,
         name: if name.is_empty() { "Admin".to_string() } else { name },
-        password,
+        password: hashed_password,
         created_at: Utc::now().timestamp_millis(),
     };
     let user_id = admin.uuid.clone();

@@ -84,6 +84,96 @@ pub async fn ensure_indexes() {
 
 }
 
+/*
+  Replaces every plaintext password left by the old storage scheme with an
+  Argon2 hash.
+
+  It can do this without anyone signing in, because a plaintext row *is* the
+  password — so it can be hashed directly. That matters: the fallback in
+  `utils::password::verify` would otherwise keep reading plaintext for as long
+  as an account went untouched, which for an abandoned account is forever.
+
+  Idempotent. A row already stored as a PHC string is skipped, so this is safe
+  to run on every startup and safe to interrupt — anything it has not reached
+  yet still authenticates through the legacy path.
+*/
+pub async fn migrate_plaintext_passwords() {
+    use crate::utils::password;
+
+    let db = MongoDB.connect();
+    let mut migrated = 0_u64;
+    let mut failed = 0_u64;
+
+    // account_core and admin_account hold passwords in the same shape, but
+    // they are different types, so each is walked on its own.
+    let users = db.collection::<Account::AccountCore>("account_core");
+    match users.find(doc!{}).await {
+        Ok(mut cursor) => {
+            use futures::StreamExt;
+            while let Some(row) = cursor.next().await {
+                let Ok(account) = row else { continue };
+                // An empty password is a social-login account with none to migrate.
+                if account.password.is_empty() || password::is_hashed(&account.password) {
+                    continue;
+                }
+                match password::hash(&account.password) {
+                    Ok(hashed) => {
+                        if let Err(error) = users.update_one(
+                            doc!{ "uuid": &account.uuid },
+                            doc!{ "$set": { "password": &hashed } },
+                        ).await {
+                            log::error!("password migration (user {}): {:?}", account.uuid, error);
+                            failed += 1;
+                        } else {
+                            migrated += 1;
+                        }
+                    }
+                    Err(error) => {
+                        log::error!("password migration (user {}): {error}", account.uuid);
+                        failed += 1;
+                    }
+                }
+            }
+        }
+        Err(error) => log::error!("password migration: could not read account_core: {:?}", error),
+    }
+
+    let admins = db.collection::<Account::AdminAccount>("admin_account");
+    match admins.find(doc!{}).await {
+        Ok(mut cursor) => {
+            use futures::StreamExt;
+            while let Some(row) = cursor.next().await {
+                let Ok(admin) = row else { continue };
+                if admin.password.is_empty() || password::is_hashed(&admin.password) {
+                    continue;
+                }
+                match password::hash(&admin.password) {
+                    Ok(hashed) => {
+                        if let Err(error) = admins.update_one(
+                            doc!{ "uuid": &admin.uuid },
+                            doc!{ "$set": { "password": &hashed } },
+                        ).await {
+                            log::error!("password migration (admin {}): {:?}", admin.uuid, error);
+                            failed += 1;
+                        } else {
+                            migrated += 1;
+                        }
+                    }
+                    Err(error) => {
+                        log::error!("password migration (admin {}): {error}", admin.uuid);
+                        failed += 1;
+                    }
+                }
+            }
+        }
+        Err(error) => log::error!("password migration: could not read admin_account: {:?}", error),
+    }
+
+    if migrated > 0 || failed > 0 {
+        log::info!("Password migration: {migrated} hashed, {failed} failed");
+    }
+}
+
 
 pub async fn delete_account(
     db: &Database,

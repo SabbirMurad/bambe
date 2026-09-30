@@ -766,10 +766,44 @@ disabled; the last-method guard fires on both disable and delete.
 - **Social login** needs a Google or Facebook client SDK to mint the token
   `/v1/auth/social-login` takes.
 - **Brand CRUD** endpoints.
-- **No test suite, CI, or seed script.** One `#[cfg(test)]` module in the
-  whole crate.
+- **No test suite, CI, or seed script.** Two `#[cfg(test)]` modules in the
+  whole crate; `utils/password.rs` carries the second.
 - The home page still has no merchandising model behind its hero and promo
   copy.
+- Product images in the database are 8×8 placeholder stubs, so every card
+  renders as a flat colour block. The upload pipeline itself works — the
+  images just need replacing through the admin product form.
+
+### Passwords
+
+Stored as Argon2id PHC strings. `utils/password.rs` is the only module that
+touches a stored password: handlers call `hash` on the way in and `verify` on
+the way out, and never compare two password strings themselves.
+
+This replaced plaintext storage. `Handler::Auth::migrate_plaintext_passwords`
+runs at startup and hashes any row still held the old way — it can do that
+without anyone signing in, because a plaintext row *is* the password. It is
+idempotent and safe to interrupt.
+
+`verify` still accepts a non-PHC stored value, comparing it literally and
+returning `Verified::NeedsRehash`; `sign_in.rs` and `admin_sign_in.rs` upgrade
+the row when they see it. That path exists only so an interrupted migration
+cannot lock anyone out, and is expected never to fire once the migration has
+completed. **Accounts with an empty stored password — the ones
+`social_login.rs` creates — never authenticate by password**, including
+against an empty attempt.
+
+### Creating an administrator
+
+There is no UI. `POST /api/v1/auth/admin/sign-up` with a `secret_key` matching
+`ADMIN_SIGNUP_SECRET`, which is the endpoint's only access control: it takes no
+token, so an existing admin is not required to create another. The handler
+refuses to run when that variable is unset, shorter than 24 characters, or
+still the literal example value.
+
+Admins live in `admin_account`, separate from `account_core`, so the same email
+may exist once as an admin and once as a buyer. There is no email verification
+step and no 2FA on the admin path.
 
 ### The payment gateway (SSLCommerz)
 

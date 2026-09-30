@@ -10,6 +10,7 @@ use mongodb::{ClientSession, Database};
 use actix_web::{ web, Error, HttpResponse };
 use crate::utils::response::Response;
 use crate::utils::validation::{validate_email, validate_password, validate_username};
+use crate::utils::password;
 
 
 //in minutes
@@ -44,6 +45,16 @@ pub async fn task(form_data: web::Json<ReqBody>) -> Result<HttpResponse, Error> 
     if let Err(res) = validate_password(&post_data.password, &post_data.confirm_password) {
         return Ok(Response::bad_request(&res));
     }
+
+    // Hashed here rather than at the insert below, so the plaintext never
+    // reaches the document that gets written.
+    let hashed_password = match password::hash(&post_data.password) {
+        Ok(h) => h,
+        Err(error) => {
+            log::error!("{error}");
+            return Ok(Response::internal_server_error("Could not create the account"));
+        }
+    };
 
     if let Err(error) = validate_email(&post_data.email_address) {
         return Ok(Response::bad_request(&error));
@@ -86,7 +97,7 @@ pub async fn task(form_data: web::Json<ReqBody>) -> Result<HttpResponse, Error> 
         uuid: user_id.clone(),
         email_address: post_data.email_address.clone(),
         username: username.clone(),
-        password: post_data.password.clone(),
+        password: hashed_password,
         email_verified: false,
         two_a_factor_auth_enabled: false,
         two_a_factor_auth_updated: None,

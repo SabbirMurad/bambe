@@ -460,7 +460,9 @@ function paintCount() {
     count.textContent = n === 1 ? '1 item' : n + ' items';
   }
 
-  const badge = document.querySelectorAll('.nav-badge')[1];
+  /* navbar.js paints this on load; repainted here because this page
+     is the one that changes the count while it is on screen. */
+  const badge = document.querySelector('.nav-icon-btn[data-nav="cart"] .nav-badge');
   if (badge && cart) {
     badge.textContent = cart.item_count;
     badge.style.display = cart.item_count ? '' : 'none';
@@ -481,7 +483,12 @@ function render() {
     link.href = '/listing';
     link.className = 'btn btn-primary';
     link.textContent = 'Browse products';
-    link.style.cssText = 'display:block;width:max-content;margin:0 auto 40px;text-decoration:none;';
+    /* flex, not block: .btn centres its label with align-items and
+       justify-content inside a fixed 42px height, and display:block
+       would throw both away — leaving the text sitting 10px high in
+       the button. Flex is still block-level, so `margin: 0 auto`
+       goes on centring the button itself. */
+    link.style.cssText = 'display:flex;width:max-content;margin:0 auto 40px;text-decoration:none;';
     host.appendChild(link);
 
     const coupon = $('.coupon-row');
@@ -513,11 +520,7 @@ async function reload() {
 
 /* ── Boot ─────────────────────────────────────────────────────  */
 (function init() {
-  /* The wishlist badge in the nav is a wireframe constant on every
-     page. This page knows the real cart count, so at least that one
-     stops lying; the other is hidden rather than left at "5". */
-  const wishBadge = document.querySelectorAll('.nav-badge')[0];
-  if (wishBadge) wishBadge.style.display = 'none';
-
+  // The nav badges are navbar.js's job now, on every page rather than
+  // just this one.
   reload();
 })();

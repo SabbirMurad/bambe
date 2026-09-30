@@ -17,6 +17,7 @@ use mongodb::bson::doc;
 use actix_web::{web, Error, HttpResponse, HttpRequest};
 use crate::BuiltIns::mongo::MongoDB;
 use crate::utils::response::Response;
+use crate::utils::password::{self, Verified};
 use crate::Middleware::Auth::{require_access, AccessRequirement};
 use crate::model::Account::AccountCore;
 
@@ -53,14 +54,12 @@ pub async fn task(req: HttpRequest, body: web::Json<ReqBody>) -> Result<HttpResp
         };
 
         /*
-          A plain comparison, because that is how passwords are stored — see
-          `sign_in.rs`, which does `account_core.password != password`. There
-          is no hashing anywhere in this project. Matching the existing scheme
-          here rather than hashing only this one check, which would compare a
-          hash against a plaintext column and always fail; the storage itself
-          needs fixing, and that is a migration, not a line in this file.
+          `utils::password` owns the comparison; this handler never sees the
+          stored form. It deliberately does not upgrade a legacy row the way
+          sign_in.rs does — turning off two-step is not an authentication,
+          and a write here would be a side effect nobody asked for.
         */
-        if &account.password != password {
+        if password::verify(password, &account.password) == Verified::Failed {
             return Ok(Response::unauthorized("That password isn't right"));
         }
     }

@@ -7,6 +7,7 @@ use crate::{builtins::jwt, Model::Account};
 use crate::Integrations::Resend;
 use crate::BuiltIns::mongo::MongoDB;
 use crate::utils::response::Response;
+use crate::utils::password::{self, Verified};
 use serde::{ Serialize, Deserialize };
 use serde_json::json;
 use mongodb::{ClientSession, Database};
@@ -227,12 +228,33 @@ async fn validate_login(
     }
 
     if account_core.email_verified {
-        if account_core.password != password {
-            session.abort_transaction().await.ok().unwrap();
-            return Err(Response::forbidden("Incorrect password"));
-        }
-        else {
-            Ok(account_core)
+        match password::verify(password, &account_core.password) {
+            Verified::Failed => {
+                session.abort_transaction().await.ok().unwrap();
+                Err(Response::forbidden("Incorrect password"))
+            }
+            /*
+              Right password, but the row predates hashing. Upgrade it now
+              that the plaintext is in hand and correct. A failure here is
+              logged and ignored: the credentials were valid, so refusing
+              the sign-in would punish the caller for our migration.
+            */
+            Verified::NeedsRehash => {
+                match password::hash(password) {
+                    Ok(hashed) => {
+                        let update = collection.update_one(
+                            doc!{ "uuid": &account_core.uuid },
+                            doc!{ "$set": { "password": &hashed } },
+                        ).session(&mut *session).await;
+                        if let Err(error) = update {
+                            log::error!("could not upgrade stored password: {:?}", error);
+                        }
+                    }
+                    Err(error) => log::error!("{error}"),
+                }
+                Ok(account_core)
+            }
+            Verified::Ok => Ok(account_core),
         }
     }
     else {

@@ -336,6 +336,21 @@ export async function mountAdminChrome() {
   const name = $('.nav-user-name');
   if (name) name.textContent = me.name || 'Admin';
 
+  /*
+    The navbar bell was drawn with a badge reading 7 and nothing behind
+    it. There is no admin notification feed: `/v1/notification/list`
+    keys on the caller's uuid in `account_core`, and an admin lives in
+    `admin_account`, so it answers empty for every administrator. It has
+    no click handler either.
+
+    Removed rather than shown at zero, on the same rule the rest of this
+    console follows — a control that cannot do the one thing it depicts
+    is worse than no control. The counts that do mean something are in
+    the sidebar, painted by paintNavCounts() above.
+  */
+  const bell = $('.nav-icon-btn[title="Notifications"]') || $('.nav-icon-btn');
+  if (bell) bell.remove();
+
   const logout = $('.admin-nav-logout');
   if (logout) {
     logout.onclick = async () => {

@@ -11,6 +11,7 @@
 import { Fetcher } from './fetcher.js';
 import { toast } from './toast.js';
 import { session } from './session.js';
+import { DIAL_CODES, DEFAULT_DIAL_ISO } from './dial-codes.js';
 
 /* ── Shared helpers ───────────────────────────────────────── */
 
@@ -294,6 +295,36 @@ function initLogin() {
   return true;
 }
 
+/*
+  Fills the dial-code <select> and hands it to select.js to skin. The
+  options are built here rather than written into the page because
+  there are two hundred of them, and being a real <select> is what
+  buys keyboard control and type-ahead without writing either.
+
+  select.js is a classic script, so it has already run by the time
+  this module executes; its own DOMContentLoaded sweep would catch
+  the element anyway, just a frame later and after a flash of the
+  unstyled native control.
+*/
+function initDialCodes(select) {
+  if (!select) return null;
+
+  select.innerHTML = '';
+  DIAL_CODES.forEach((country) => {
+    const option = document.createElement('option');
+    option.value = country.dial;
+    // The name is what the menu is searched and read by; the button
+    // has room for the flag and the code only.
+    option.textContent = `${country.name} (${country.dial})`;
+    option.dataset.short = `${country.flag} ${country.dial}`;
+    option.selected = country.iso === DEFAULT_DIAL_ISO;
+    select.appendChild(option);
+  });
+
+  window.BambeSelect?.scan();
+  return select;
+}
+
 /* ── Register ─────────────────────────────────────────────── */
 
 function initRegister() {
@@ -307,6 +338,20 @@ function initRegister() {
   const password  = $('reg-password');
   const confirm   = $('reg-confirm-password');
   const terms     = $('reg-terms');
+  const dial      = initDialCodes($('reg-dial'));
+
+  /*
+    The profile keeps one free-text phone field, and the rest of the
+    app writes it dial code first ("+1 917 555 0142"), so the picker
+    has to be folded back into the number before it is sent.
+  */
+  const fullPhone = () => {
+    const number = phone.value.trim();
+    if (!number) return '';
+    // A number already typed with its own "+" is left as the user wrote it.
+    if (number.startsWith('+') || !dial) return number;
+    return `${dial.value} ${number}`;
+  };
 
   wirePasswordToggle('reg-password-toggle', 'reg-password');
   wireStrength('reg-password', ['reg-pw-bar-1', 'reg-pw-bar-2', 'reg-pw-bar-3'], 'reg-pw-label');
@@ -376,10 +421,11 @@ function initRegister() {
       field. It goes to the profile instead, which is only reachable once
       the tokens above exist — hence here rather than a step earlier.
     */
-    if (phone.value.trim()) {
+    const phoneNumber = fullPhone();
+    if (phoneNumber) {
       await Fetcher.patch({
         endpoint: '/v1/account/profile',
-        body: { phone_number: phone.value.trim() },
+        body: { phone_number: phoneNumber },
         showError: false,
       });
     }

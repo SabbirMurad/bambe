@@ -601,18 +601,26 @@ body::-webkit-scrollbar-corner {
   position: relative;
 }
 .form-input-icon .form-input { padding-left: 42px; }
-.form-input-icon .input-icon {
+/* display:flex is load-bearing, not decoration. These spans wrap an
+   inline <svg>, which sits on the text baseline — so a block span is
+   as tall as the line box and keeps the descender space underneath
+   the icon. Centring that box lands the icon three-odd pixels high.
+   Flex makes the span exactly as tall as the svg, so translateY
+   centres the icon itself. */
+.form-input-icon .input-icon,
+.form-input-icon .input-icon-right {
   position: absolute;
-  left: 14px;
   top: 50%;
   transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+}
+.form-input-icon .input-icon {
+  left: 14px;
   pointer-events: none;
 }
 .form-input-icon .input-icon-right {
-  position: absolute;
   right: 14px;
-  top: 50%;
-  transform: translateY(-50%);
   cursor: pointer;
 }
 

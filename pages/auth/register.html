@@ -97,11 +97,9 @@
       <div class="form-group">
         <label class="form-label">Phone Number</label>
         <div class="phone-input-group">
-          <div class="phone-dial">
-            <span style="font-size:14px;">🇺🇸</span>
-            <span style="font-size:13px;color:var(--dark);">+1</span>
-            <svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 2l4 4 4-4" stroke="#94908A" stroke-width="1.3" stroke-linecap="round"/></svg>
-          </div>
+          <!-- Filled by auth.js from dial-codes.js, then skinned by
+               select.js like every other dropdown on the site. -->
+          <select id="reg-dial" class="phone-dial" aria-label="Country calling code"></select>
           <input id="reg-phone" class="form-input phone-dial-input" type="tel" placeholder="555 000 0000" autocomplete="tel">
         </div>
       </div>
@@ -178,6 +176,7 @@
   </div>
 
 </div>
+<script src="/assets/js/select.js"></script>
 <script type="module" src="/assets/js/auth.js"></script>
 </body>
 </html>
