@@ -1,6 +1,6 @@
 use chrono::Utc;
 use serde::Deserialize;
-use mongodb::bson::{doc, Document};
+use mongodb::bson::{doc, Bson, Document};
 use actix_web::{web, Error, HttpResponse, HttpRequest};
 use crate::BuiltIns::mongo::MongoDB;
 use crate::utils::response::Response;
@@ -41,7 +41,11 @@ pub async fn task(req: HttpRequest, path: web::Path<String>, body: web::Json<Req
     if let Some(v) = &body.description { set_doc.insert("description", v); }
     if let Some(v) = &body.parent_id { set_doc.insert("parent_id", v); }
     if let Some(v) = &body.swatch { set_doc.insert("swatch", v); }
-    if let Some(v) = &body.image_id { set_doc.insert("image_id", v); }
+    // An empty image_id removes the picture (absent means "unchanged").
+    if let Some(v) = &body.image_id {
+        if v.trim().is_empty() { set_doc.insert("image_id", Bson::Null); }
+        else { set_doc.insert("image_id", v); }
+    }
     if let Some(v) = body.visible { set_doc.insert("visible", v); }
     if let Some(v) = body.position { set_doc.insert("position", v as i32); }
     set_doc.insert("modified_at", Utc::now().timestamp_millis());

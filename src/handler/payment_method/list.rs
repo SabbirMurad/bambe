@@ -26,7 +26,14 @@ pub async fn task(req: HttpRequest) -> Result<HttpResponse, Error> {
     let mut methods = Vec::new();
     // provider_token never leaves the server — it's the one thing that can
     // actually charge this method.
-    while let Some(Ok(m)) = cursor.next().await {
+    while let Some(result) = cursor.next().await {
+        let m = match result {
+            Ok(m) => m,
+            Err(error) => {
+                log::error!("{}: skipping unreadable document: {:?}", module_path!(), error);
+                continue;
+            }
+        };
         methods.push(json!({
             "uuid": m.uuid,
             "kind": m.kind,

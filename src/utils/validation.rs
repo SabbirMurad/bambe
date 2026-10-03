@@ -7,7 +7,21 @@ pub const PASSWORD_REGEX: &str = r"^[!@#$%&*[:word:]\S]{6, 64}$";
 #[allow(dead_code)]
 pub const PHONE_NUMBER_REGEX: &str = r"^[\+\s\(\)\-[:digit:]]{10, 25}$";
 #[allow(dead_code)]
-pub const EMAIL_REGEX: &str = r"^([a-z0-9_+]([a-z0-9_+.]*[a-z0-9_+])?)@([a-z0-9]+([\-\.]{1}[a-z0-9]+)*\.[a-z]{2,6})";
+/*
+  Three things the previous pattern got wrong, all of them reachable
+  from the sign-up form:
+
+  - it had no `-` in the local part, so `jane-doe@gmail.com` — a
+    perfectly ordinary address — could not register at all;
+  - it had no `$`, so it matched a prefix and let anything trail it:
+    `ok@example.com<script>` passed validation;
+  - its TLD was capped at 6 characters, which only looked survivable
+    because the missing anchor let `.photography` match as `.photo`.
+
+  Callers lowercase before validating, which is why this is written in
+  lowercase only.
+*/
+pub const EMAIL_REGEX: &str = r"^[a-z0-9._%+-]+@[a-z0-9-]+(\.[a-z0-9-]+)*\.[a-z]{2,24}$";
 
 /* Remove in development if not needed */
 

@@ -21,6 +21,9 @@ pub use category as Category;
 pub mod order;
 pub use order as Order;
 
+pub mod return_request;
+pub use return_request as ReturnRequest;
+
 pub mod coupon;
 pub use coupon as Coupon;
 

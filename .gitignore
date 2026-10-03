@@ -24,3 +24,10 @@ status.log
 .DS_Store
 Thumbs.db
 *.swp
+/target
+
+# Per-machine Claude Code permissions (absolute paths inside)
+.claude/settings.local.json
+
+# Local dev test account (generated, machine-specific)
+.dev-account.local.json

@@ -36,12 +36,8 @@ pub async fn task(req: HttpRequest, body: web::Json<ReqBody>) -> Result<HttpResp
     let user = optional_access(&req);
     let now = Utc::now().timestamp_millis();
 
-    let prefix = db
-        .collection::<StoreSettings>("store_settings")
-        .find_one(doc! {})
+    let prefix = crate::Handler::Admin::Settings::load(&db)
         .await
-        .ok()
-        .flatten()
         .map(|s| s.ticket_number_prefix)
         .unwrap_or_else(|| "TK".to_string());
     let number = format!("{}-{}", prefix, rand::rng().random_range(1000..9999));

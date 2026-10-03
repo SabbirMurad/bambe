@@ -6,6 +6,7 @@ use crate::Utils::response::Response;
 use serde::{ Serialize, Deserialize };
 use actix_web::{ web, Error, HttpResponse };
 use crate::Utils::validation::validate_password;
+use crate::Utils::password;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ResetPasswordFormData {
@@ -41,7 +42,7 @@ pub async fn task(form_data: web::Json<ResetPasswordFormData>) -> Result<HttpRes
 
     let result = collection.find_one(
         doc!{"user_id": &post_data.user_id},
-    ).await;
+    ).session(&mut session).await;
 
     if let Err(error) = result {
         log::error!("{:?}", error);
@@ -75,14 +76,23 @@ pub async fn task(form_data: web::Json<ResetPasswordFormData>) -> Result<HttpRes
     }
 
     //resetting password
+    let hashed_password = match password::hash(&post_data.new_password) {
+        Ok(h) => h,
+        Err(error) => {
+            log::error!("{error}");
+            session.abort_transaction().await.ok().unwrap();
+            return Ok(Response::internal_server_error("Could not reset the password"));
+        }
+    };
+
     let collection = db.collection::<Account::AccountCore>("account_core");
 
     let result = collection.update_one(
         doc!{"uuid": &post_data.user_id},
         doc!{"$set": {
-            "password": &post_data.new_password
+            "password": &hashed_password
         }},
-    ).await;
+    ).session(&mut session).await;
 
     if let Err(error) = result {
         log::error!("{:?}", error);
@@ -96,7 +106,7 @@ pub async fn task(form_data: web::Json<ResetPasswordFormData>) -> Result<HttpRes
 
     let result = collection.delete_one(
         doc!{"uuid": &reset.uuid, "user_id": &post_data.user_id},
-    ).await;
+    ).session(&mut session).await;
 
     if let Err(error) = result {
         log::error!("{:?}", error);

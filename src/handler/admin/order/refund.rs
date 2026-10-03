@@ -41,7 +41,14 @@ pub async fn task(req: HttpRequest, path: web::Path<String>, body: web::Json<Req
         .await
         .expect("payment transaction lookup");
     let mut transactions = Vec::new();
-    while let Some(Ok(t)) = tx_cursor.next().await {
+    while let Some(result) = tx_cursor.next().await {
+        let t = match result {
+            Ok(t) => t,
+            Err(error) => {
+                log::error!("{}: skipping unreadable document: {:?}", module_path!(), error);
+                continue;
+            }
+        };
         transactions.push(t);
     }
 
@@ -105,6 +112,23 @@ pub async fn task(req: HttpRequest, path: web::Path<String>, body: web::Json<Req
 
     let name = crate::Handler::Admin::Settings::AuditLog::admin_name(&db, &admin.user_id).await;
     crate::Handler::Admin::Settings::AuditLog::log(&db, &admin.user_id, &name, "order.refunded", "order", &order_id, Some(format!("{} {}", amount, order.currency))).await;
+
+    crate::utils::notify::send(
+        &db,
+        &order.user_id,
+        crate::utils::notify::Notice {
+            kind: crate::model::Notification::NotifType::RefundIssued,
+            title: format!("Refund issued for order {}", order.number),
+            body: "The money is on its way back to your original payment method.".to_string(),
+            image_id: None,
+            related_id: Some(order_id.clone()),
+            link: Some("/account/orders".to_string()),
+            email: Some(crate::utils::notify::Email {
+                subject: format!("Your Bambe refund for order {}", order.number),
+                html: crate::Integrations::Resend::refund_issued_template(&order.number, amount, &order.currency),
+            }),
+        },
+    ).await;
 
     Ok(HttpResponse::Ok().content_type("application/json").json(refund))
 }

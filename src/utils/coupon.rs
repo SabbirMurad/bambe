@@ -50,7 +50,13 @@ pub async fn evaluate(
     }
     if let Some(min_spend) = coupon.min_spend {
         if subtotal < min_spend {
-            return Err(format!("This coupon needs a minimum spend of {}", min_spend));
+            // Cents are the wire format, not something to show a shopper —
+            // this read "a minimum spend of 2000".
+            return Err(format!(
+                "This coupon needs a minimum spend of ${}.{:02}",
+                min_spend / 100,
+                min_spend % 100,
+            ));
         }
     }
 
@@ -67,13 +73,23 @@ pub async fn evaluate(
         }
 
         if coupon.first_order_only {
-            let has_completed_order = db
+            /*
+              "First order" means they have ordered before, not that the money
+              cleared. Testing `payment_status: "Paid"` missed cash-on-delivery
+              entirely — COD stays Pending until the courier collects, so a COD
+              customer could reuse a first-order coupon forever. Any order that
+              wasn't cancelled counts.
+            */
+            let has_previous_order = db
                 .collection::<Order>("order")
-                .count_documents(doc! { "user_id": user_id, "payment_status": "Paid" })
+                .count_documents(doc! {
+                    "user_id": user_id,
+                    "fulfilment_status": { "$ne": "Cancelled" },
+                })
                 .await
                 .map_err(|e| e.to_string())?
                 > 0;
-            if has_completed_order {
+            if has_previous_order {
                 return Err("This coupon is only valid on a first order".to_string());
             }
         }
@@ -92,7 +108,14 @@ pub async fn evaluate(
                 .await
                 .map_err(|e| e.to_string())?;
             let mut hit = false;
-            while let Some(Ok(p)) = cursor.next().await {
+            while let Some(result) = cursor.next().await {
+                let p = match result {
+                    Ok(p) => p,
+                    Err(error) => {
+                        log::error!("{}: skipping unreadable document: {:?}", module_path!(), error);
+                        continue;
+                    }
+                };
                 if coupon.category_ids.contains(&p.category_id) {
                     hit = true;
                     break;

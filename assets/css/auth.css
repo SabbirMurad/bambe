@@ -25,7 +25,7 @@
 .auth-panel-left-bg {
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, #2A2620 0%, #14120E 100%);
+  background: linear-gradient(135deg, #1B3A2F 0%, #102019 100%);
 }
 .auth-panel-deco {
   position: absolute;
@@ -33,14 +33,28 @@
   overflow: hidden;
   pointer-events: none;
 }
+/*
+  These sit on the dark ink panel. At a low alpha the accent all but
+  vanishes against it; the orange at 45%, on a 2px stroke, reads as a
+  deliberate mark without competing with the type over it.
+*/
 .deco-circle {
   position: absolute;
   border-radius: 50%;
-  border: 1px solid rgba(250,170,57,0.15);
+  border: 2px solid color-mix(in srgb, var(--primary) 45%, transparent);
 }
-.auth-panel-left > * { position: relative; z-index: 1; }
+/*
+  Lifts the panel's content above the background and the decorations.
+  The :not() is load-bearing: this rule ties with .deco-circle on
+  specificity and, coming later, was winning — which turned two
+  absolutely positioned 400px and 240px circles into flex items. On the
+  desktop column that merely padded the layout; in the mobile band it
+  made a 72px strip 432px tall.
+*/
+.auth-panel-left > *:not(.deco-circle) { position: relative; z-index: 1; }
 
 .auth-brand { display: flex; align-items: flex-end; gap: 0; }
+/* The stag in white on the dark panel, beside a white "ambe". */
 .auth-brand-mark {
   width: 36px;
   height: 40px;
@@ -69,7 +83,8 @@
 }
 .auth-panel-tagline em {
   font-style: normal;
-  color: var(--blue);
+  /* The orange accent reads strongly on the dark ink panel. */
+  color: var(--primary);
 }
 .auth-panel-sub {
   font-size: 14px;
@@ -90,8 +105,8 @@
   width: 32px;
   height: 32px;
   border-radius: 9px;
-  background: rgba(250,170,57,0.15);
-  border: 1px solid rgba(250,170,57,0.25);
+  background: color-mix(in srgb, var(--primary) 15%, transparent);
+  border: 1px solid color-mix(in srgb, var(--primary) 25%, transparent);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -212,6 +227,24 @@
 .otp-box.filled { border-color: var(--primary-text); background: var(--blue-lt); }
 .otp-box.active { border-color: var(--primary-text); background: var(--white); box-shadow: 0 0 0 3px var(--blue-lt); }
 
+/* The boxes are real <input>s now, one digit each. Flex centring does
+   nothing to an input's own text, so it centres itself instead, and the
+   focus ring reuses the .active look rather than the browser default. */
+input.otp-box {
+  display: block;
+  text-align: center;
+  padding: 0;
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+}
+input.otp-box::-webkit-outer-spin-button,
+input.otp-box::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+input.otp-box:focus { border-color: var(--primary-text); background: var(--white); box-shadow: 0 0 0 3px var(--blue-lt); }
+
+/* Any auth button mid-request: still readable, but not clickable twice. */
+.btn.is-busy { opacity: 0.6; pointer-events: none; }
+
 .auth-footer-link { text-align: center; font-size: 13px; color: var(--subtle); margin-top: 20px; }
 .auth-footer-link a { color: var(--primary-text); font-weight: 600; cursor: pointer; }
 
@@ -219,9 +252,17 @@
 .terms-row { font-size: 12px; color: var(--subtle); line-height: 1.55; }
 .terms-row a { color: var(--primary-text); font-weight: 600; }
 
-/* Phone input with dial code */
+/* Phone input with dial code.
+
+   The dial code is a <select>, and select.js replaces it with a button
+   carrying the same class — so these rules target the button. The
+   native element it leaves behind is styled by .select-native alone.
+
+   The min-width keeps the field boundary still: dial codes run from
+   two characters to five, and the input beside it shouldn't resize
+   every time the country changes. */
 .phone-input-group { display: flex; gap: 0; }
-.phone-dial {
+button.phone-dial {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -234,7 +275,12 @@
   color: var(--dark);
   cursor: pointer;
   flex-shrink: 0;
+  min-width: 92px;
 }
+/* The focus ring is drawn on all four sides, so it needs to sit above
+   the input's border rather than under the seam between them. */
+button.phone-dial[aria-expanded="true"],
+button.phone-dial:focus-visible { position: relative; z-index: 1; }
 .phone-dial-input {
   border-radius: 0 var(--radius-sm) var(--radius-sm) 0 !important;
 }
@@ -248,4 +294,58 @@
   align-items: center;
   justify-content: center;
   margin-bottom: 20px;
+}
+
+/* ── ══════════════════════════════════════════════════════
+   RESPONSIVE — AUTH
+
+   Same breakpoints as common.css.
+══════════════════════════════════════════════════════ ── */
+
+@media (max-width: 1024px) {
+  /*
+    The left panel is brand and reassurance; the right panel is the
+    job the visitor came to do. On one column the form has to come
+    first, so the panel is reduced to a band above it carrying just
+    the logo — enough to say whose site this is without pushing the
+    fields below the fold.
+  */
+  .auth-page {
+    grid-template-columns: 1fr;
+    min-height: 0;
+  }
+  .auth-panel-left {
+    /*
+      relative, not static: the panel has overflow:hidden to clip the
+      decorative circles, but that only clips descendants whose
+      containing block it is. Made static, it stopped being theirs and
+      the circles spilled out of the band across the form below.
+    */
+    position: relative;
+    /*
+      The base rule pins this to 100vh for the two-column layout. Not
+      overriding it here was the whole bug: on a phone the panel stayed
+      a full screen tall, so the sign-in form began one entire viewport
+      below the fold with nothing but empty brand panel above it.
+    */
+    height: auto;
+    padding: 20px 24px;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+  }
+  /* The tagline, feature list and copyright have no room in a band.
+     The copyright's class is auth-panel-footer — an earlier pass wrote
+     .auth-panel-foot, which matches nothing, so it kept showing. */
+  .auth-panel-body,
+  .auth-panel-left .auth-panel-footer { display: none; }
+  .auth-panel-right { padding: 32px 24px 56px; }
+}
+
+@media (max-width: 640px) {
+  .auth-panel-left { padding: 16px; }
+  .auth-panel-right { padding: 24px 16px 48px; }
+  .auth-form-wrap { max-width: none; }
+  /* Google and Facebook side by side get too narrow to read. */
+  .social-login { grid-template-columns: 1fr; }
 }

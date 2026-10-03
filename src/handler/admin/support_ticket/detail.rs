@@ -35,7 +35,14 @@ pub async fn task(req: HttpRequest, path: web::Path<String>) -> Result<HttpRespo
 
     let mut cursor = result.unwrap();
     let mut messages = Vec::new();
-    while let Some(Ok(m)) = cursor.next().await {
+    while let Some(result) = cursor.next().await {
+        let m = match result {
+            Ok(m) => m,
+            Err(error) => {
+                log::error!("{}: skipping unreadable document: {:?}", module_path!(), error);
+                continue;
+            }
+        };
         messages.push(m);
     }
 

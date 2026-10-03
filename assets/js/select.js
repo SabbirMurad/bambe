@@ -74,7 +74,11 @@
     /* Repaint the button from whatever the native currently holds. */
     function paint() {
       var opt = native.options[native.selectedIndex];
-      var text = opt ? opt.textContent.trim() : '';
+      /* data-short is the compact form of an option, for a button too
+         narrow for the full label: the sign-up dial code shows
+         "🇺🇸 +1" on the button and "United States (+1)" in the menu,
+         where the name is what makes the row findable. */
+      var text = opt ? (opt.dataset.short || opt.textContent.trim()) : '';
       labelEl.textContent = text;
       /* An option with an empty value is a placeholder ("— None —",
          "All categories"), not a choice the user made. */

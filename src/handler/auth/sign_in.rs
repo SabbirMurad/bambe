@@ -4,10 +4,12 @@ use chrono::Utc;
 use mongodb::bson::doc;
 use actix_session::Session;
 use crate::{builtins::jwt, Model::Account};
-use crate::Integrations::Smtp;
+use crate::Integrations::Resend;
 use crate::BuiltIns::mongo::MongoDB;
 use crate::utils::response::Response;
+use crate::utils::password::{self, Verified};
 use serde::{ Serialize, Deserialize };
+use serde_json::json;
 use mongodb::{ClientSession, Database};
 use actix_web::{ web, Error, HttpResponse};
 
@@ -94,7 +96,7 @@ async fn perform(
 
         let result = collection.insert_one(
             request,
-        ).await;
+        ).session(&mut session).await;
 
         if let Err(error) = result {
             log::error!("{:?}", error);
@@ -102,16 +104,40 @@ async fn perform(
             return Ok(Response::internal_server_error(&error.to_string()));
         }
 
-        let message = Smtp::sign_in_verification_code_template(
-            &account_core.email_address,
+        let message = Resend::sign_in_verification_code_template(
             &validation_code.to_string()
         );
 
-        let result = Smtp::send_email(message);
+        let result = Resend::send_email(
+            &account_core.email_address,
+            "Your Bambe sign-in code",
+            &message
+        ).await;
         if let Err(_) = result {
             session.abort_transaction().await.ok().unwrap();
             return Ok(Response::internal_server_error("Failed to send email"));
         }
+
+        /*
+          Stop here. This branch used to write the request, send the code and
+          then fall straight through to minting a token — so enabling
+          two-factor bought a spare email and no second factor at all. It went
+          unnoticed because nothing could set the flag; the account settings
+          can now, so it matters.
+
+          The caller gets the request id and no token, and exchanges the two
+          for one at `POST /v1/auth/verify-sign-in-code`.
+        */
+        if let Err(error) = session.commit_transaction().await {
+            log::error!("{:?}", error);
+            return Ok(Response::internal_server_error(&error.to_string()));
+        }
+
+        return Ok(HttpResponse::Ok().content_type("application/json").json(json!({
+            "two_afa_enabled": true,
+            "auth_payload": serde_json::Value::Null,
+            "request_id": request_id,
+        })));
     }
 
     // getting access token
@@ -178,7 +204,7 @@ async fn validate_login(
                 {"email_address": email_or_username},
             ],
         },
-    ).await;
+    ).session(&mut *session).await;
 
     if let Err(error) = result {
         log::error!("{:?}", error);
@@ -202,12 +228,33 @@ async fn validate_login(
     }
 
     if account_core.email_verified {
-        if account_core.password != password {
-            session.abort_transaction().await.ok().unwrap();
-            return Err(Response::forbidden("Incorrect password"));
-        }
-        else {
-            Ok(account_core)
+        match password::verify(password, &account_core.password) {
+            Verified::Failed => {
+                session.abort_transaction().await.ok().unwrap();
+                Err(Response::forbidden("Incorrect password"))
+            }
+            /*
+              Right password, but the row predates hashing. Upgrade it now
+              that the plaintext is in hand and correct. A failure here is
+              logged and ignored: the credentials were valid, so refusing
+              the sign-in would punish the caller for our migration.
+            */
+            Verified::NeedsRehash => {
+                match password::hash(password) {
+                    Ok(hashed) => {
+                        let update = collection.update_one(
+                            doc!{ "uuid": &account_core.uuid },
+                            doc!{ "$set": { "password": &hashed } },
+                        ).session(&mut *session).await;
+                        if let Err(error) = update {
+                            log::error!("could not upgrade stored password: {:?}", error);
+                        }
+                    }
+                    Err(error) => log::error!("{error}"),
+                }
+                Ok(account_core)
+            }
+            Verified::Ok => Ok(account_core),
         }
     }
     else {

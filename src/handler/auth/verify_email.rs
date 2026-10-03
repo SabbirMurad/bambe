@@ -39,7 +39,7 @@ pub async fn task(form_data: web::Json<ReqBody>) -> Result<HttpResponse, Error> 
     let collection = db.collection::<Account::AccountCore>("account_core");
     let result = collection.find_one(
         doc!{"uuid": &post_data.user_id},
-    ).await;
+    ).session(&mut session).await;
 
     if let Err(error) = result {
         log::error!("{:?}", error);
@@ -64,7 +64,7 @@ pub async fn task(form_data: web::Json<ReqBody>) -> Result<HttpResponse, Error> 
     <Account::AccountVerificationRequest>("account_verification_request");
     let result = collection.find_one(
         doc!{"user_id": &post_data.user_id},
-    ).await;
+    ).session(&mut session).await;
 
     if let Err(error) = result {
         log::error!("{:?}", error);
@@ -94,7 +94,7 @@ pub async fn task(form_data: web::Json<ReqBody>) -> Result<HttpResponse, Error> 
     let result = collection.update_one(
         doc!{ "uuid": &post_data.user_id },
         doc!{"$set": { "email_verified": true }},
-    ).await;
+    ).session(&mut session).await;
 
     if let Err(error) = result {
         log::error!("{:?}", error);
@@ -113,7 +113,7 @@ pub async fn task(form_data: web::Json<ReqBody>) -> Result<HttpResponse, Error> 
     ::<Account::AccountVerificationRequest>("account_verification_request");
     let result = collection.delete_many(
         doc!{"user_id": &post_data.user_id},
-    ).await;
+    ).session(&mut session).await;
 
     if let Err(error) = result {
       log::error!("{:?}", error);

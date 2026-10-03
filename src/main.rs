@@ -76,6 +76,13 @@ async fn main() -> io::Result<()> {
     // Unique email indexes on account_core (users) and admin_account (admins).
     Handler::Auth::ensure_indexes().await;
 
+    // Upgrades any password still stored as plaintext by the old scheme.
+    // Idempotent, so it costs one scan on a database that is already clean.
+    Handler::Auth::migrate_plaintext_passwords().await;
+
+    // Uniqueness and lookup indexes for the storefront collections.
+    BuiltIns::indexes::ensure_indexes(&BuiltIns::mongo::MongoDB.connect()).await;
+
     let mut listenfd = ListenFd::from_env();
 
     let host = env::var("APP_HOST").expect("APP_HOST must be set on .env file");
@@ -225,8 +232,15 @@ async fn main() -> io::Result<()> {
             .wrap(BuiltIns::cors::get_policy())
             .wrap(ActixMiddleware::Compress::default())
             /* Custom HTTP Headers */
-            .wrap(ActixMiddleware::DefaultHeaders::new().add(("X-Signature", "sabbir")))
-            .wrap(ActixMiddleware::DefaultHeaders::new().add(("X-Frame-Options", "DENY")))
+            .wrap(ActixMiddleware::DefaultHeaders::new().add(("X-Signature", "Bambe")))
+            /*
+              SAMEORIGIN rather than DENY: still refuses to be framed by
+              anyone else, which is what stops clickjacking, but lets the
+              site frame its own pages — needed for the responsive
+              preview harness, and for anything else that previews a page
+              in place.
+            */
+            .wrap(ActixMiddleware::DefaultHeaders::new().add(("X-Frame-Options", "SAMEORIGIN")))
             .wrap(
                 ActixMiddleware::DefaultHeaders::new()
                     .add(("Referrer-Policy", "strict-origin-when-cross-origin")),
@@ -238,40 +252,46 @@ async fn main() -> io::Result<()> {
                     .use_last_modified(true),
             )
             .wrap_fn(|req, srv| {
-                /* Custom CACHE_CONTROL for Resources */
+                /*
+                  Cache-Control for static assets.
+
+                  This was a flat `max-age=86400, must-revalidate` for
+                  everything, which does not mean what it looks like:
+                  must-revalidate only applies once a response has gone
+                  stale, so for the first 24 hours a browser reuses the
+                  cached copy without asking. Scripts and styles are not
+                  content-hashed here, so a fix shipped today reached a
+                  returning visitor a day later — and a plain refresh did
+                  not help. That is what made an avatar appear to need a
+                  reload to update: the page was running yesterday's JS.
+
+                  Code and configuration therefore revalidate every time.
+                  `no-cache` still stores the file; it just has to ask
+                  first, and use_last_modified above answers almost all
+                  of those with a 304 and no body.
+
+                  Media keeps the day-long cache: it is large, and a
+                  changed picture gets a new id rather than overwriting
+                  an old one.
+                */
                 srv.call(req).map(|mut res| {
                     if let Ok(response) = &mut res {
-                        let request = response.request();
-                        let uri = request.uri().to_string();
-                        if uri.contains("/assets/") {
+                        let uri = response.request().uri().to_string();
+                        let path = uri.split('?').next().unwrap_or("").to_string();
+                        if path.contains("/assets/") {
+                            let revalidate = path.ends_with(".js")
+                                || path.ends_with(".css")
+                                || path.ends_with(".json")
+                                || path.ends_with(".webmanifest")
+                                || path.ends_with(".html");
+                            let value = if revalidate {
+                                "no-cache"
+                            } else {
+                                "public, max-age=86400, must-revalidate"
+                            };
                             response.headers_mut().insert(
                                 http::header::CACHE_CONTROL,
-                                http::header::HeaderValue::from_static(
-                                    "public, max-age=86400, must-revalidate",
-                                ),
-                            );
-                        }
-                    }
-                    res
-                })
-            })
-            .service(
-                StaticResource::Files::new("/components/", "components/")
-                    .prefer_utf8(true)
-                    .use_last_modified(true),
-            )
-            .wrap_fn(|req, srv| {
-                /* Custom CACHE_CONTROL for Resources */
-                srv.call(req).map(|mut res| {
-                    if let Ok(response) = &mut res {
-                        let request = response.request();
-                        let uri = request.uri().to_string();
-                        if uri.contains("/components/") {
-                            response.headers_mut().insert(
-                                http::header::CACHE_CONTROL,
-                                http::header::HeaderValue::from_static(
-                                    "public, max-age=86400, must-revalidate",
-                                ),
+                                http::header::HeaderValue::from_static(value),
                             );
                         }
                     }
@@ -285,6 +305,7 @@ async fn main() -> io::Result<()> {
             .configure(Routes::Audio::router)
             .configure(Routes::Video::router)
             .configure(Routes::Notification::router)
+            .configure(Routes::Newsletter::router)
             .configure(Routes::Admin::router)
             .configure(Routes::Category::router)
             .configure(Routes::Product::router)
@@ -296,6 +317,7 @@ async fn main() -> io::Result<()> {
             .configure(Routes::Checkout::router)
             .configure(Routes::Order::router)
             .configure(Routes::PaymentMethod::router)
+            .configure(Routes::Payment::router)
             .configure(Routes::ReturnRequest::router)
             .configure(Routes::SupportTicket::router)
             /* Page routes last: its scope("") matches everything, so an API

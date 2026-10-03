@@ -32,8 +32,25 @@ pub async fn task(req: HttpRequest, path: web::Path<String>, body: web::Json<Req
     let col = db.collection::<Coupon>("coupon");
     let coupon_id = path.into_inner();
 
-    if col.find_one(doc! { "uuid": &coupon_id }).await.ok().flatten().is_none() {
-        return Ok(Response::not_found("Coupon not found"));
+    let existing = col.find_one(doc! { "uuid": &coupon_id }).await.ok().flatten();
+    let existing = match existing {
+        Some(c) => c,
+        None => return Ok(Response::not_found("Coupon not found")),
+    };
+
+    /*
+      An update is partial, so the bound has to be checked against the values
+      the coupon will actually end up with — changing the type from Fixed to
+      Percentage without touching `value` can leave 5000 cents reinterpreted as
+      a 50000-basis-point discount.
+    */
+    let discount_type = body.discount_type.clone().unwrap_or(existing.discount_type.clone());
+    let value = body.value.unwrap_or(existing.value);
+    let min_spend = body.min_spend.or(existing.min_spend);
+    let max_discount = body.max_discount.or(existing.max_discount);
+
+    if let Err(message) = crate::Handler::Admin::Coupon::Create::validate(&discount_type, value, min_spend, max_discount) {
+        return Ok(Response::bad_request(&message));
     }
 
     let mut set_doc = Document::new();

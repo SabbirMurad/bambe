@@ -1,14 +1,15 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-store-theme="{{ store_theme | default(value='orange') }}">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Checkout — Address — Bambe</title>
+{% include "common/favicon.html" %}
 <link rel="stylesheet" href="/assets/css/common.css">
 <link rel="stylesheet" href="/assets/css/checkout.css">
 </head>
 <body>
-<nav class="navbar"><div class="navbar-inner"><a href="/" class="nav-logo"><div class="nav-logo-mark"></div><span class="nav-logo-text">ambe</span></a><div class="nav-search"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="7" cy="7" r="5" stroke="#94908A" stroke-width="1.4"/><path d="M11 11 14.5 14.5" stroke="#94908A" stroke-width="1.4" stroke-linecap="round"/></svg><input type="text" placeholder="Search products, brands…"><div class="nav-search-btn"><svg width="14" height="14" viewBox="0 0 16 16" fill="none"><circle cx="7" cy="7" r="5" stroke="white" stroke-width="1.4"/><path d="M11 11 14.5 14.5" stroke="white" stroke-width="1.4" stroke-linecap="round"/></svg></div></div><div class="nav-actions"><div class="nav-icon-btn"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M10 17S2 12 2 6.5a4 4 0 0 1 8-1 4 4 0 0 1 8 1C18 12 10 17 10 17Z" stroke="#32302C" stroke-width="1.5" stroke-linejoin="round"/></svg><div class="nav-badge">5</div></div><div class="nav-icon-btn" style="background:var(--blue-lt);"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M2 2h2.5l3 10h9l2-7H5.5" stroke="var(--blue)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="9" cy="17" r="1.5" fill="var(--blue)"/><circle cx="15" cy="17" r="1.5" fill="var(--blue)"/></svg><div class="nav-badge">3</div></div><div class="nav-user-btn"><div class="nav-avatar"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="5.5" r="3" stroke="var(--blue)" stroke-width="1.4"/><path d="M2 14c0-3.3 2.7-6 6-6s6 2.7 6 6" stroke="var(--blue)" stroke-width="1.4" stroke-linecap="round"/></svg></div><span class="nav-user-name">John D.</span></div></div></div></nav>
+<nav class="navbar"><div class="navbar-inner"><a href="/" class="nav-logo"><div class="nav-logo-mark"></div><span class="nav-logo-text">ambe</span></a><div class="nav-search"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="7" cy="7" r="5" stroke="#94908A" stroke-width="1.4"/><path d="M11 11 14.5 14.5" stroke="#94908A" stroke-width="1.4" stroke-linecap="round"/></svg><input type="text" placeholder="Search products, brands…"><div class="nav-search-btn"><svg width="14" height="14" viewBox="0 0 16 16" fill="none"><circle cx="7" cy="7" r="5" stroke="white" stroke-width="1.4"/><path d="M11 11 14.5 14.5" stroke="white" stroke-width="1.4" stroke-linecap="round"/></svg></div></div><div class="nav-actions"><div class="nav-icon-btn" data-nav="wishlist"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M10 17S2 12 2 6.5a4 4 0 0 1 8-1 4 4 0 0 1 8 1C18 12 10 17 10 17Z" stroke="#32302C" stroke-width="1.5" stroke-linejoin="round"/></svg><div class="nav-badge"></div></div><div class="nav-icon-btn" data-nav="cart" style="background:var(--blue-lt);"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M2 2h2.5l3 10h9l2-7H5.5" stroke="var(--blue)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="9" cy="17" r="1.5" fill="var(--blue)"/><circle cx="15" cy="17" r="1.5" fill="var(--blue)"/></svg><div class="nav-badge"></div></div><div class="nav-user-btn"><div class="nav-avatar"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="5.5" r="3" stroke="var(--blue)" stroke-width="1.4"/><path d="M2 14c0-3.3 2.7-6 6-6s6 2.7 6 6" stroke="var(--blue)" stroke-width="1.4" stroke-linecap="round"/></svg></div><span class="nav-user-name">John D.</span></div></div></div></nav>
 
 <main>
   <div class="container">
@@ -48,42 +49,9 @@
         </div>
 
         <div class="address-cards" id="addr-list">
-          <div class="address-card selected" data-addr
-               data-label="Home" data-name="John Doe" data-street="42 Maple Street, Apt 3B"
-               data-city="Brooklyn" data-state="New York" data-zip="11201"
-               data-country="United States" data-phone="+1 (917) 555-0142" data-default="1"
-               role="radio" aria-checked="true" tabindex="0">
-            <div class="address-card-type">
-              <span data-field="label">Home</span>
-              <span class="address-card-default" data-field="badge">Default</span>
-            </div>
-            <span class="address-card-edit" data-edit role="button" tabindex="0">Edit</span>
-            <div class="address-card-name" data-field="name">John Doe</div>
-            <div class="address-card-text" data-field="text">42 Maple Street, Apt 3B<br>Brooklyn, New York 11201<br>United States</div>
-            <div class="address-card-phone" data-field="phone">+1 (917) 555-0142</div>
-            <div class="address-select-dot">
-              <svg width="8" height="7" viewBox="0 0 10 8" fill="none" aria-hidden="true"><path d="M1 4l3 3 5-6" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            </div>
-          </div>
-
-          <div class="address-card" data-addr
-               data-label="Office" data-name="John Doe" data-street="100 Park Ave, Floor 12"
-               data-city="New York" data-state="New York" data-zip="10017"
-               data-country="United States" data-phone="+1 (917) 555-0198" data-default=""
-               role="radio" aria-checked="false" tabindex="0">
-            <div class="address-card-type">
-              <span data-field="label">Office</span>
-              <span class="address-card-default" data-field="badge" hidden>Default</span>
-            </div>
-            <span class="address-card-edit" data-edit role="button" tabindex="0">Edit</span>
-            <div class="address-card-name" data-field="name">John Doe</div>
-            <div class="address-card-text" data-field="text">100 Park Ave, Floor 12<br>New York, New York 10017<br>United States</div>
-            <div class="address-card-phone" data-field="phone">+1 (917) 555-0198</div>
-            <div class="address-select-dot">
-              <svg width="8" height="7" viewBox="0 0 10 8" fill="none" aria-hidden="true"><path d="M1 4l3 3 5-6" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            </div>
-          </div>
-
+          <!-- The saved-address cards are built by address.js from
+               GET /v1/address/list; the two hand-written ones that stood
+               here belonged to nobody. -->
           <div class="add-address-card" id="addr-add" role="button" tabindex="0">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.5" stroke-dasharray="3 2"/><path d="M12 8v8M8 12h8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
             Add New Address
@@ -108,9 +76,13 @@
               <label class="form-label" for="a-name">Full name</label>
               <input class="form-input" id="a-name" placeholder="John Doe">
             </div>
-            <div class="form-group span-2">
-              <label class="form-label" for="a-street">Street address</label>
-              <input class="form-input" id="a-street" placeholder="42 Maple Street, Apt 3B">
+            <div class="form-group">
+              <label class="form-label" for="a-country">Country</label>
+              <input class="form-input" id="a-country" placeholder="Start typing a country">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="a-phone">Phone</label>
+              <input class="form-input" id="a-phone" type="tel" placeholder="+1 (917) 555-0142">
             </div>
             <div class="form-group">
               <label class="form-label" for="a-city">City</label>
@@ -124,19 +96,9 @@
               <label class="form-label" for="a-zip">ZIP / Postcode</label>
               <input class="form-input" id="a-zip" placeholder="11201">
             </div>
-            <div class="form-group">
-              <label class="form-label" for="a-country">Country</label>
-              <select class="form-select" id="a-country">
-                <option>United States</option>
-                <option>Canada</option>
-                <option>United Kingdom</option>
-                <option>Australia</option>
-                <option>Bangladesh</option>
-              </select>
-            </div>
             <div class="form-group span-2">
-              <label class="form-label" for="a-phone">Phone</label>
-              <input class="form-input" id="a-phone" placeholder="+1 (917) 555-0142">
+              <label class="form-label" for="a-street">Street address</label>
+              <input class="form-input" id="a-street" placeholder="42 Maple Street, Apt 3B">
             </div>
           </div>
           <div class="addr-form-foot">
@@ -159,38 +121,8 @@
         </div>
 
         <div class="delivery-options" id="delivery-options" role="radiogroup" aria-label="Delivery method">
-          <div class="delivery-option selected" data-price="0" role="radio" aria-checked="true" tabindex="0">
-            <span class="delivery-option-icon">
-              <svg width="18" height="18" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M2 5.5h10v7H2v-7ZM12 8h3.2l2.8 2.6v1.9h-6V8Z" stroke="var(--warn)" stroke-width="1.4" stroke-linejoin="round"/><circle cx="5.5" cy="14.5" r="1.6" stroke="var(--warn)" stroke-width="1.4"/><circle cx="14.5" cy="14.5" r="1.6" stroke="var(--warn)" stroke-width="1.4"/></svg>
-            </span>
-            <div class="delivery-option-info">
-              <div class="delivery-option-name">Standard Delivery</div>
-              <div class="delivery-option-date">Estimated 3&ndash;5 business days</div>
-            </div>
-            <div class="delivery-option-price free">Free</div>
-          </div>
-
-          <div class="delivery-option" data-price="9.99" role="radio" aria-checked="false" tabindex="0">
-            <span class="delivery-option-icon">
-              <svg width="18" height="18" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M11 2 4 11h4.5l-1 7 7.5-9.5h-4.6L11 2Z" stroke="var(--warn)" stroke-width="1.4" stroke-linejoin="round"/></svg>
-            </span>
-            <div class="delivery-option-info">
-              <div class="delivery-option-name">Express Delivery</div>
-              <div class="delivery-option-date">Estimated 1&ndash;2 business days</div>
-            </div>
-            <div class="delivery-option-price">$9.99</div>
-          </div>
-
-          <div class="delivery-option" data-price="19.99" role="radio" aria-checked="false" tabindex="0">
-            <span class="delivery-option-icon">
-              <svg width="18" height="18" viewBox="0 0 20 20" fill="none" aria-hidden="true"><circle cx="10" cy="10" r="7.5" stroke="var(--warn)" stroke-width="1.4"/><path d="M10 5.5V10l3 2" stroke="var(--warn)" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            </span>
-            <div class="delivery-option-info">
-              <div class="delivery-option-name">Same-Day Delivery</div>
-              <div class="delivery-option-date">Order by 12:00 PM &middot; Today by 8 PM</div>
-            </div>
-            <div class="delivery-option-price">$19.99</div>
-          </div>
+          <!-- Built by address.js from GET /v1/checkout/delivery-methods,
+               priced against this cart. -->
         </div>
 
         <!-- Packaging -->
@@ -200,27 +132,7 @@
         </div>
 
         <div class="delivery-options" id="packaging-options" role="radiogroup" aria-label="Packaging">
-          <div class="delivery-option selected" data-price="0" data-pack="Standard" role="radio" aria-checked="true" tabindex="0">
-            <span class="delivery-option-icon">
-              <svg width="18" height="18" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M2.5 6.2 10 3l7.5 3.2v7.6L10 17l-7.5-3.2V6.2Z" stroke="var(--warn)" stroke-width="1.4" stroke-linejoin="round"/><path d="m2.5 6.2 7.5 3.3 7.5-3.3M10 9.5V17" stroke="var(--warn)" stroke-width="1.4" stroke-linejoin="round"/></svg>
-            </span>
-            <div class="delivery-option-info">
-              <div class="delivery-option-name">Standard Packaging</div>
-              <div class="delivery-option-date">Recycled cardboard, paper tape</div>
-            </div>
-            <div class="delivery-option-price free">Free</div>
-          </div>
-
-          <div class="delivery-option" data-price="4.99" data-pack="Premium" role="radio" aria-checked="false" tabindex="0">
-            <span class="delivery-option-icon">
-              <svg width="18" height="18" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M2.5 7.5h15v9h-15v-9ZM2 5h16v2.5H2V5Z" stroke="var(--warn)" stroke-width="1.4" stroke-linejoin="round"/><path d="M10 5v11.5" stroke="var(--warn)" stroke-width="1.4"/><path d="M10 5S8.4 2.5 6.8 2.5A1.6 1.6 0 0 0 6.8 5H10Zm0 0s1.6-2.5 3.2-2.5A1.6 1.6 0 0 1 13.2 5H10Z" stroke="var(--warn)" stroke-width="1.4" stroke-linejoin="round"/></svg>
-            </span>
-            <div class="delivery-option-info">
-              <div class="delivery-option-name">Premium Gift Packaging</div>
-              <div class="delivery-option-date">Rigid box, ribbon and a handwritten note card</div>
-            </div>
-            <div class="delivery-option-price">$4.99</div>
-          </div>
+          <!-- Built by address.js from GET /v1/checkout/packaging-options. -->
         </div>
 
         <!-- Order note -->
@@ -302,7 +214,7 @@
         <div class="footer-logo-mark"></div>
         <span class="footer-logo-text">ambe</span>
       </div>
-      <p class="footer-desc">Your one-stop shop for fashion, electronics, home goods, and more. Premium brands, unbeatable prices.</p>
+      <p class="footer-desc">Cosmetics, skincare, body care, wellness, hair, nails and men's grooming — chosen well, priced fairly.</p>
       <div class="footer-social">
         <div class="footer-social-btn"><svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M16 8.05C16 3.6 12.4 0 8 0S0 3.6 0 8.05c0 3.9 2.8 7.2 6.5 7.85v-5.5H4.5v-2.4H6.5V6.2c0-2 1.2-3.1 3-3.1.85 0 1.7.15 1.7.15v1.9h-1c-.95 0-1.2.6-1.2 1.2v1.4H11l-.4 2.4H9v5.5C12.7 15.2 16 11.9 16 8.05Z" fill="rgba(255,255,255,0.6)"/></svg></div>
         <div class="footer-social-btn"><svg width="14" height="14" viewBox="0 0 16 16" fill="none"><rect x="1" y="1" width="14" height="14" rx="3.5" stroke="rgba(255,255,255,0.6)" stroke-width="1.3"/><circle cx="8" cy="8" r="3" stroke="rgba(255,255,255,0.6)" stroke-width="1.3"/><circle cx="12" cy="4" r="1" fill="rgba(255,255,255,0.6)"/></svg></div>
@@ -310,15 +222,7 @@
         <div class="footer-social-btn"><svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M1 1l6 6-6 8h2l5-6.5L13 15h3L10 8.5 15.5 1H13.5L8 7 3.5 1H1Z" fill="rgba(255,255,255,0.6)"/></svg></div>
       </div>
     </div>
-    <div>
-      <div class="footer-col-title">Shop</div>
-      <a class="footer-link">Men's Fashion</a>
-      <a class="footer-link">Women's Fashion</a>
-      <a class="footer-link">Kids & Baby</a>
-      <a class="footer-link">Electronics</a>
-      <a class="footer-link">Home & Living</a>
-      <a class="footer-link">Sale</a>
-    </div>
+    {% include "common/footer-shop.html" %}
     <div>
       <div class="footer-col-title">Account</div>
       <a class="footer-link" href="/account/profile">My Profile</a>
@@ -329,29 +233,27 @@
     </div>
     <div>
       <div class="footer-col-title">Help</div>
-      <a class="footer-link">Help Center</a>
-      <a class="footer-link">Track Order</a>
-      <a class="footer-link">Returns</a>
+      <a class="footer-link" href="/account/support">Help Center</a>
+      <a class="footer-link" href="/account/orders">Track Order</a>
+      <a class="footer-link" href="/account/returns">Returns</a>
       <a class="footer-link">Shipping Info</a>
-      <a class="footer-link">Contact Us</a>
+      <a class="footer-link" href="/account/support">Contact Us</a>
     </div>
     <div>
       <div class="footer-col-title">Company</div>
-      <a class="footer-link">About Us</a>
-      <a class="footer-link">Careers</a>
-      <a class="footer-link">Blog</a>
-      <a class="footer-link">Press</a>
-      <a class="footer-link">Affiliates</a>
+      <a class="footer-link" href="/about">About Us</a>
+      <a class="footer-link" href="/privacy">Privacy Policy</a>
+      <a class="footer-link" href="/terms">Terms of Use</a>
     </div>
   </div>
   <div class="footer-bottom">
-    <span>© 2026 Bambe Inc. · Privacy Policy · Terms of Service</span>
+    <span>© 2026 Bambe Inc. · <a href="/privacy">Privacy Policy</a> · <a href="/terms">Terms of Use</a></span>
     <div class="footer-pay-icons">
       <div class="pay-icon">VISA</div>
       <div class="pay-icon">MC</div>
       <div class="pay-icon">AMEX</div>
-      <div class="pay-icon">PayPal</div>
-      <div class="pay-icon">Apple Pay</div>
+      <div class="pay-icon">MOBILE BANKING</div>
+      <div class="pay-icon">CASH ON DELIVERY</div>
     </div>
   </div>
 </footer>
@@ -368,6 +270,7 @@
 })();
 </script>
 <script src="/assets/js/select.js"></script>
-<script src="/assets/js/address.js"></script>
+<script type="module" src="/assets/js/address.js"></script>
+<script type="module" src="/assets/js/navbar.js"></script>
 </body>
 </html>

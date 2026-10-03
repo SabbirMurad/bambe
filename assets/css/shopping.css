@@ -4,314 +4,903 @@
 ═══════════════════════════════════════════════════════════════ */
 
 /* ── ══════════════════════════════════════════════════════
-   HOME — HERO BANNER
+   HOME — THE THREE OPENING SECTIONS
+
+   Editorial rather than dashboard: a photographic hero, a collage
+   that says who the brand is, and a set of category doors. All
+   three are photo-led, so each image slot is a `.ph` — a neutral
+   placeholder that styles itself until a real picture is set on it
+   with `--img: url(...)`. See the note above `.ph` below.
+
+   The page ground is pure white, so these sections earn their
+   separation from contrast and from the tinted band on the collage,
+   not from a tinted background.
 ══════════════════════════════════════════════════════ ── */
+
+/* ── Nav over the hero ────────────────────────────────────
+   Only on pages that opt in with `.has-hero-overlay` on <body> —
+   the home page. Everywhere else the navbar keeps its solid white
+   bar, so this cannot leak into the account or checkout chrome.
+
+   The nav is lifted out of the flow and laid over the hero, which
+   is why the hero can start at the top of the viewport. It keeps
+   its ordinary solid white bar and grey hairline from common.css,
+   so the logo and links stand on white rather than on the photo;
+   only the positioning is set here.                             */
+/*
+  The hairline drawn on the photograph itself — along the top of the
+  marquee at the foot of the hero. Not --border or --faint: both are
+  picked to sit on white, and against the photo's beige ground they
+  are close enough to it to disappear.
+*/
+.has-hero-overlay { --hero-rule: rgba(50,48,44,0.18); }
+
+/* Fixed rather than absolute: the bars stay over the hero at the top
+   and, with nav-autohide.js, slide back in on scroll-up anywhere down
+   the page. */
+.has-hero-overlay .navbar,
+.has-hero-overlay .subnav {
+  position: fixed;
+  left: 0;
+  right: 0;
+}
+.has-hero-overlay .navbar { top: 0; }
+.has-hero-overlay .subnav { top: var(--nav-h); }
+
+/* ── Photo slots ──────────────────────────────────────────
+   Every image on these sections is one of these. With no --img it
+   draws a soft neutral gradient with a faint grain, which reads as
+   "photo goes here" rather than as a broken box; set --img and the
+   picture covers it. Nothing here needs changing when the real
+   photography arrives — only the --img value.            */
+.ph {
+  position: relative;
+  overflow: hidden;
+  background-color: var(--input-bg);
+  background-image:
+    var(--img, none),
+    linear-gradient(135deg, var(--input-bg) 0%, #F2EDEE 55%, var(--border) 100%);
+  background-size: cover, cover;
+  background-position: center, center;
+  background-repeat: no-repeat, no-repeat;
+}
+/* A hairline inside the slot so a pale photo still reads as a card. */
+.ph::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,0.06);
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+/* ── ─────────────────────────────────────────────────────
+   1 — HERO
+   Full-bleed dark photograph, inset from the page edges and
+   rounded, with the copy stacked on the right half. The picture is
+   the section; the panel behind it only shows through where the
+   photograph has not loaded.
+   ───────────────────────────────────────────────────── ── */
 .hero {
-  background: var(--input-bg);
-  padding: 56px 0 60px;
+  /* Full-bleed and full-height. The navbar sits on top of it rather
+     than above it, so the hero starts at y=0 and the nav is pulled
+     back over it by .has-hero-overlay below. */
+  position: relative;
+  background: var(--ink);
 }
-.hero-inner {
-  display: grid;
-  grid-template-columns: 1fr 360px;
-  gap: 48px;
-  align-items: center;
-}
-.hero-body {
+.hero-frame {
+  position: relative;
+  /* svh, not vh: on mobile the browser chrome collapses as you scroll,
+     and vh would size to the tall state and crop the CTA on arrival. */
+  min-height: 100svh;
   display: flex;
-  flex-direction: column;
-}
-.hero-tag {
-  display: inline-flex;
   align-items: center;
-  gap: 7px;
-  padding: 5px 12px;
-  border-radius: 20px;
-  background: rgba(250,170,57,0.18);
-  border: 1px solid rgba(250,170,57,0.3);
-  font-size: 11.5px;
-  font-weight: 700;
-  color: var(--primary-text);
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
-  margin-bottom: 20px;
-  width: fit-content;
+  overflow: hidden;
+  background-color: var(--ink);
+}
+/* Keeps the copy clear of the overlaid nav and off the very bottom. */
+.hero-frame::after {
+  content: '';
+  display: block;
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+/* The photograph. Kept as its own layer rather than a background on
+   .hero-frame so the scrim below can sit between it and the copy. */
+/*
+  The wall in this photograph was extended to the right in the file
+  itself (see read_me), so the picture already carries the full width
+  of the hero — no panel, no fade, nothing to blend. It is cropped
+  from the left so the subject keeps her position as the window
+  widens, and the spare wall on the right is what gets cut.
+*/
+.hero-photo {
+  position: absolute;
+  inset: 0;
+  background-color: #FFFFFF;
+  background-image: var(--img, none);
+  background-size: cover;
+  /* Centred: the products ring the edges of this picture and the middle
+     is open, which is where the copy now sits. */
+  background-position: center;
+  background-repeat: no-repeat;
+}
+/*
+  No wash on the wide layout: the nav above is solid white, so nothing
+  has to be lifted off the photograph, and the copy sits in the
+  picture's open middle. The layer stays for the stacked layout below,
+  where the copy is laid over the busier parts of the picture and needs
+  the photo's own colour behind it.
+*/
+.hero-scrim {
+  position: absolute;
+  inset: 0;
+}
+
+.hero-body {
+  position: relative;
+  z-index: 1;
+  /* No width: as a flex item the block sizes to its own content, and
+     auto margins on both sides centre it in the frame. Line breaks are
+     therefore set by the copy — the <br> in the headline and
+     .hero-desc's own max-width — rather than by a column measure. */
+  margin-inline: auto;
+  /* Top padding clears the nav + sub-nav sitting over the hero; the
+     equal sides are what keep the block centred rather than merely
+     centre-aligned. */
+  padding: calc(var(--nav-h) + var(--subnav-h)) 32px 96px;
+  text-align: center;
 }
 .hero-title {
   font-family: var(--font-head);
-  font-size: 46px;
+  font-size: clamp(40px, 5.4vw, 76px);
   font-weight: 700;
+  line-height: 1.06;
+  letter-spacing: -1.2px;
   color: var(--black);
-  line-height: 1.1;
-  margin-bottom: 16px;
-}
-.hero-title em {
-  font-style: normal;
-  color: var(--primary-text);
+  margin: 0;
 }
 .hero-desc {
   font-size: 15px;
-  color: var(--mid);
-  line-height: 1.65;
-  max-width: 420px;
-  margin-bottom: 32px;
+  line-height: 1.7;
+  color: var(--dark);
+  margin: 20px auto 0;
+  max-width: 440px;
 }
-.hero-actions { display: flex; gap: 12px; align-items: center; }
+.hero-actions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 30px;
+}
+
+/* ── Hero motion ──────────────────────────────────────────
+   Only the copy moves now. Each line rises a little and fades up,
+   one after the next, so the eye is walked down the stack in the
+   order it should be read rather than meeting all of it at once.
+
+   The photograph used to drift as well, scaling slowly about the
+   point the old subject stood on. The picture is a flat-lay with its
+   products ringing the edges, and a scale of any size pushed them out
+   of frame — so the drift is gone rather than re-aimed.
+
+   The copy animation is off under prefers-reduced-motion at the end
+   of this file: nothing here carries meaning that is lost when it
+   stops.                                                         */
+
+@keyframes hero-rise {
+  from { opacity: 0; transform: translate3d(0, 20px, 0); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* --px / --py are written by initHeroParallax() in home.js and read by
+   the orb keyframes below. They default to 0 when the script never
+   runs, so the hero is inert without it. */
+.hero-frame { --px: 0px; --py: 0px; }
+
+.hero-title,
+.hero-desc,
+.hero-actions {
+  /* `both` so the opening frame applies before the delay elapses —
+     without it each line flashes at full opacity, then starts. */
+  animation: hero-rise 0.75s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.hero-title   { animation-delay: 0.06s; }
+.hero-desc    { animation-delay: 0.22s; }
+.hero-actions { animation-delay: 0.36s; }
+
+/* The arrow leans out of the button on hover — the same gesture the
+   pill already makes when it lifts, carried through to the glyph. */
+.hero-cta-primary svg {
+  transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.hero-cta-primary:hover svg { transform: translate3d(2px, -2px, 0); }
+
+/* ── Drifting light ───────────────────────────────────────
+   Three blurred discs behind the copy, each on its own duration so
+   they never fall into step and never repeat the same arrangement.
+   Soft-light blending keeps them as changes in the light on the wall
+   rather than shapes sitting on top of it.                      */
+.hero-orbs {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.hero-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(52px);
+  mix-blend-mode: soft-light;
+  will-change: transform;
+}
+.hero-orb--1 {
+  width: 340px; height: 340px;
+  right: 8%; top: 12%;
+  background: radial-gradient(circle, color-mix(in srgb, var(--primary) 85%, transparent) 0%, color-mix(in srgb, var(--primary) 0%, transparent) 70%);
+  animation: orb-a 19s ease-in-out infinite alternate;
+}
+.hero-orb--2 {
+  width: 260px; height: 260px;
+  right: 26%; bottom: 14%;
+  background: radial-gradient(circle, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0) 70%);
+  animation: orb-b 25s ease-in-out infinite alternate;
+}
+.hero-orb--3 {
+  width: 400px; height: 400px;
+  left: 30%; top: 30%;
+  background: radial-gradient(circle, rgba(255,140,170,0.7) 0%, rgba(255,140,170,0) 70%);
+  animation: orb-c 31s ease-in-out infinite alternate;
+}
+@keyframes orb-a {
+  from { transform: translate3d(calc(var(--px) * -1.8), calc(var(--py) * -1.8), 0) scale(1); }
+  to   { transform: translate3d(calc(var(--px) * -1.8 - 90px), calc(var(--py) * -1.8 + 60px), 0) scale(1.18); }
+}
+@keyframes orb-b {
+  from { transform: translate3d(calc(var(--px) * 2.2), calc(var(--py) * 2.2), 0) scale(1.1); }
+  to   { transform: translate3d(calc(var(--px) * 2.2 + 70px), calc(var(--py) * 2.2 - 55px), 0) scale(0.9); }
+}
+@keyframes orb-c {
+  from { transform: translate3d(calc(var(--px) * 1.4), calc(var(--py) * 1.4), 0) scale(0.95); }
+  to   { transform: translate3d(calc(var(--px) * 1.4 + 60px), calc(var(--py) * 1.4 + 45px), 0) scale(1.15); }
+}
+
+/* ── Claims strip ─────────────────────────────────────────
+   The one part of the hero that moves continuously and obviously.
+   The track holds the list twice and travels exactly -50%, so the
+   second run is in the first run's place at the moment it resets —
+   which is what makes the loop invisible. Any other distance and it
+   would visibly jump.                                           */
+.hero-marquee {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow: hidden;
+  border-top: 1px solid var(--hero-rule, rgba(50,48,44,0.18));
+  background: rgba(255,255,255,0.35);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+.hero-marquee-track {
+  display: flex;
+  align-items: center;
+  width: max-content;
+  padding: 15px 0;
+  animation: marquee 34s linear infinite;
+  will-change: transform;
+}
+/*
+  Two of these, identical. -50% of the track is exactly one group, so
+  the reset lands the second group where the first started and the
+  seam is invisible.
+
+  min-width is the part that was missing: with ten items the group
+  measured 994px against a 1910px strip, so the second half ran out
+  of content most of the way across and the tail of the loop went
+  blank before snapping back. Forcing each group to a viewport wide
+  means there is always something in frame, and space-around shares
+  out any slack — identically in both groups, so they still line up.
+*/
+.hero-marquee-group {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  gap: 22px;
+  min-width: 100vw;
+  /* Keeps the spacing across the join equal to the spacing within. */
+  padding-right: 22px;
+  flex-shrink: 0;
+}
+.hero-marquee-group span {
+  font-family: var(--font-head);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 2.4px;
+  text-transform: uppercase;
+  color: var(--black);
+  white-space: nowrap;
+}
+.hero-marquee-group i { color: var(--primary); font-style: normal; }
+@keyframes marquee {
+  from { transform: translate3d(0, 0, 0); }
+  to   { transform: translate3d(-50%, 0, 0); }
+}
+/* Pausing on hover makes the claims readable instead of a blur. */
+.hero-marquee:hover .hero-marquee-track { animation-play-state: paused; }
+
+/* ── Scroll cue ───────────────────────────────────────────
+   Sits above the strip, on the copy's side so it never lands on the
+   model. The dot falls inside the mouse; the whole cue breathes.  */
+.hero-cue {
+  position: absolute;
+  bottom: 84px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: rgba(50,48,44,0.62);
+  animation: cue-breathe 2.6s ease-in-out infinite;
+}
+.hero-cue-dot { animation: cue-dot 2.6s ease-in-out infinite; }
+@keyframes cue-breathe {
+  0%, 100% { transform: translate3d(-50%, 0, 0); }
+  50%      { transform: translate3d(-50%, 7px, 0); }
+}
+@keyframes cue-dot {
+  0%, 100% { transform: translate3d(0, 0, 0); opacity: 1; }
+  50%      { transform: translate3d(0, 7px, 0); opacity: 0.25; }
+}
+/* Pill shape and the arrow come from the reference; the colour is
+   this site's own primary, not the reference's gold. */
 .hero-cta-primary {
-  height: 48px;
-  padding: 0 28px;
-  background: var(--blue);
-  color: var(--on-primary);
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  height: 46px;
+  padding: 0 26px;
   border: none;
-  border-radius: var(--radius-md);
+  border-radius: 999px;
+  background: var(--primary-grad);
+  color: var(--on-primary);
   font-family: var(--font-head);
-  font-size: 14.5px;
+  font-size: 13.5px;
   font-weight: 700;
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  transition: background 0.15s;
+  transition: filter 0.15s, transform 0.15s;
 }
-.hero-cta-primary:hover { background: var(--blue-dk); }
-.hero-cta-ghost {
-  height: 48px;
+.hero-cta-primary:hover { filter: brightness(0.90); transform: translateY(-1px); }
+/* The hero's button stands alone, so it takes a wider stance than the
+   same button in the collage below. */
+.hero-actions .hero-cta-primary {
+  justify-content: center;
+  padding: 0 44px;
+}
+
+/* ── ─────────────────────────────────────────────────────
+   2 — COLLAGE
+   The brand's own section: a heading and a short claim on the
+   left, a tall portrait in the middle, a rotating seal and a
+   second picture on the right. Deliberately asymmetric and
+   overlapping — it should not read as a grid of cards.
+
+   Laid out on an explicit 12-column grid so the overlaps are
+   stated rather than produced by negative margins.
+   ───────────────────────────────────────────────────── ── */
+.collage {
+  /*
+    Pure white, not the tinted band it used to be: that was a pale pink
+    left from the old palette, and it read as a smudge between the
+    hero's warm off-white above and the category doors below.
+
+    Held in a variable because the step cut out of the picture below is
+    drawn by painting band-coloured shapes over it — four separate
+    declarations that are only invisible while they match this one
+    exactly. Changing the band without changing them leaves the notch
+    showing as a patch of the old colour.
+  */
+  --band: #FFFFFF;
+  /* The same colour at zero alpha. Not the `transparent` keyword: that
+     is transparent BLACK, and the antialiased rim of the quarter-discs
+     below would blend towards grey against it. */
+  --band-fade: rgba(255,255,255,0);
+  background: var(--band);
+  /* Generous, and deliberately so: the band is the only thing
+     separating this section from the hero above and the category
+     doors below, both of which are full-bleed and busy. The air is
+     what lets it read as its own page rather than a strip wedged
+     between two photographs. */
+  padding: 190px 0;
+}
+.collage-inner {
+  max-width: var(--content-max);
+  margin: 0 auto;
   padding: 0 24px;
-  background: transparent;
-  color: var(--dark);
-  border: 1.5px solid var(--border);
-  border-radius: var(--radius-md);
-  font-family: var(--font-head);
-  font-size: 14.5px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.15s;
+  display: grid;
+  /* Three columns, one row. The left column is a single cell holding
+     its own stack — an earlier version spanned the portrait across two
+     grid rows, which stretched the first row to half the portrait's
+     height and tore a gap between the heading and the clip. */
+  grid-template-columns: 4.2fr 4.4fr 3.4fr;
+  column-gap: 32px;
+  align-items: start;
 }
-.hero-cta-ghost:hover { border-color: var(--mid); color: var(--black); }
-
-.hero-stats {
+.collage-left {
   display: flex;
-  gap: 32px;
-  margin-top: 36px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 22px;
+}
+.collage-title {
+  font-family: var(--font-head);
+  font-size: clamp(26px, 2.6vw, 36px);
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.4px;
+  color: var(--black);
+}
+.collage-sub {
+  font-size: 13px;
+  color: var(--mid);
+  margin-top: 10px;
+}
+/* The small video still under the heading. */
+.collage-clip {
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  border-radius: 18px;
+}
+.collage-play {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 48px;
+  height: 48px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.92);
+  color: var(--black);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 1;
+  transition: transform 0.15s, background 0.15s;
+}
+.collage-play:hover { transform: scale(1.08); background: #FFFFFF; }
+/* The tall centre portrait, lifted so it breaks the top line of the
+   row — the overlap is what stops this reading as three cards. */
+.collage-portrait {
+  position: relative;
+  aspect-ratio: 3 / 4;
+  border-radius: 22px;
+  margin-top: -28px;
+  /* The notch and the button reach outside these bounds; border-radius
+     still clips the background image, so nothing is lost by this. */
+  overflow: visible;
+}
+.collage-side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 20px;
   padding-top: 28px;
-  border-top: 1px solid var(--border);
 }
-.hero-stat-num {
-  font-family: var(--font-head);
-  font-size: 22px;
-  font-weight: 700;
-  color: var(--black);
-}
-.hero-stat-lbl { font-size: 12px; color: var(--subtle); margin-top: 2px; }
-
-/* Hero image (right column) */
-.hero-image {
+/* The rotating seal. Text on a circle needs SVG; the dot is drawn
+   here so the SVG only carries the letters. */
+.collage-seal {
   position: relative;
-  border-radius: 20px;
-  overflow: hidden;
-  background: var(--white);
-  border: 1px solid var(--border);
+  width: 132px;
+  height: 132px;
 }
-.hero-image-sale-badge {
-  position: absolute;
-  top: 16px;
-  left: 16px;
-  z-index: 2;
-  background: var(--blue);
-  color: var(--on-primary);
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.6px;
-  padding: 4px 10px;
-  border-radius: 8px;
-}
-.hero-image-inner {
-  position: relative;
-  height: 240px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-}
-.hero-img-circle {
-  position: absolute;
-  border-radius: 50%;
-}
-.hero-img-circle--lg {
-  width: 200px;
-  height: 200px;
-  background: rgba(250,170,57,0.08);
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-}
-.hero-img-circle--sm {
-  width: 120px;
-  height: 120px;
-  background: rgba(250,170,57,0.14);
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-}
-.hero-img-icon {
-  position: relative;
-  z-index: 1;
-  width: 88px;
-  height: 88px;
-  border-radius: 50%;
-  background: rgba(250,170,57,0.18);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.hero-image-label {
-  padding: 16px 20px 20px;
-  border-top: 1px solid var(--border);
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-.hero-image-brand {
-  font-size: 10px;
-  font-weight: 700;
-  color: var(--primary-text);
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
-}
-.hero-image-name {
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--black);
-}
-.hero-image-price {
-  font-size: 16px;
-  font-weight: 800;
-  color: var(--black);
-  margin-top: 4px;
-}
-
-/* Promo strip */
-.promo-strip {
-  background: var(--blue);
-  color: var(--on-primary);
-  text-align: center;
-  padding: 10px;
-  font-size: 12.5px;
-  font-weight: 600;
-  letter-spacing: 0.3px;
-}
-.promo-strip-code {
-  background: rgba(255,255,255,0.2);
-  padding: 1px 8px;
-  border-radius: 4px;
-  font-family: var(--font-head);
-  font-weight: 700;
-  letter-spacing: 1px;
-}
-
-/* ── Categories strip ─────────────────────────────────────── */
-.categories-strip {
-  padding: 36px 0;
-}
-.category-grid {
-  display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  gap: 14px;
-}
-.category-card {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-  padding: 20px 12px;
-  background: var(--white);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  cursor: pointer;
-  transition: all 0.2s;
-  text-align: center;
-}
-.category-card:hover {
-  border-color: var(--primary-text);
-  background: var(--blue-lt);
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
-}
-.category-icon {
-  width: 52px;
-  height: 52px;
-  border-radius: 14px;
-  background: var(--input-bg);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.category-card:hover .category-icon { background: var(--blue-lt); }
-.category-label {
-  font-size: 12.5px;
-  font-weight: 600;
-  color: var(--dark);
-}
-.category-count { font-size: 10.5px; color: var(--subtle); }
-
-/* ── Promo Banners ────────────────────────────────────────── */
-.promo-banners {
-  display: grid;
-  grid-template-columns: 1.6fr 1fr;
-  gap: 16px;
-  margin-bottom: 48px;
-}
-.promo-banner {
-  border-radius: var(--radius-lg);
-  overflow: hidden;
-  position: relative;
-  cursor: pointer;
-  min-height: 200px;
-}
-.promo-banner-sm { min-height: auto; }
-.promo-banner-body {
-  position: relative;
-  z-index: 1;
-  padding: 28px 32px;
+.collage-seal svg {
+  width: 100%;
   height: 100%;
+  animation: seal-spin 22s linear infinite;
+}
+.collage-seal-dot {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--black);
+}
+@keyframes seal-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) {
+  .collage-seal svg { animation: none; }
+  .hero-title,
+  .hero-desc,
+  .hero-actions { animation: none; }
+  .hero-cta-primary svg { transition: none; }
+  .hero-orb,
+  .hero-marquee-track,
+  .hero-cue,
+  .hero-cue-dot { animation: none; }
+  /* Still centred once the animation that was doing it stops. */
+  .hero-cue { transform: translateX(-50%); }
+}
+.collage-still {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  border-radius: 18px;
+}
+/*
+  The step cut out of the picture's bottom-left corner, and the button
+  that sits in it.
+
+  The shape, read off the reference: the picture's left edge comes
+  straight down, turns right along the top of the step, turns down
+  again at the step's right edge, runs to the picture's bottom, and
+  only there curves right into the bottom edge. The band colour simply
+  continues through the gap — it does NOT wrap around the button. An
+  earlier attempt drew a pill behind the button instead, which enclosed
+  it on all four sides and was the wrong shape entirely.
+
+  Proportions are taken from the reference rather than guessed: the
+  step is about 27% of the picture's width and 15% of its height, so
+  they are written as percentages and hold at any column width.
+*/
+.collage-notch {
+  position: absolute;
+  left: -60px;                    /* runs out past the picture into the band */
+  bottom: 0;
+  width: calc(27% + 60px);
+  height: 15%;
+  background: var(--band);
+  /* The inward turn where the step's top meets its right edge. */
+  border-top-right-radius: 20px;
+  z-index: 1;
+}
+/*
+  Rounds the picture's new bottom-left corner — the one the step
+  creates, which is inside the element's box and so out of reach of
+  border-radius. The gradient is band colour everywhere except a
+  quarter-disc, and that disc is the corner left showing.
+*/
+.collage-notch::after {
+  content: '';
+  position: absolute;
+  left: 100%;
+  bottom: 0;
+  width: 20px;
+  height: 20px;
+  background: radial-gradient(circle at 100% 0, var(--band-fade) 0 20px, var(--band) 20px);
+}
+
+.collage-notch::before {
+  content: '';
+  position: absolute;
+  left: 60px;
+  top: -20px;
+  width: 20px;
+  height: 20px;
+  background: radial-gradient(circle at 100% 0, var(--band-fade) 0 20px, var(--band) 20px);
+}
+
+/*
+  Wrapper for the button and the line beneath it. Anchored by its TOP,
+  not its bottom: anchoring the bottom would pin the note's last line to
+  the picture and shove the button up out of the step whenever the text
+  reflowed. 100% is the picture's height, so `100% - 66px` puts the
+  button's top 66px above the picture's bottom — where it sat alone.
+*/
+.collage-cta-slot {
+  position: absolute;
+  left: -380px;
+  top: calc(100% - 66px);
+  z-index: 2;
   display: flex;
   flex-direction: column;
+  align-items: flex-end;
+  /* Wide enough that the note clears the picture's bottom edge and lands
+     on the band, rather than putting dark text over the photograph. */
+  gap: 26px;
+}
+.collage-cta {
+  position: relative;
+  margin: 0;
+}
+.collage-note {
+  font-size: 15px;
+  line-height: 1.7;
+  color: var(--mid);
+  width: 470px;
+  margin: 0;
+}
+
+/* ── ─────────────────────────────────────────────────────
+   3 — CATEGORY DOORS
+   Full-bleed panels that touch, each a photograph with the
+   category name over it. The row is built by home.js from the
+   real category tree, so the count is whatever the shop has —
+   the grid below adapts rather than assuming three.
+   ───────────────────────────────────────────────────── ── */
+.doors {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  background: var(--ink);
+}
+.door {
+  position: relative;
+  min-height: 420px;
+  display: flex;
+  align-items: center;
   justify-content: center;
+  text-align: center;
+  text-decoration: none;
+  overflow: hidden;
 }
-.promo-tag {
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 1.5px;
-  text-transform: uppercase;
-  opacity: 0.75;
-  margin-bottom: 8px;
+.door-photo {
+  position: absolute;
+  inset: 0;
+  background-color: #2C2427;
+  background-image: var(--img, none);
+  background-size: cover;
+  background-position: center;
+  transition: transform 0.5s ease;
 }
-.promo-title {
+.door:hover .door-photo { transform: scale(1.05); }
+/* Enough scrim for white type at any photograph. */
+.door::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(12,8,10,0.30) 0%, rgba(12,8,10,0.55) 100%);
+}
+.door-body {
+  position: relative;
+  z-index: 1;
+  padding: 24px;
+}
+.door-name {
   font-family: var(--font-head);
   font-size: 26px;
   font-weight: 700;
-  line-height: 1.2;
-  margin-bottom: 8px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #FFFFFF;
 }
-.promo-sub { font-size: 13px; opacity: 0.75; margin-bottom: 18px; }
-.promo-cta {
+.door-sub {
+  font-size: 12.5px;
+  color: rgba(255,255,255,0.78);
+  margin-top: 8px;
+}
+.door-cta {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 9px 18px;
-  border-radius: var(--radius-sm);
+  gap: 8px;
+  margin-top: 18px;
+  height: 38px;
+  padding: 0 20px;
+  border: 1px solid rgba(255,255,255,0.55);
+  border-radius: 999px;
+  color: #FFFFFF;
   font-size: 12.5px;
+  font-weight: 600;
+  transition: background 0.15s, border-color 0.15s;
+}
+.door:hover .door-cta { background: rgba(255,255,255,0.16); border-color: #FFFFFF; }
+/* The empty state, when the catalogue has no categories yet. */
+.doors-empty {
+  grid-column: 1 / -1;
+  min-height: 260px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  color: rgba(255,255,255,0.75);
+  text-align: center;
+  padding: 24px;
+}
+.doors-empty strong {
+  font-family: var(--font-head);
+  font-size: 17px;
   font-weight: 700;
-  cursor: pointer;
-  width: fit-content;
+  color: #FFFFFF;
 }
 
-/* ── Trending / New Arrivals section ─────────────────────── */
-.products-section { padding-bottom: 48px; }
+/* ── Narrow screens ───────────────────────────────────────
+   The collage's overlaps only work with room for them, so below
+   the desktop breakpoint it unwinds into one column and the doors
+   stack. The hero loses its side-by-side split and centres.  */
+@media (max-width: 1024px) {
+  .hero-body {
+    width: 100%;
+    padding: calc(var(--nav-h) + var(--subnav-h)) 32px 0;
+    margin: 0;
+  }
+  /* Stacked layout: the copy sits over the picture rather than beside
+     it, so the wash is carried down the whole frame to keep the dark
+     type off the busiest part of the photograph. #EAD6BB is the median
+     of the photo's bare marble (hero_bg.png) — white here would sit as
+     a pale panel on top of a beige picture. */
+  .hero-scrim {
+    background: linear-gradient(
+      180deg,
+      rgba(234,214,187,0.92) 0%,
+      rgba(234,214,187,0.55) 30%,
+      rgba(234,214,187,0.62) 60%,
+      rgba(234,214,187,0.88) 100%
+    );
+  }
+  .collage-inner { grid-template-columns: 1fr; row-gap: 28px; }
+  .collage-portrait { margin-top: 0; aspect-ratio: 4 / 5; }
+  .collage-side { align-items: flex-start; padding-top: 0; }
+  /* Stacked: there is no gutter to straddle, so the scoop is dropped
+     and the button sits inside the picture's corner instead. */
+  /* Stacked: no gutter to straddle, so the button sits fully inside
+     the picture's corner and the scoop is dropped. */
+  /* Stacked: no gutter to straddle, so the step is dropped and the
+     button sits inside the picture's corner. */
+  .collage-notch { display: none; }
+  .collage-cta-slot {
+    left: 20px;
+    right: 20px;
+    top: auto;
+    bottom: 20px;
+    align-items: flex-start;
+  }
+  /* The note is a fixed 470px so its first line can run under the
+     button at desktop width. There is no room for that here. */
+  .collage-note { width: auto; max-width: 100%; }
+  .doors { grid-auto-flow: row; }
+  .door { min-height: 300px; }
+}
+@media (max-width: 640px) {
+  /*
+    A phone shows a slice about a quarter of the picture wide. Centred,
+    that slice is the open middle of the flat-lay and no product is in
+    it at all. 20% pulls it left onto the column of brushes, compact and
+    foundation, so the picture still says what it is.
+  */
+  .hero-photo { background-position: 20% center; }
+
+  .hero-body { padding: calc(var(--nav-h) + var(--subnav-h)) 20px 0; }
+  /* The headline's <br> is placed for two wide lines. A phone can't
+     hold either of them, so a forced break there strands a word on a
+     line of its own ("a" at 360px, "you." at 390px). Drop it and let
+     the browser even the lines out instead. */
+  .hero-title br { display: none; }
+  .hero-title { text-wrap: balance; }
+  .hero-actions { flex-direction: column; align-items: stretch; }
+  .collage { padding: 104px 0 112px; }
+  .collage-inner { padding: 0 16px; }
+}
+
+/* ── ══════════════════════════════════════════════════════
+   HOME — EMAIL CAPTURE
+
+   A row at the top of the footer rather than a section above it. It
+   was a full-bleed dark band first, which put the same ink either
+   side of a strip of white page and read as two slabs fighting each
+   other. Sharing the footer's ground and separating with a hairline
+   makes it the first thing in the footer instead of a rival to it.
+
+   The field styling below is shared, so it survives if the form is
+   ever rolled out to the footer on every page.
+══════════════════════════════════════════════════════ ── */
+.footer-signup {
+  border-bottom: 1px solid var(--footer-rule);
+}
+.footer-signup-inner {
+  max-width: var(--content-max);
+  margin: 0 auto;
+  padding: 40px 32px;
+  display: grid;
+  grid-template-columns: 1fr minmax(300px, 440px);
+  gap: 40px;
+  align-items: center;
+}
+.footer-signup-title {
+  font-family: var(--font-head);
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--footer-text);
+}
+.footer-signup-sub {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--footer-text);
+  margin-top: 6px;
+  max-width: 420px;
+}
+
+.signup-form {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+}
+.signup-input {
+  height: 46px;
+  padding: 0 18px;
+  border-radius: 999px;
+  border: 1.5px solid rgba(24,24,24,0.22);
+  background: #FFFFFF;
+  color: var(--footer-text);
+  font-family: var(--font-body);
+  font-size: 13.5px;
+  outline: none;
+  transition: border-color 0.15s, background 0.15s;
+  min-width: 0;   /* or a long placeholder widens the grid track */
+}
+.signup-input::placeholder { color: rgba(24,24,24,0.5); }
+.signup-input:focus {
+  border-color: var(--primary);
+}
+.signup-input.error { border-color: var(--error); }
+
+.signup-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 46px;
+  padding: 0 24px;
+  border: none;
+  border-radius: 999px;
+  /* The primary green, like every other main button. It was gold
+     while the footer was dark green, where green disappeared. */
+  background: var(--primary-grad);
+  color: var(--on-primary);
+  font-family: var(--font-head);
+  font-size: 13.5px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: filter 0.15s, transform 0.15s;
+}
+.signup-btn:hover { filter: brightness(0.9); transform: translateY(-1px); }
+.signup-btn:disabled { opacity: 0.6; pointer-events: none; transform: none; }
+.signup-btn svg { transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1); }
+.signup-btn:hover svg { transform: translate3d(2px, -2px, 0); }
+
+.signup-note {
+  grid-column: 1 / -1;
+  font-size: 12px;
+  color: var(--footer-text);
+  margin-top: 2px;
+}
+.signup-note.is-error { color: var(--error); }
+.signup-note.is-done { color: var(--success); }
+
+@media (max-width: 860px) {
+  .footer-signup-inner {
+    grid-template-columns: 1fr;
+    gap: 22px;
+    padding: 32px 20px;
+  }
+  /* Stacked, the button goes full width under the field rather than
+     squeezing the input to nothing. */
+  .signup-form { grid-template-columns: 1fr; }
+  .signup-btn { justify-content: center; }
+}
+
+/* ── Trending / New Arrivals section ───────────────────────
+   The first of these follows the category doors, which are a hard
+   full-bleed dark band — with no top padding the heading sat flush
+   against that edge. The space is on the section rather than on the
+   doors so it travels with the rows wherever they are placed. */
+.products-section { padding: 80px 0 48px; }
 
 /* ── ══════════════════════════════════════════════════════
    FILTER SIDEBAR (Category & Search pages)
 ══════════════════════════════════════════════════════ ── */
-.filter-sidebar {}
+/* Sticky, and taller than a laptop screen once every card is open —
+   so it scrolls on its own. Without a height it could only be moved
+   by scrolling the whole page, and its top and bottom stayed out of
+   reach until the product grid had been scrolled to its ends. The
+   height matches its sticky offset (nav + 20px) with 20px spare
+   below. The drawer on small screens overrides both. */
+.filter-sidebar {
+  max-height: calc(100vh - var(--nav-h) - 40px);
+  overflow-y: auto;
+  /* Scrolls, but without a visible bar beside the cards. */
+  scrollbar-width: none;
+}
+.filter-sidebar::-webkit-scrollbar { display: none; }
 
 .filter-card {
   background: var(--white);
@@ -401,7 +990,7 @@
   left: 18%;
   right: 22%;
   height: 100%;
-  background: var(--blue);
+  background: var(--primary-grad);
   border-radius: 2px;
 }
 .price-range-thumb {
@@ -555,14 +1144,14 @@
   gap: 6px;
   padding: 4px 10px 4px 12px;
   background: var(--blue-lt);
-  border: 1px solid rgba(250,170,57,0.25);
+  border: 1px solid color-mix(in srgb, var(--primary) 25%, transparent);
   border-radius: 20px;
   font-size: 12px;
   color: var(--primary-text);
   font-weight: 600;
   cursor: pointer;
 }
-.active-filter-chip:hover { background: rgba(250,170,57,0.18); }
+.active-filter-chip:hover { background: color-mix(in srgb, var(--primary) 18%, transparent); }
 
 /* ── ══════════════════════════════════════════════════════
    PRODUCT DETAIL PAGE
@@ -603,6 +1192,46 @@
   position: relative;
 }
 .pd-main-img-bg { width: 100%; height: 100%; }
+
+/* ── Detail page while loading ─────────────────────────────────
+   The page ships with no product in it; product.js fills every
+   field from the API. Until it does, an empty field reads as a
+   shimmer bar, and anything that only exists for some products
+   (a sale price, colour and size pickers) stays out of the way.
+   Each rule stops matching the moment its field is written.     */
+.pd-main-img-bg:not([style]),
+.pd-brand-name:empty,
+.pd-title:empty,
+.pd-rating-score:empty,
+.pd-price:empty,
+.pd-description .body-lg:empty,
+.rating-big:empty {
+  background-image: var(--skeleton-fill);
+  background-repeat: no-repeat;
+  background-size: 200% 100%;
+  animation: shimmer 1.8s ease-in-out infinite;
+  border-radius: var(--radius-sm);
+}
+.pd-brand-name:empty    { display: inline-block; width: 90px; height: 12px; }
+.pd-title:empty         { width: 70%; height: 32px; }
+.pd-rating-score:empty  { display: inline-block; width: 140px; height: 16px; }
+.pd-price:empty         { display: inline-block; width: 110px; height: 34px; }
+.pd-description .body-lg:empty { height: 72px; }
+.rating-big:empty       { width: 72px; height: 56px; margin: 0 auto; }
+.pd-thumbnails:empty    { width: 72px; }
+
+.pd-price-old:empty,
+.pd-discount-badge:empty,
+.pd-section-label:empty,
+.pd-swatches:empty,
+.pd-sizes:empty,
+.pd-description ul:empty { display: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .pd-main-img-bg:not([style]),
+  .pd-brand-name:empty, .pd-title:empty, .pd-rating-score:empty,
+  .pd-price:empty, .pd-description .body-lg:empty, .rating-big:empty { animation: none; }
+}
 
 .pd-img-dots {
   position: absolute;
@@ -712,7 +1341,7 @@
 .pd-add-cart {
   flex: 1;
   height: 52px;
-  background: var(--blue);
+  background: var(--primary-grad);
   color: var(--on-primary);
   border: none;
   border-radius: var(--radius-md);
@@ -724,9 +1353,9 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  transition: background 0.15s;
+  transition: filter 0.15s;
 }
-.pd-add-cart:hover { background: var(--blue-dk); }
+.pd-add-cart:hover { filter: brightness(0.90); }
 .pd-wish-btn {
   width: 52px;
   height: 52px;
@@ -826,7 +1455,7 @@
 .rbar-row { display: flex; align-items: center; gap: 10px; }
 .rbar-label { font-size: 12px; color: var(--mid); width: 36px; text-align: right; flex-shrink: 0; }
 .rbar-track { flex: 1; height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; }
-.rbar-fill { height: 100%; background: var(--primary); border-radius: 4px; }
+.rbar-fill { height: 100%; background: var(--primary-grad); border-radius: 4px; }
 .rbar-count { font-size: 11.5px; color: var(--subtle); width: 28px; flex-shrink: 0; }
 
 /* ── Wishlist page ────────────────────────────────────────── */
@@ -844,241 +1473,627 @@
 }
 .wishlist-subtitle { font-size: 13.5px; color: var(--subtle); margin-top: 3px; }
 
+
 /* ── ══════════════════════════════════════════════════════
-   GET THE APP  (home page)
+   RESPONSIVE — LISTING, SEARCH & PRODUCT
 
-   A dark band between the last product row and the footer. It
-   borrows the footer's ink surface and white-alpha text ramp so the
-   page ends on one dark block rather than two competing ones — the
-   band reads as the lead-in to the footer, not a separate slab.
+   Same breakpoints as common.css. The home page's own rules live
+   with their sections further up this file.
 ══════════════════════════════════════════════════════ ── */
-.app-band {
-  background: var(--ink);
-  color: rgba(255,255,255,0.72);
-  /* A top-level block, sibling to <main> and the footer, so it spans
-     the page on its own. It is deliberately NOT inside .container:
-     the usual `margin: 0 calc(50% - 50vw)` escape measures against
-     100vw, which counts the scrollbar, and the band would overhang
-     the content area by the scrollbar's width and add a horizontal
-     scrollbar of its own. The inner wrapper below puts the content
-     back on the same 1280 track the footer uses.
 
-     The negative bottom margin cancels the footer's own top margin,
-     so the two dark blocks meet with no light seam between them. */
-  margin: 56px 0 -80px;
-  overflow: hidden;
-  position: relative;
-}
-/* A soft warm wash behind the phone, so the block isn't flat ink. */
-.app-band::before {
-  content: '';
-  position: absolute;
-  right: -80px;
-  top: -120px;
-  width: 620px;
-  height: 620px;
-  border-radius: 50%;
-  background: radial-gradient(circle, var(--primary-lt) 0%, transparent 68%);
-  pointer-events: none;
-}
-.app-inner {
-  max-width: var(--content-max);
-  margin: 0 auto;
-  padding: 56px 32px 0;
-  display: grid;
-  grid-template-columns: 1fr 300px;
-  gap: 56px;
-  align-items: end;
-  position: relative;
+@media (max-width: 1024px) {
+  /* Gallery above the buy box, which is the order they are read in. */
+  .product-detail-layout { grid-template-columns: 1fr; gap: 24px; }
+  .product-detail-layout > * { min-width: 0; }
 }
 
-.app-copy { padding-bottom: 60px; }
-.app-eyebrow {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  height: 26px;
-  padding: 0 12px;
-  border-radius: 20px;
-  background: rgba(250,170,57,0.16);
-  color: var(--primary);
-  font-family: var(--font-head);
-  font-size: 11.5px;
+/* ── Filters as a drawer ──────────────────────────────────
+   Below the breakpoint the sidebar leaves the flow and slides in
+   over the page, opened from a button in the bar above the grid.
+   The button, backdrop and close control are built by listing.js;
+   if that script never runs, none of the rules below apply and the
+   sidebar stays where it was — unstyled but reachable.        */
+.filter-drawer-open,
+.filter-drawer-close,
+.filter-drawer-backdrop { display: none; }
+
+@media (max-width: 1024px) {
+  .filter-drawer-open {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 36px;
+    padding: 0 16px;
+    border: 1.5px solid var(--border);
+    border-radius: 999px;
+    background: var(--white);
+    color: var(--black);
+    font-family: var(--font-head);
+    font-size: 13px;
+    font-weight: 600;
+  }
+  .filter-drawer-open:hover { border-color: var(--faint); }
+
+  .filter-sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    z-index: calc(var(--z-modal) + 1);
+    width: min(320px, 86vw);
+    max-height: none;
+    overflow-y: auto;
+    padding: 56px 16px 24px;
+    background: var(--surface);
+    box-shadow: var(--shadow-lg);
+    transform: translateX(-100%);
+    transition: transform 0.24s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  body.filters-open .filter-sidebar { transform: none; }
+
+  .filter-drawer-close {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 34px;
+    height: 34px;
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    background: var(--white);
+    color: var(--black);
+  }
+
+  .filter-drawer-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: var(--z-modal);
+    background: rgba(10,7,8,0.45);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.24s ease;
+  }
+  body.filters-open .filter-drawer-backdrop { opacity: 1; pointer-events: auto; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .filter-sidebar,
+  .filter-drawer-backdrop { transition: none; }
+}
+
+@media (max-width: 640px) {
+  .filter-card { margin-bottom: 10px; }
+
+  /*
+    The review header is the big average, the bar chart at half width
+    and a pinned-right column, with a 40px gap. There is not 40px to
+    spare at 360px, so it stacks: average on top, bars full width.
+  */
+  .rating-summary {
+    flex-direction: column;
+    gap: 16px;
+    padding: 18px 16px;
+  }
+  .rating-summary > * { min-width: 0; }
+  .rating-bars { flex: 1 1 auto; width: 100%; }
+  /* The right-pinned column has nothing to pin against once stacked. */
+  .rating-summary > :last-child { margin-left: 0; }
+
+  /* The tab row scrolls rather than wrapping — Description / Reviews /
+     Size Guide / Shipping will not fit on one phone line. */
+  .pd-tabs {
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .pd-tabs::-webkit-scrollbar { display: none; }
+  .pd-tab { flex: 0 0 auto; white-space: nowrap; }
+
+  /* The bar above the grid: count on one line, sort control below. */
+  .listing-topbar {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+}
+
+@media (max-width: 360px) {
+  /* Sort control and the grid/list toggle share one line and together
+     need 300px. Let the toggle drop below rather than push the page. */
+  .listing-sort { flex-wrap: wrap; justify-content: flex-end; row-gap: 8px; }
+  .listing-sort > * { min-width: 0; }
+}
+
+/* ── ══════════════════════════════════════════════════════
+   ABOUT US  (pages/shopping/about.html)
+
+   Four sections in the order the client wrote them: a title band,
+   who we are, why choose Bambe, and the promise with a way into the
+   shop. The title band reuses the home hero's flat-lay, whose open
+   marble middle is where the copy sits, so the two pages read as
+   the same brand; the beige behind the values row is that same
+   marble's ground (#EAD6BB), lightened to a band.
+══════════════════════════════════════════════════════ ── */
+.about { background: var(--white); }
+
+.about-kicker {
+  font-size: 12px;
   font-weight: 700;
-  letter-spacing: 0.4px;
-  margin-bottom: 16px;
+  letter-spacing: 2.4px;
+  text-transform: uppercase;
+  color: var(--primary-text);
 }
-.app-title {
+.about-heading {
   font-family: var(--font-head);
-  font-size: 34px;
+  font-size: clamp(26px, 2.6vw, 36px);
   font-weight: 700;
   line-height: 1.15;
-  color: white;
-  margin-bottom: 12px;
-}
-.app-title em { font-style: normal; color: var(--primary); }
-.app-desc {
-  font-size: 13.5px;
-  line-height: 1.7;
-  max-width: 420px;
-  margin-bottom: 22px;
+  letter-spacing: -0.5px;
+  color: var(--black);
+  margin: 10px 0 0;
+  text-wrap: balance;
 }
 
-.app-perks { display: flex; gap: 26px; margin-bottom: 26px; flex-wrap: wrap; }
-.app-perk { display: flex; align-items: center; gap: 9px; font-size: 12.5px; }
-.app-perk-icon {
-  width: 30px;
-  height: 30px;
-  border-radius: 9px;
-  background: rgba(255,255,255,0.08);
+/* Title band */
+.about-hero {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  flex-shrink: 0;
+  min-height: 420px;
+  padding: 64px 24px;
+  background-color: #F3E9DB;
+  background-image: var(--img, none);
+  background-size: cover;
+  background-position: center;
+  text-align: center;
+}
+/* A soft pool of the marble's own colour behind the copy, so the title
+   stays clear of the products at any width without washing the edges. */
+.about-hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 52% 60% at 50% 50%,
+    rgba(240,226,206,0.92) 0%, rgba(240,226,206,0.75) 55%, rgba(240,226,206,0) 100%);
+  pointer-events: none;
+}
+.about-hero-inner { position: relative; max-width: 940px; }
+.about-eyebrow {
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--primary-text);
+}
+.about-title {
+  font-family: var(--font-head);
+  font-size: clamp(32px, 4.2vw, 56px);
+  font-weight: 700;
+  line-height: 1.08;
+  letter-spacing: -1px;
+  color: var(--black);
+  margin: 14px 0 0;
+  text-wrap: balance;
+}
+.about-tagline {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--dark);
+  margin: 18px 0 0;
+}
+
+/* Who we are */
+.about-intro {
+  display: grid;
+  grid-template-columns: 1.05fr 1fr;
+  gap: 64px;
+  align-items: center;
+  padding-top: 88px;
+  padding-bottom: 88px;
+}
+.about-intro-copy p {
+  font-size: 16.5px;
+  line-height: 1.75;
+  color: var(--dark);
+  margin: 18px 0 0;
+  max-width: 560px;
+}
+.about-intro-copy .about-heading + p { margin-top: 22px; }
+.about-intro-photo {
+  aspect-ratio: 4 / 3.4;
+  border-radius: var(--radius-lg);
+}
+
+/* Why choose Bambe */
+.about-values {
+  background: #F7F1E8;
+  padding: 84px 0;
+}
+.about-section-head { text-align: center; max-width: 640px; margin: 0 auto 44px; }
+.about-values-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+}
+.about-value {
+  background: var(--white);
+  border: 1px solid rgba(24,24,24,0.06);
+  border-radius: var(--radius-lg);
+  padding: 28px 24px 26px;
+}
+.about-value-badge {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--primary-lt);
   color: var(--primary);
 }
-
-.app-get { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-/* Store buttons keep the badge proportions people already scan for —
-   small "Download on the" line over a large wordmark. */
-.app-store-btn {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  height: 52px;
-  padding: 0 18px 0 15px;
-  border-radius: var(--radius-md);
-  background: rgba(255,255,255,0.08);
-  border: 1px solid rgba(255,255,255,0.14);
-  color: white;
-  cursor: pointer;
-  transition: background 0.15s, border-color 0.15s, transform 0.15s;
-}
-.app-store-btn:hover {
-  background: rgba(255,255,255,0.14);
-  border-color: rgba(255,255,255,0.28);
-  transform: translateY(-1px);
-}
-.app-store-btn:focus-visible {
-  outline: 2px solid var(--primary);
-  outline-offset: 3px;
-}
-.app-store-label { line-height: 1.15; text-align: left; }
-.app-store-label small {
-  display: block;
-  font-size: 9.5px;
-  letter-spacing: 0.4px;
-  color: rgba(255,255,255,0.55);
-  text-transform: uppercase;
-}
-.app-store-label strong {
+.about-value-title {
   font-family: var(--font-head);
-  font-size: 15px;
-  font-weight: 700;
-}
-
-/* The QR stands in for the real code; it is drawn, not photographed,
-   so it stays crisp and needs no asset. */
-.app-qr {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding-left: 18px;
-  margin-left: 6px;
-  border-left: 1px solid rgba(255,255,255,0.12);
-}
-.app-qr-code {
-  width: 52px;
-  height: 52px;
-  border-radius: 8px;
-  background: white;
-  padding: 5px;
-  flex-shrink: 0;
-}
-.app-qr-text { font-size: 11.5px; line-height: 1.45; width: 118px; }
-.app-qr-text b { display: block; color: white; font-weight: 600; }
-
-.app-rating {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 22px;
-  font-size: 12px;
-  color: rgba(255,255,255,0.5);
-}
-.app-rating strong { color: white; font-family: var(--font-head); font-size: 13px; }
-
-/* ── Phone ────────────────────────────────────────────────
-   Drawn in CSS. It is cropped by the band's overflow so the
-   handset reads as rising out of the section rather than
-   floating in a box. */
-.app-phone {
-  width: 260px;
-  height: 380px;
-  margin: 0 auto;
-  border-radius: 34px 34px 0 0;
-  border: 8px solid #2E2C29;
-  border-bottom: none;
-  background: var(--white);
-  box-shadow: 0 -2px 40px rgba(0,0,0,0.45);
-  position: relative;
-  overflow: hidden;
-}
-.app-phone-notch {
-  position: absolute;
-  top: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 96px;
-  height: 20px;
-  background: #2E2C29;
-  border-radius: 0 0 12px 12px;
-  z-index: 2;
-}
-.app-screen { padding: 30px 14px 0; }
-.app-screen-bar {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  height: 32px;
-  padding: 0 10px;
-  border-radius: 20px;
-  background: var(--input-bg);
-  font-size: 10.5px;
-  color: var(--subtle);
-  margin-bottom: 12px;
-}
-.app-screen-row { display: flex; gap: 8px; margin-bottom: 10px; }
-.app-screen-chip {
-  height: 22px;
-  padding: 0 10px;
-  border-radius: 20px;
-  background: var(--input-bg);
-  font-size: 10px;
-  font-weight: 600;
-  color: var(--mid);
-  display: flex;
-  align-items: center;
-}
-.app-screen-chip.on { background: var(--primary); color: var(--on-primary); }
-.app-screen-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.app-screen-card {
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  overflow: hidden;
-}
-.app-screen-thumb { aspect-ratio: 1; }
-.app-screen-meta { padding: 7px 8px 9px; }
-.app-screen-line {
-  height: 6px;
-  border-radius: 3px;
-  background: var(--border);
-}
-.app-screen-line.short { width: 54%; margin-top: 5px; }
-.app-screen-price {
-  margin-top: 6px;
-  font-family: var(--font-head);
-  font-size: 10.5px;
+  font-size: 17px;
   font-weight: 700;
   color: var(--black);
+  margin: 18px 0 0;
 }
+.about-value-text {
+  font-size: 14.5px;
+  line-height: 1.65;
+  color: var(--mid);
+  margin: 10px 0 0;
+}
+
+/* Our promise */
+.about-promise {
+  max-width: 820px;
+  text-align: center;
+  padding-top: 96px;
+  padding-bottom: 104px;
+}
+.about-promise-text {
+  font-family: var(--font-head);
+  font-size: clamp(20px, 2vw, 26px);
+  font-weight: 500;
+  line-height: 1.5;
+  color: var(--black);
+  margin: 16px 0 0;
+  text-wrap: pretty;
+}
+.about-promise-cta-lead {
+  font-size: 16px;
+  color: var(--dark);
+  margin: 26px 0 0;
+}
+.about-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  height: 48px;
+  padding: 0 34px;
+  margin-top: 22px;
+  border-radius: 999px;
+  background: var(--primary-grad);
+  color: var(--on-primary);
+  font-family: var(--font-head);
+  font-size: 14px;
+  font-weight: 700;
+  transition: filter 0.15s, transform 0.15s;
+}
+.about-cta:hover { filter: brightness(0.9); transform: translateY(-1px); }
+.about-cta svg { transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1); }
+.about-cta:hover svg { transform: translate3d(2px, -2px, 0); }
+
+@media (max-width: 1024px) {
+  .about-values-grid { grid-template-columns: repeat(2, 1fr); }
+  .about-intro { gap: 40px; }
+}
+@media (max-width: 760px) {
+  .about-hero { min-height: 340px; padding: 56px 20px; }
+  .about-hero::before {
+    background: radial-gradient(ellipse 90% 70% at 50% 50%,
+      rgba(240,226,206,0.94) 0%, rgba(240,226,206,0.82) 60%, rgba(240,226,206,0.35) 100%);
+  }
+  .about-title br { display: none; }
+  .about-tagline { font-size: 16px; }
+  .about-intro {
+    grid-template-columns: 1fr;
+    gap: 32px;
+    padding-top: 56px;
+    padding-bottom: 56px;
+  }
+  .about-intro-copy p { font-size: 16px; max-width: none; }
+  .about-values { padding: 56px 0; }
+  .about-section-head { margin-bottom: 28px; }
+  .about-values-grid { grid-template-columns: 1fr; gap: 14px; }
+  .about-promise { padding-top: 64px; padding-bottom: 72px; }
+}
+@media (max-width: 640px) {
+  .about .container { padding: 0 16px; }
+  .about-promise.container,
+  .about-intro.container { padding-left: 16px; padding-right: 16px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .about-cta, .about-cta svg { transition: none; }
+}
+
+/* ── ══════════════════════════════════════════════════════
+   LEGAL  (pages/shopping/privacy.html, terms.html)
+
+   Long reading pages: a quiet title band, a contents list that stays
+   in view on wide screens, and a single measured text column.
+══════════════════════════════════════════════════════ ── */
+.legal { background: var(--white); }
+.legal-hero {
+  background: #F7F1E8;
+  padding: 64px 0 52px;
+}
+.legal-title {
+  font-family: var(--font-head);
+  font-size: clamp(32px, 3.6vw, 48px);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.8px;
+  color: var(--black);
+  margin: 12px 0 0;
+}
+.legal-lead {
+  font-size: 17px;
+  line-height: 1.6;
+  color: var(--dark);
+  max-width: 640px;
+  margin: 14px 0 0;
+}
+.legal-updated {
+  font-size: 13.5px;
+  color: var(--mid);
+  margin: 14px 0 0;
+}
+
+.legal-layout {
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr);
+  gap: 64px;
+  align-items: start;
+  padding-top: 56px;
+  padding-bottom: 96px;
+}
+.legal-toc {
+  position: sticky;
+  top: calc(var(--nav-h) + 24px);
+  max-height: calc(100vh - var(--nav-h) - 48px);
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+.legal-toc::-webkit-scrollbar { display: none; }
+.legal-toc-title {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1.6px;
+  text-transform: uppercase;
+  color: var(--mid);
+  margin-bottom: 12px;
+}
+.legal-toc ol { list-style: none; margin: 0; padding: 0; }
+.legal-toc li a {
+  display: block;
+  padding: 6px 0 6px 12px;
+  border-left: 2px solid var(--border);
+  font-size: 14px;
+  line-height: 1.4;
+  color: var(--dark);
+}
+.legal-toc li a:hover { color: var(--primary-text); border-left-color: var(--primary); }
+.legal-toc-other {
+  display: inline-block;
+  margin-top: 20px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--primary-text);
+}
+.legal-toc-other:hover { text-decoration: underline; }
+
+.legal-body { max-width: 720px; }
+.legal-section { scroll-margin-top: calc(var(--nav-h) + 24px); }
+.legal-section + .legal-section { margin-top: 40px; }
+.legal-section h2 {
+  font-family: var(--font-head);
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--black);
+  margin: 0 0 12px;
+}
+.legal-section p,
+.legal-section li {
+  font-size: 16px;
+  line-height: 1.75;
+  color: var(--dark);
+}
+.legal-section p { margin: 0 0 14px; }
+.legal-section ul { list-style: disc; margin: 0 0 14px; padding-left: 22px; }
+.legal-section li::marker { color: var(--primary); }
+.legal-section li + li { margin-top: 8px; }
+.legal-section strong { color: var(--black); }
+.legal-section a { color: var(--primary-text); text-decoration: underline; text-underline-offset: 2px; }
+
+/* Facts only the business can supply. Loud on purpose, so a page with
+   one of these left in is noticed before it is published. */
+.legal-fill {
+  background: #FFF0B3;
+  color: var(--black);
+  padding: 0 4px;
+  border-radius: 3px;
+}
+
+@media (max-width: 900px) {
+  .legal-layout { grid-template-columns: 1fr; gap: 32px; padding-top: 32px; padding-bottom: 64px; }
+  .legal-toc {
+    position: static;
+    max-height: none;
+    background: #F7F1E8;
+    border-radius: var(--radius-md);
+    padding: 18px 20px;
+  }
+  .legal-toc ol { columns: 2; column-gap: 24px; }
+  .legal-toc li { break-inside: avoid; }
+}
+@media (max-width: 640px) {
+  .legal-hero { padding: 40px 0 34px; }
+  .legal .container { padding: 0 16px; }
+  .legal-toc ol { columns: 1; }
+  .legal-section h2 { font-size: 20px; }
+  .legal-section p, .legal-section li { font-size: 15.5px; }
+}
+
+/* ── Dark hero photograph (.hero--dark) ──────────────────────
+   For a dark, moody hero image — the current one is a deep crimson
+   scene with the products grouped on the right and open dark space on
+   the left. The copy turns light and, on wide screens, moves into that
+   open left side instead of sitting centred over the products. Remove
+   `hero--dark` from the <section> in home.html to go back to a light
+   photograph with dark, centred copy. #060000 is the image's own
+   ground, sampled from its open left side, so the frame shows the
+   picture's colour while it loads. */
+.hero--dark .hero-photo {
+  background-color: #060000;
+  background-position: right center;
+}
+.hero--dark .hero-title { color: #FFFFFF; }
+.hero--dark .hero-desc { color: rgba(255,255,255,0.82); }
+.hero--dark .hero-marquee {
+  background: rgba(30,0,3,0.45);
+  border-top-color: rgba(255,255,255,0.14);
+}
+.hero--dark .hero-marquee-group span { color: rgba(255,255,255,0.88); }
+
+@media (min-width: 1025px) {
+  /* A soft fade from the left edge keeps the white copy crisp where the
+     picture's light rays cross it, and is gone well before the products. */
+  .hero--dark .hero-scrim {
+    background: linear-gradient(90deg,
+      rgba(40,0,3,0.62) 0%, rgba(40,0,3,0.38) 38%, rgba(40,0,3,0) 62%);
+  }
+  .hero--dark .hero-body {
+    margin-inline: 0;
+    /* Aligned with the page's content column, however wide the window. */
+    margin-left: max(0px, calc((100vw - var(--content-max)) / 2));
+    max-width: 760px;
+    text-align: left;
+  }
+  /* A short, two-line headline ("Beauty, / boldly yours."), so it can be
+     set big: clearly the headline, several sizes above the line below. */
+  .hero--dark .hero-title {
+    font-size: clamp(56px, 5.2vw, 92px);
+    line-height: 0.98;
+    letter-spacing: -2px;
+  }
+  .hero--dark .hero-desc { font-size: 17px; max-width: 470px; margin-top: 24px; }
+  .hero--dark .hero-desc { margin-left: 0; margin-right: 0; }
+  .hero--dark .hero-actions { justify-content: flex-start; }
+}
+
+@media (max-width: 1024px) {
+  /* Stacked: the copy sits centred over the picture, so the whole frame
+     is shaded to keep it readable. */
+  .hero--dark .hero-scrim {
+    background: linear-gradient(180deg,
+      rgba(40,0,3,0.70) 0%, rgba(40,0,3,0.50) 50%, rgba(40,0,3,0.72) 100%);
+  }
+}
+@media (max-width: 640px) {
+  /* A phone shows a narrow slice: keep the products in it. */
+  .hero--dark .hero-photo { background-position: 72% center; }
+  .hero--dark .hero-title { font-size: 48px; line-height: 1.02; letter-spacing: -1.2px; }
+}
+
+/* ── Glass nav over the dark hero ──────────────────────────────
+   On the home page the navbar and category row are laid over the hero
+   (.has-hero-overlay), so with a dark hero they become frosted glass:
+   a light tint of the photo's own deep red, blurred, with the picture
+   showing through and white type and icons on it. Scoped with :has()
+   to a hero marked .hero--dark, so a light hero photo gets the ordinary
+   white bar back with no other change. Once the bars scroll past the
+   hero, nav-autohide.js sets html.nav-past-hero and they turn back into
+   the ordinary white bar over the white page. The icons' strokes are written
+   into their SVGs, which CSS outranks, so they're recoloured here. */
+/* One sheet of glass behind both bars, not one per bar: two separately
+   blurred panes showed two tints and a seam where they met. The bars go
+   clear, keeping their hairline divider, and the glass is drawn once by
+   the category row's ::before, reaching up behind the top bar. It hangs
+   off the lower bar so it stacks beneath the top bar's search, icons
+   and menus rather than over them. */
+html:not(.nav-past-hero) .has-hero-overlay:has(.hero--dark) .navbar,
+html:not(.nav-past-hero) .has-hero-overlay:has(.hero--dark) .subnav {
+  background: transparent;
+  border-bottom-color: rgba(255,255,255,0.14);
+}
+html:not(.nav-past-hero) .has-hero-overlay:has(.hero--dark) .subnav::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: calc(var(--nav-h) + var(--subnav-h));
+  z-index: -1;
+  pointer-events: none;
+  background: rgba(40,0,3,0.30);
+  -webkit-backdrop-filter: blur(16px) saturate(150%);
+  backdrop-filter: blur(16px) saturate(150%);
+}
+
+html:not(.nav-past-hero) .has-hero-overlay:has(.hero--dark) .nav-logo-mark { background-color: #FFFFFF; }
+html:not(.nav-past-hero) .has-hero-overlay:has(.hero--dark) .nav-logo-text { color: #FFFFFF; }
+
+html:not(.nav-past-hero) .has-hero-overlay:has(.hero--dark) .nav-deliver-lbl { color: rgba(255,255,255,0.65); }
+html:not(.nav-past-hero) .has-hero-overlay:has(.hero--dark) .nav-deliver-loc { color: #FFFFFF; }
+html:not(.nav-past-hero) .has-hero-overlay:has(.hero--dark) .nav-deliver-loc svg [stroke] { stroke: #FFFFFF; }
+
+html:not(.nav-past-hero) .has-hero-overlay:has(.hero--dark) .nav-search {
+  background: rgba(255,255,255,0.12);
+  border-color: rgba(255,255,255,0.22);
+}
+html:not(.nav-past-hero) .has-hero-overlay:has(.hero--dark) .nav-search:focus-within { border-color: rgba(255,255,255,0.55); }
+html:not(.nav-past-hero) .has-hero-overlay:has(.hero--dark) .nav-search input { color: #FFFFFF; }
+html:not(.nav-past-hero) .has-hero-overlay:has(.hero--dark) .nav-search input::placeholder { color: rgba(255,255,255,0.65); }
+html:not(.nav-past-hero) .has-hero-overlay:has(.hero--dark) .nav-search > svg [stroke] { stroke: rgba(255,255,255,0.75); }
+
+html:not(.nav-past-hero) .has-hero-overlay:has(.hero--dark) .nav-icon-btn svg [stroke] { stroke: #FFFFFF; }
+html:not(.nav-past-hero) .has-hero-overlay:has(.hero--dark) .nav-icon-btn svg [fill]:not([fill="none"]) { fill: #FFFFFF; }
+html:not(.nav-past-hero) .has-hero-overlay:has(.hero--dark) .nav-icon-btn:hover { background: rgba(255,255,255,0.12); }
+
+/* !important: navbar.js and the markup tint this button inline. */
+html:not(.nav-past-hero) .has-hero-overlay:has(.hero--dark) .nav-user-btn {
+  background: rgba(255,255,255,0.12) !important;
+  border-color: rgba(255,255,255,0.22);
+}
+html:not(.nav-past-hero) .has-hero-overlay:has(.hero--dark) .nav-user-btn:hover { border-color: rgba(255,255,255,0.55); }
+html:not(.nav-past-hero) .has-hero-overlay:has(.hero--dark) .nav-user-name { color: #FFFFFF; }
+/* The avatar's person icon is drawn in the theme colour, which vanishes
+   on the red glass (on a phone the button is only the avatar). */
+html:not(.nav-past-hero) .has-hero-overlay:has(.hero--dark) .nav-avatar { background: rgba(255,255,255,0.18); }
+html:not(.nav-past-hero) .has-hero-overlay:has(.hero--dark) .nav-avatar svg [stroke] { stroke: #FFFFFF; }
+html:not(.nav-past-hero) .has-hero-overlay:has(.hero--dark) .nav-user-btn > svg [stroke] { stroke: rgba(255,255,255,0.75); }
+
+html:not(.nav-past-hero) .has-hero-overlay:has(.hero--dark) .subnav-link { color: rgba(255,255,255,0.80); }
+html:not(.nav-past-hero) .has-hero-overlay:has(.hero--dark) .subnav-link:hover { color: #FFFFFF; }
+html:not(.nav-past-hero) .has-hero-overlay:has(.hero--dark) .subnav-link.active { color: #FFFFFF; border-bottom-color: #FFFFFF; }
+/* The sale link's red would sink into the red glass; a light coral holds. */
+html:not(.nav-past-hero) .has-hero-overlay:has(.hero--dark) .subnav-link.sale { color: #FFB4A9; }
+
+/* ── About header on the dark hero photograph (.about-hero--dark) ──
+   The same near-black picture as the home hero, so the copy turns light
+   and the pool behind it goes dark instead of cream. Remove the class
+   in about.html to go back to a light photograph with dark copy. */
+.about-hero--dark { background-color: #060000; }
+.about-hero--dark::before {
+  background: radial-gradient(ellipse 52% 60% at 50% 50%,
+    rgba(6,0,0,0.78) 0%, rgba(6,0,0,0.55) 55%, rgba(6,0,0,0) 100%);
+}
+/* The theme red is too dark to read at this size on near-black. */
+.about-hero--dark .about-eyebrow { color: #FF8A80; }
+.about-hero--dark .about-title { color: #FFFFFF; }
+.about-hero--dark .about-tagline { color: rgba(255,255,255,0.82); }

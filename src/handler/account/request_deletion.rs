@@ -4,6 +4,7 @@ use mongodb::bson::doc;
 use serde::Deserialize;
 use crate::BuiltIns::mongo::MongoDB;
 use crate::utils::response::Response;
+use crate::utils::password::{self, Verified};
 use crate::Model::Account;
 use actix_web::{web, Error, HttpResponse};
 
@@ -56,7 +57,7 @@ pub async fn task(body: web::Json<ReqBody>) -> Result<HttpResponse, Error> {
 
     // Same credential check sign-in uses: the account must be verified and the
     // password must match before we accept the request.
-    if !account.email_verified || account.password != password {
+    if !account.email_verified || password::verify(&password, &account.password) == Verified::Failed {
         return Ok(Response::forbidden("Incorrect email or password"));
     }
 

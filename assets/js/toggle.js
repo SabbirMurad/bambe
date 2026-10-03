@@ -31,6 +31,10 @@
   document.addEventListener('click', function(e) {
     var toggle = e.target.closest ? e.target.closest('.toggle') : null;
     if (!toggle) return;
+    /* Some switches show a state the page has no way to change —
+       two-factor is stored on the account but nothing exposes a way to
+       set it. Marked data-readonly, they display and don't flip. */
+    if (toggle.dataset.readonly === 'true') return;
     toggle.classList.toggle('on');
     toggle.setAttribute('aria-checked', toggle.classList.contains('on') ? 'true' : 'false');
   });

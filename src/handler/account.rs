@@ -10,5 +10,8 @@ pub use get_profile as GetProfile;
 pub mod update_profile;
 pub use update_profile as UpdateProfile;
 
+pub mod two_factor;
+pub use two_factor as TwoFactor;
+
 pub mod stats;
 pub use stats as Stats;

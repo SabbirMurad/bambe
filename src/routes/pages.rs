@@ -25,6 +25,18 @@ pub fn router(cfg: &mut web::ServiceConfig) {
             "/wishlist",
             web::get().to(Markup::wishlist)
         )
+        .route(
+            "/about",
+            web::get().to(Markup::about)
+        )
+        .route(
+            "/privacy",
+            web::get().to(Markup::privacy)
+        )
+        .route(
+            "/terms",
+            web::get().to(Markup::terms)
+        )
 
         /* ── Checkout ───────────────────────────────────── */
         .route(
@@ -65,6 +77,14 @@ pub fn router(cfg: &mut web::ServiceConfig) {
             "/account/notifications",
             web::get().to(Markup::account_notifications)
         )
+        .route(
+            "/account/returns",
+            web::get().to(Markup::account_returns)
+        )
+        .route(
+            "/account/support",
+            web::get().to(Markup::account_support)
+        )
 
         /* ── Auth ───────────────────────────────────────── */
         .route(
@@ -86,6 +106,10 @@ pub fn router(cfg: &mut web::ServiceConfig) {
           path: the admin endpoints live under /api/v1/admin.
         */
         .route(
+            "/admin/login",
+            web::get().to(Markup::admin_sign_in)
+        )
+        .route(
             "/admin",
             web::get().to(Markup::admin_overview)
         )
@@ -104,6 +128,10 @@ pub fn router(cfg: &mut web::ServiceConfig) {
         .route(
             "/admin/orders",
             web::get().to(Markup::admin_orders)
+        )
+        .route(
+            "/admin/returns",
+            web::get().to(Markup::admin_returns)
         )
         .route(
             "/admin/customers",

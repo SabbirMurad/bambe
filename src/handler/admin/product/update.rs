@@ -7,7 +7,7 @@ use crate::utils::response::Response;
 use crate::Middleware::Auth::{require_access, AccessRequirement};
 use crate::model::Account::AccountRole;
 use crate::model::Cents;
-use crate::model::Product::{Product, ProductImage, ProductStatus};
+use crate::model::Product::{Product, ProductStatus};
 
 #[derive(Debug, Deserialize)]
 pub struct ReqBody {
@@ -17,7 +17,6 @@ pub struct ReqBody {
     brand_id: Option<String>,
     category_id: Option<String>,
     tags: Option<Vec<String>>,
-    images: Option<Vec<ProductImage>>,
     status: Option<ProductStatus>,
     compare_at_price: Option<Cents>,
 }
@@ -39,7 +38,8 @@ pub async fn task(req: HttpRequest, path: web::Path<String>, body: web::Json<Req
     if let Some(v) = &body.brand_id { set_doc.insert("brand_id", v); }
     if let Some(v) = &body.category_id { set_doc.insert("category_id", v); }
     if let Some(v) = &body.tags { set_doc.insert("tags", v); }
-    if let Some(v) = &body.images { set_doc.insert("images", mongodb::bson::to_bson(v).unwrap()); }
+    // No `images` here: images belong to the variants. The cover is
+    // denormalised from them by recompute_aggregates, never set directly.
     if let Some(v) = &body.status { set_doc.insert("status", mongodb::bson::to_bson(v).unwrap()); }
     if let Some(v) = body.compare_at_price { set_doc.insert("compare_at_price", v); }
     set_doc.insert("modified_at", Utc::now().timestamp_millis());

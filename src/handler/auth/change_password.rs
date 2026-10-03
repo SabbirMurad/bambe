@@ -4,6 +4,7 @@ use crate::BuiltIns::mongo::MongoDB;
 use crate::utils::response::Response;
 use serde::{ Serialize, Deserialize };
 use crate::utils::validation::validate_password;
+use crate::utils::password::{self, Verified};
 use actix_web::{ web, Error, HttpResponse, HttpRequest };
 use crate::Middleware::Auth::{require_access, AccessRequirement};
 
@@ -54,13 +55,23 @@ pub async fn task(
         None => return Ok(Response::not_found("Account not found")),
     };
 
-    if account_core.password != current_password {
+    if password::verify(&current_password, &account_core.password) == Verified::Failed {
         return Ok(Response::forbidden("Current password is incorrect"));
     }
 
+    /* Whatever the old row held, what replaces it is a hash — so this
+       path also upgrades an account still stored the legacy way. */
+    let hashed_password = match password::hash(&new_password) {
+        Ok(h) => h,
+        Err(error) => {
+            log::error!("{error}");
+            return Ok(Response::internal_server_error("Could not change the password"));
+        }
+    };
+
     let result = collection.update_one(
         doc!{ "uuid": &user_id },
-        doc!{ "$set": { "password": &new_password } },
+        doc!{ "$set": { "password": &hashed_password } },
     ).await;
 
     if let Err(error) = result {

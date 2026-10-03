@@ -19,7 +19,14 @@ pub async fn task(req: HttpRequest) -> Result<HttpResponse, Error> {
 
     let mut cursor = result.unwrap();
     let mut zones = Vec::new();
-    while let Some(Ok(z)) = cursor.next().await {
+    while let Some(result) = cursor.next().await {
+        let z = match result {
+            Ok(z) => z,
+            Err(error) => {
+                log::error!("{}: skipping unreadable document: {:?}", module_path!(), error);
+                continue;
+            }
+        };
         zones.push(z);
     }
 

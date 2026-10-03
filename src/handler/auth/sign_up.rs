@@ -10,6 +10,7 @@ use mongodb::{ClientSession, Database};
 use actix_web::{ web, Error, HttpResponse };
 use crate::utils::response::Response;
 use crate::utils::validation::{validate_email, validate_password, validate_username};
+use crate::utils::password;
 
 
 //in minutes
@@ -44,6 +45,16 @@ pub async fn task(form_data: web::Json<ReqBody>) -> Result<HttpResponse, Error> 
     if let Err(res) = validate_password(&post_data.password, &post_data.confirm_password) {
         return Ok(Response::bad_request(&res));
     }
+
+    // Hashed here rather than at the insert below, so the plaintext never
+    // reaches the document that gets written.
+    let hashed_password = match password::hash(&post_data.password) {
+        Ok(h) => h,
+        Err(error) => {
+            log::error!("{error}");
+            return Ok(Response::internal_server_error("Could not create the account"));
+        }
+    };
 
     if let Err(error) = validate_email(&post_data.email_address) {
         return Ok(Response::bad_request(&error));
@@ -86,7 +97,7 @@ pub async fn task(form_data: web::Json<ReqBody>) -> Result<HttpResponse, Error> 
         uuid: user_id.clone(),
         email_address: post_data.email_address.clone(),
         username: username.clone(),
-        password: post_data.password.clone(),
+        password: hashed_password,
         email_verified: false,
         two_a_factor_auth_enabled: false,
         two_a_factor_auth_updated: None,
@@ -99,7 +110,7 @@ pub async fn task(form_data: web::Json<ReqBody>) -> Result<HttpResponse, Error> 
     let collection = db.collection::<Account::AccountCore>("account_core");
     let result = collection.insert_one(
         account_core,
-    ).await;
+    ).session(&mut session).await;
 
     if let Err(error) = result {
       log::error!("{:?}", error);
@@ -122,7 +133,7 @@ pub async fn task(form_data: web::Json<ReqBody>) -> Result<HttpResponse, Error> 
 
     let result = collection.insert_one(
         account_profile,
-    ).await;
+    ).session(&mut session).await;
 
     if let Err(error) = result {
         log::error!("{:?}", error);
@@ -146,7 +157,7 @@ pub async fn task(form_data: web::Json<ReqBody>) -> Result<HttpResponse, Error> 
     <Account::AccountVerificationRequest>("account_verification_request");
     let result = collection.insert_one(
         request,
-    ).await;
+    ).session(&mut session).await;
 
     if let Err(error) = result {
         log::error!("{:?}", error);
@@ -190,7 +201,7 @@ async fn account_already_exist(
     let collection = db.collection::<Account::AccountCore>("account_core");
     let result = collection.find_one(
       doc!{"email_address": email_address, "role": "User"},
-    ).await;
+    ).session(&mut *session).await;
 
     if let Err(error) = result {
       log::error!("{:?}", error);
@@ -224,7 +235,7 @@ async fn account_already_exist(
     <Account::AccountProfile>("account_profile");
     let result = collection.find_one(
       doc!{"username": username},
-    ).await;
+    ).session(&mut *session).await;
 
     if let Err(error) = result {
       log::error!("{:?}", error);
@@ -238,7 +249,7 @@ async fn account_already_exist(
         let collection = db.collection::<Account::AccountCore>("account_core");
         let result = collection.find_one(
           doc!{"uuid": &account_profile.uuid},
-        ).await;
+        ).session(&mut *session).await;
     
         if let Err(error) = result {
           log::error!("{:?}", error);
@@ -279,7 +290,7 @@ async fn delete_account(
     let collection = db.collection::<Account::AccountCore>("account_core");
     let result = collection.delete_one(
         doc!{"uuid": user_id},
-    ).await;
+    ).session(&mut *session).await;
 
     if let Err(error) = result {
         log::error!("{:?}", error);
@@ -291,7 +302,7 @@ async fn delete_account(
     <Account::AccountProfile>("account_profile");
     let result = collection.delete_one(
         doc!{"uuid": user_id},
-    ).await;
+    ).session(&mut *session).await;
 
     if let Err(error) = result {
         log::error!("{:?}", error);
@@ -303,7 +314,7 @@ async fn delete_account(
     <Account::AccountVerificationRequest>("account_verification_request");
     let result = collection.delete_one(
         doc!{"uuid": user_id},
-    ).await;
+    ).session(&mut *session).await;
 
     if let Err(error) = result {
         log::error!("{:?}", error);

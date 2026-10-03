@@ -19,6 +19,9 @@ pub use account as Account;
 pub mod notification;
 pub use notification as Notification;
 
+pub mod newsletter;
+pub use newsletter as Newsletter;
+
 pub mod admin;
 pub use admin as Admin;
 
@@ -48,6 +51,9 @@ pub use checkout as Checkout;
 
 pub mod order;
 pub use order as Order;
+
+pub mod payment;
+pub use payment as Payment;
 
 pub mod payment_method;
 pub use payment_method as PaymentMethod;

@@ -61,9 +61,58 @@ pub async fn task(req: HttpRequest, query: web::Query<ReqQuery>) -> Result<HttpR
 
     let mut cursor = result.unwrap();
     let mut orders = Vec::new();
-    while let Some(Ok(o)) = cursor.next().await {
-        orders.push(o);
+    while let Some(next) = cursor.next().await {
+        match next {
+            Ok(o) => orders.push(o),
+            /* `while let Some(Ok(o))` stops the loop on the first bad
+               document, and says nothing — the tab count comes from
+               `count_documents` and so keeps counting rows the list no
+               longer returns, which reads as "All (4)" over one card.
+               Skip the row, but leave a trace of which one. */
+            Err(error) => log::error!("order list: undeserialisable order skipped: {:?}", error),
+        }
     }
+
+    /* Every order card shows the thumbnails of what was in it, and the
+       list only returned the order documents — so the page had to fetch
+       a detail per row just to draw them. One lookup over the page's
+       orders instead, with only the three fields a card uses. */
+    let order_ids: Vec<String> = orders.iter().map(|o| o.uuid.clone()).collect();
+    let mut items_by_order: std::collections::HashMap<String, Vec<serde_json::Value>> =
+        std::collections::HashMap::new();
+    if !order_ids.is_empty() {
+        let mut cursor = db
+            .collection::<crate::model::Order::OrderItem>("order_item")
+            .find(doc! { "order_id": { "$in": &order_ids } })
+            .await
+            .expect("order item lookup");
+        while let Some(result) = cursor.next().await {
+            let item = match result {
+                Ok(item) => item,
+                Err(error) => {
+                    log::error!("{}: skipping unreadable document: {:?}", module_path!(), error);
+                    continue;
+                }
+            };
+            items_by_order.entry(item.order_id.clone()).or_default().push(json!({
+                "title": item.title,
+                "image_id": item.image_id,
+                "quantity": item.quantity,
+                "product_id": item.product_id,
+            }));
+        }
+    }
+
+    let order_views: Vec<serde_json::Value> = orders
+        .iter()
+        .map(|order| {
+            let mut view = serde_json::to_value(order).unwrap_or_else(|_| json!({}));
+            let items = items_by_order.get(&order.uuid).cloned().unwrap_or_default();
+            view["item_count"] = json!(items.iter().map(|i| i["quantity"].as_u64().unwrap_or(0)).sum::<u64>());
+            view["items"] = json!(items);
+            view
+        })
+        .collect();
 
     let base = doc! { "user_id": &user.user_id };
     let mut processing_filter = base.clone();
@@ -84,7 +133,7 @@ pub async fn task(req: HttpRequest, query: web::Query<ReqQuery>) -> Result<HttpR
     });
 
     Ok(HttpResponse::Ok().content_type("application/json").json(json!({
-        "items": orders,
+        "items": order_views,
         "total": total,
         "page": page,
         "limit": limit,

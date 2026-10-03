@@ -1,17 +1,18 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-store-theme="{{ store_theme | default(value='orange') }}">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Men's Fashion — 843 results — Bambe</title>
+<title>Shampoo — 843 results — Bambe</title>
+{% include "common/favicon.html" %}
 <link rel="stylesheet" href="/assets/css/common.css">
 <link rel="stylesheet" href="/assets/css/shopping.css">
 </head>
 <body>
 
 <!-- NAVBAR -->
-<nav class="navbar"><div class="navbar-inner"><a href="/" class="nav-logo"><div class="nav-logo-mark"></div><span class="nav-logo-text">ambe</span></a><div class="nav-search"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="7" cy="7" r="5" stroke="#94908A" stroke-width="1.4"/><path d="M11 11 14.5 14.5" stroke="#94908A" stroke-width="1.4" stroke-linecap="round"/></svg><input type="text" placeholder="Search products, brands…" value="Men's fashion"><div class="nav-search-btn"><svg width="14" height="14" viewBox="0 0 16 16" fill="none"><circle cx="7" cy="7" r="5" stroke="white" stroke-width="1.4"/><path d="M11 11 14.5 14.5" stroke="white" stroke-width="1.4" stroke-linecap="round"/></svg></div></div><div class="nav-actions"><div class="nav-icon-btn"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M10 17S2 12 2 6.5a4 4 0 0 1 8-1 4 4 0 0 1 8 1C18 12 10 17 10 17Z" stroke="#32302C" stroke-width="1.5" stroke-linejoin="round"/></svg><div class="nav-badge">5</div></div><div class="nav-icon-btn"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M2 2h2.5l3 10h9l2-7H5.5" stroke="#32302C" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="9" cy="17" r="1.5" fill="#32302C"/><circle cx="15" cy="17" r="1.5" fill="#32302C"/></svg><div class="nav-badge">3</div></div><div class="nav-user-btn"><div class="nav-avatar"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="5.5" r="3" stroke="var(--blue)" stroke-width="1.4"/><path d="M2 14c0-3.3 2.7-6 6-6s6 2.7 6 6" stroke="var(--blue)" stroke-width="1.4" stroke-linecap="round"/></svg></div><span class="nav-user-name">John D.</span></div></div></div></nav>
-<nav class="subnav"><div class="subnav-inner"><div class="subnav-link">All</div><div class="subnav-link active">Men</div><div class="subnav-link">Women</div><div class="subnav-link">Kids</div><div class="subnav-link">Electronics</div><div class="subnav-link">Home &amp; Living</div><div class="subnav-link">Sports</div><div class="subnav-link">Beauty</div><div class="subnav-link sale">Sale 🔥</div><div class="subnav-link">New Arrivals</div></div></nav>
+<nav class="navbar"><div class="navbar-inner"><a href="/" class="nav-logo"><div class="nav-logo-mark"></div><span class="nav-logo-text">ambe</span></a><div class="nav-search"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="7" cy="7" r="5" stroke="#94908A" stroke-width="1.4"/><path d="M11 11 14.5 14.5" stroke="#94908A" stroke-width="1.4" stroke-linecap="round"/></svg><input type="text" placeholder="Search products, brands…" value="shampoo"><div class="nav-search-btn"><svg width="14" height="14" viewBox="0 0 16 16" fill="none"><circle cx="7" cy="7" r="5" stroke="white" stroke-width="1.4"/><path d="M11 11 14.5 14.5" stroke="white" stroke-width="1.4" stroke-linecap="round"/></svg></div></div><div class="nav-actions"><div class="nav-icon-btn" data-nav="wishlist"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M10 17S2 12 2 6.5a4 4 0 0 1 8-1 4 4 0 0 1 8 1C18 12 10 17 10 17Z" stroke="#32302C" stroke-width="1.5" stroke-linejoin="round"/></svg><div class="nav-badge"></div></div><div class="nav-icon-btn" data-nav="cart"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M2 2h2.5l3 10h9l2-7H5.5" stroke="#32302C" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="9" cy="17" r="1.5" fill="#32302C"/><circle cx="15" cy="17" r="1.5" fill="#32302C"/></svg><div class="nav-badge"></div></div><div class="nav-user-btn"><div class="nav-avatar"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="5.5" r="3" stroke="var(--blue)" stroke-width="1.4"/><path d="M2 14c0-3.3 2.7-6 6-6s6 2.7 6 6" stroke="var(--blue)" stroke-width="1.4" stroke-linecap="round"/></svg></div><span class="nav-user-name">John D.</span></div></div></div></nav>
+<nav class="subnav"><div class="subnav-inner"><a class="subnav-link" href="/listing">All</a>{% for c in nav_categories %}<a class="subnav-link" href="/listing?category={{ c.slug | urlencode }}">{{ c.name }}</a>{% endfor %}<a class="subnav-link sale" href="/listing?sale=true">Sale 🔥</a><a class="subnav-link" href="/listing?sort=newest">New Arrivals</a></div></nav>
 
 <main>
   <div class="container">
@@ -19,7 +20,7 @@
     <div class="breadcrumb">
       <a href="/" class="breadcrumb-item">Home</a>
       <span class="breadcrumb-sep">/</span>
-      <span class="breadcrumb-item current">Men's Fashion</span>
+      <span class="breadcrumb-item current">Shampoo</span>
     </div>
 
     <div class="with-sidebar with-sidebar-wide">
@@ -34,24 +35,17 @@
           </span>
         </div>
 
-        <!-- Category -->
-        <div class="filter-card">
+        <!-- Category — options are rendered from /v1/category/list -->
+        <div class="filter-card" data-facet="category" data-single>
           <div class="filter-card-head">
             <span class="filter-card-title">Category</span>
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M3 5l3 3 3-3" stroke="#94908A" stroke-width="1.3" stroke-linecap="round"/></svg>
           </div>
-          <div class="filter-card-body">
-            <div class="filter-option"><div class="filter-option-label"><div class="form-check-input checked"><svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4l3 3 5-6" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>T-Shirts &amp; Tops</div><span class="filter-option-count">843</span></div>
-            <div class="filter-option"><div class="filter-option-label"><div class="form-check-input"></div>Shirts &amp; Polos</div><span class="filter-option-count">421</span></div>
-            <div class="filter-option"><div class="filter-option-label"><div class="form-check-input"></div>Jackets &amp; Coats</div><span class="filter-option-count">267</span></div>
-            <div class="filter-option"><div class="filter-option-label"><div class="form-check-input"></div>Trousers &amp; Chinos</div><span class="filter-option-count">512</span></div>
-            <div class="filter-option"><div class="filter-option-label"><div class="form-check-input"></div>Jeans</div><span class="filter-option-count">389</span></div>
-            <div class="filter-option"><div class="filter-option-label"><div class="form-check-input"></div>Sportswear</div><span class="filter-option-count">634</span></div>
-          </div>
+          <div class="filter-card-body"></div>
         </div>
 
         <!-- Price -->
-        <div class="filter-card">
+        <div class="filter-card" data-facet="price">
           <div class="filter-card-head">
             <span class="filter-card-title">Price Range</span>
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M3 5l3 3 3-3" stroke="#94908A" stroke-width="1.3" stroke-linecap="round"/></svg>
@@ -71,64 +65,28 @@
         </div>
 
         <!-- Brand -->
-        <div class="filter-card">
+        <div class="filter-card" data-facet="brand">
           <div class="filter-card-head">
             <span class="filter-card-title">Brand</span>
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M3 5l3 3 3-3" stroke="#94908A" stroke-width="1.3" stroke-linecap="round"/></svg>
           </div>
-          <div class="filter-card-body">
-            <div class="filter-option"><div class="filter-option-label"><div class="form-check-input checked"><svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4l3 3 5-6" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>TrendCo</div><span class="filter-option-count">312</span></div>
-            <div class="filter-option"><div class="filter-option-label"><div class="form-check-input"></div>UrbanWear</div><span class="filter-option-count">208</span></div>
-            <div class="filter-option"><div class="filter-option-label"><div class="form-check-input"></div>ClassicLine</div><span class="filter-option-count">175</span></div>
-            <div class="filter-option"><div class="filter-option-label"><div class="form-check-input"></div>SportMax</div><span class="filter-option-count">290</span></div>
-            <div class="filter-option"><div class="filter-option-label"><div class="form-check-input"></div>MoodCo</div><span class="filter-option-count">143</span></div>
-          </div>
+          <!-- Options are rendered from /v1/product/brand/list -->
+          <div class="filter-card-body"></div>
         </div>
 
         <!-- Rating -->
-        <div class="filter-card">
+        <div class="filter-card" data-facet="rating" data-single>
           <div class="filter-card-head">
             <span class="filter-card-title">Customer Rating</span>
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M3 5l3 3 3-3" stroke="#94908A" stroke-width="1.3" stroke-linecap="round"/></svg>
           </div>
           <div class="filter-card-body">
-            <div class="rating-filter-item" data-label="5★ &amp; up"><div class="form-radio-input checked"></div><div class="stars" style="gap:2px;"><svg width="11" height="11" viewBox="0 0 12 12" fill="#FAAA39"><path d="M6 1l1.1 3.4H11L8.2 6.5l1 3.4L6 8.1 2.8 9.9l1-3.4L1 4.4h3.9L6 1Z"/></svg><svg width="11" height="11" viewBox="0 0 12 12" fill="#FAAA39"><path d="M6 1l1.1 3.4H11L8.2 6.5l1 3.4L6 8.1 2.8 9.9l1-3.4L1 4.4h3.9L6 1Z"/></svg><svg width="11" height="11" viewBox="0 0 12 12" fill="#FAAA39"><path d="M6 1l1.1 3.4H11L8.2 6.5l1 3.4L6 8.1 2.8 9.9l1-3.4L1 4.4h3.9L6 1Z"/></svg><svg width="11" height="11" viewBox="0 0 12 12" fill="#FAAA39"><path d="M6 1l1.1 3.4H11L8.2 6.5l1 3.4L6 8.1 2.8 9.9l1-3.4L1 4.4h3.9L6 1Z"/></svg><svg width="11" height="11" viewBox="0 0 12 12" fill="#FAAA39"><path d="M6 1l1.1 3.4H11L8.2 6.5l1 3.4L6 8.1 2.8 9.9l1-3.4L1 4.4h3.9L6 1Z"/></svg></div>&amp; up</div>
-            <div class="rating-filter-item" data-label="4★ &amp; up"><div class="form-radio-input"></div><div class="stars" style="gap:2px;"><svg width="11" height="11" viewBox="0 0 12 12" fill="#FAAA39"><path d="M6 1l1.1 3.4H11L8.2 6.5l1 3.4L6 8.1 2.8 9.9l1-3.4L1 4.4h3.9L6 1Z"/></svg><svg width="11" height="11" viewBox="0 0 12 12" fill="#FAAA39"><path d="M6 1l1.1 3.4H11L8.2 6.5l1 3.4L6 8.1 2.8 9.9l1-3.4L1 4.4h3.9L6 1Z"/></svg><svg width="11" height="11" viewBox="0 0 12 12" fill="#FAAA39"><path d="M6 1l1.1 3.4H11L8.2 6.5l1 3.4L6 8.1 2.8 9.9l1-3.4L1 4.4h3.9L6 1Z"/></svg><svg width="11" height="11" viewBox="0 0 12 12" fill="#FAAA39"><path d="M6 1l1.1 3.4H11L8.2 6.5l1 3.4L6 8.1 2.8 9.9l1-3.4L1 4.4h3.9L6 1Z"/></svg><svg width="11" height="11" viewBox="0 0 12 12" fill="#E8E5E0"><path d="M6 1l1.1 3.4H11L8.2 6.5l1 3.4L6 8.1 2.8 9.9l1-3.4L1 4.4h3.9L6 1Z"/></svg></div>&amp; up</div>
-            <div class="rating-filter-item" data-label="3★ &amp; up"><div class="form-radio-input"></div><div class="stars" style="gap:2px;"><svg width="11" height="11" viewBox="0 0 12 12" fill="#FAAA39"><path d="M6 1l1.1 3.4H11L8.2 6.5l1 3.4L6 8.1 2.8 9.9l1-3.4L1 4.4h3.9L6 1Z"/></svg><svg width="11" height="11" viewBox="0 0 12 12" fill="#FAAA39"><path d="M6 1l1.1 3.4H11L8.2 6.5l1 3.4L6 8.1 2.8 9.9l1-3.4L1 4.4h3.9L6 1Z"/></svg><svg width="11" height="11" viewBox="0 0 12 12" fill="#FAAA39"><path d="M6 1l1.1 3.4H11L8.2 6.5l1 3.4L6 8.1 2.8 9.9l1-3.4L1 4.4h3.9L6 1Z"/></svg><svg width="11" height="11" viewBox="0 0 12 12" fill="#E8E5E0"><path d="M6 1l1.1 3.4H11L8.2 6.5l1 3.4L6 8.1 2.8 9.9l1-3.4L1 4.4h3.9L6 1Z"/></svg><svg width="11" height="11" viewBox="0 0 12 12" fill="#E8E5E0"><path d="M6 1l1.1 3.4H11L8.2 6.5l1 3.4L6 8.1 2.8 9.9l1-3.4L1 4.4h3.9L6 1Z"/></svg></div>&amp; up</div>
+            <div class="rating-filter-item" data-label="5★ &amp; up"><div class="form-radio-input"></div><div class="stars" style="gap:2px;"><svg width="11" height="11" viewBox="0 0 12 12" fill="#C8A772"><path d="M6 1l1.1 3.4H11L8.2 6.5l1 3.4L6 8.1 2.8 9.9l1-3.4L1 4.4h3.9L6 1Z"/></svg><svg width="11" height="11" viewBox="0 0 12 12" fill="#C8A772"><path d="M6 1l1.1 3.4H11L8.2 6.5l1 3.4L6 8.1 2.8 9.9l1-3.4L1 4.4h3.9L6 1Z"/></svg><svg width="11" height="11" viewBox="0 0 12 12" fill="#C8A772"><path d="M6 1l1.1 3.4H11L8.2 6.5l1 3.4L6 8.1 2.8 9.9l1-3.4L1 4.4h3.9L6 1Z"/></svg><svg width="11" height="11" viewBox="0 0 12 12" fill="#C8A772"><path d="M6 1l1.1 3.4H11L8.2 6.5l1 3.4L6 8.1 2.8 9.9l1-3.4L1 4.4h3.9L6 1Z"/></svg><svg width="11" height="11" viewBox="0 0 12 12" fill="#C8A772"><path d="M6 1l1.1 3.4H11L8.2 6.5l1 3.4L6 8.1 2.8 9.9l1-3.4L1 4.4h3.9L6 1Z"/></svg></div>&amp; up</div>
+            <div class="rating-filter-item" data-label="4★ &amp; up"><div class="form-radio-input"></div><div class="stars" style="gap:2px;"><svg width="11" height="11" viewBox="0 0 12 12" fill="#C8A772"><path d="M6 1l1.1 3.4H11L8.2 6.5l1 3.4L6 8.1 2.8 9.9l1-3.4L1 4.4h3.9L6 1Z"/></svg><svg width="11" height="11" viewBox="0 0 12 12" fill="#C8A772"><path d="M6 1l1.1 3.4H11L8.2 6.5l1 3.4L6 8.1 2.8 9.9l1-3.4L1 4.4h3.9L6 1Z"/></svg><svg width="11" height="11" viewBox="0 0 12 12" fill="#C8A772"><path d="M6 1l1.1 3.4H11L8.2 6.5l1 3.4L6 8.1 2.8 9.9l1-3.4L1 4.4h3.9L6 1Z"/></svg><svg width="11" height="11" viewBox="0 0 12 12" fill="#C8A772"><path d="M6 1l1.1 3.4H11L8.2 6.5l1 3.4L6 8.1 2.8 9.9l1-3.4L1 4.4h3.9L6 1Z"/></svg><svg width="11" height="11" viewBox="0 0 12 12" fill="#E8E5E0"><path d="M6 1l1.1 3.4H11L8.2 6.5l1 3.4L6 8.1 2.8 9.9l1-3.4L1 4.4h3.9L6 1Z"/></svg></div>&amp; up</div>
+            <div class="rating-filter-item" data-label="3★ &amp; up"><div class="form-radio-input"></div><div class="stars" style="gap:2px;"><svg width="11" height="11" viewBox="0 0 12 12" fill="#C8A772"><path d="M6 1l1.1 3.4H11L8.2 6.5l1 3.4L6 8.1 2.8 9.9l1-3.4L1 4.4h3.9L6 1Z"/></svg><svg width="11" height="11" viewBox="0 0 12 12" fill="#C8A772"><path d="M6 1l1.1 3.4H11L8.2 6.5l1 3.4L6 8.1 2.8 9.9l1-3.4L1 4.4h3.9L6 1Z"/></svg><svg width="11" height="11" viewBox="0 0 12 12" fill="#C8A772"><path d="M6 1l1.1 3.4H11L8.2 6.5l1 3.4L6 8.1 2.8 9.9l1-3.4L1 4.4h3.9L6 1Z"/></svg><svg width="11" height="11" viewBox="0 0 12 12" fill="#E8E5E0"><path d="M6 1l1.1 3.4H11L8.2 6.5l1 3.4L6 8.1 2.8 9.9l1-3.4L1 4.4h3.9L6 1Z"/></svg><svg width="11" height="11" viewBox="0 0 12 12" fill="#E8E5E0"><path d="M6 1l1.1 3.4H11L8.2 6.5l1 3.4L6 8.1 2.8 9.9l1-3.4L1 4.4h3.9L6 1Z"/></svg></div>&amp; up</div>
           </div>
         </div>
 
-        <!-- Size -->
-        <div class="filter-card">
-          <div class="filter-card-head">
-            <span class="filter-card-title">Size</span>
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M3 5l3 3 3-3" stroke="#94908A" stroke-width="1.3" stroke-linecap="round"/></svg>
-          </div>
-          <div class="filter-card-body">
-            <div class="size-chips">
-              <div class="size-chip">XS</div><div class="size-chip selected">S</div><div class="size-chip selected">M</div><div class="size-chip selected">L</div><div class="size-chip">XL</div><div class="size-chip">XXL</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Color -->
-        <div class="filter-card">
-          <div class="filter-card-head">
-            <span class="filter-card-title">Color</span>
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M3 5l3 3 3-3" stroke="#94908A" stroke-width="1.3" stroke-linecap="round"/></svg>
-          </div>
-          <div class="filter-card-body">
-            <div class="color-swatches">
-              <div class="color-swatch selected" data-name="White"><div class="color-swatch-inner" style="background:#fff;border:1px solid #E8E5E0;"></div></div>
-              <div class="color-swatch" data-name="Black"><div class="color-swatch-inner" style="background:#1A1A18;"></div></div>
-              <div class="color-swatch" data-name="Navy"><div class="color-swatch-inner" style="background:#1e3a5f;"></div></div>
-              <div class="color-swatch" data-name="Olive"><div class="color-swatch-inner" style="background:#6b8e5f;"></div></div>
-              <div class="color-swatch" data-name="Rust"><div class="color-swatch-inner" style="background:#8b4a3c;"></div></div>
-              <div class="color-swatch" data-name="Amber"><div class="color-swatch-inner" style="background:#FAAA39;"></div></div>
-              <div class="color-swatch" data-name="Stone"><div class="color-swatch-inner" style="background:#94908A;"></div></div>
-            </div>
-          </div>
-        </div>
       </aside>
 
       <!-- PRODUCT LISTING -->
@@ -141,7 +99,7 @@
 
         <!-- Sort bar -->
         <div class="listing-topbar">
-          <span class="listing-result-count"><strong>843</strong> products found in Men's Fashion</span>
+          <span class="listing-result-count"><strong>843</strong> products found in Shampoo</span>
           <div class="listing-sort">
             <span class="listing-sort-label">Sort by:</span>
             <select class="form-select" style="width:180px;height:36px;font-size:13px;">
@@ -161,12 +119,12 @@
 
         <!-- Product grid (3 cols to match sidebar) -->
         <div class="product-grid product-grid-3" data-skeleton>
-          <div class="product-card"><div class="product-card-img" style="background:linear-gradient(140deg,#D8E4ED,#EDE5D8);"><span class="product-card-badge badge-sale">–33%</span><div class="product-card-wish"><svg width="14" height="13" viewBox="0 0 14 13" fill="none"><path d="M7 11.5S1 7.5 1 4a3 3 0 0 1 6-1 3 3 0 0 1 6 1c0 3.5-6 7.5-6 7.5Z" stroke="#C4C0B9" stroke-width="1.3" stroke-linejoin="round"/></svg></div><div class="product-card-quick"><button class="quick-add-btn">Quick Add</button></div></div><div class="product-card-body"><div class="product-card-brand">TrendCo</div><div class="product-card-name">Essential White Tee — Premium Cotton</div><div class="product-card-rating"><div class="stars"><svg class="star" viewBox="0 0 12 12" fill="#FAAA39"><path d="M6 1l1.1 3.4H11L8.2 6.5l1 3.4L6 8.1 2.8 9.9l1-3.4L1 4.4h3.9L6 1Z"/></svg><svg class="star" viewBox="0 0 12 12" fill="#FAAA39"><path d="M6 1l1.1 3.4H11L8.2 6.5l1 3.4L6 8.1 2.8 9.9l1-3.4L1 4.4h3.9L6 1Z"/></svg><svg class="star" viewBox="0 0 12 12" fill="#FAAA39"><path d="M6 1l1.1 3.4H11L8.2 6.5l1 3.4L6 8.1 2.8 9.9l1-3.4L1 4.4h3.9L6 1Z"/></svg><svg class="star" viewBox="0 0 12 12" fill="#FAAA39"><path d="M6 1l1.1 3.4H11L8.2 6.5l1 3.4L6 8.1 2.8 9.9l1-3.4L1 4.4h3.9L6 1Z"/></svg><svg class="star" viewBox="0 0 12 12" fill="#E8E5E0"><path d="M6 1l1.1 3.4H11L8.2 6.5l1 3.4L6 8.1 2.8 9.9l1-3.4L1 4.4h3.9L6 1Z"/></svg></div><span class="rating-count">(128)</span></div><div class="product-card-price"><span class="price">$29.99</span><span class="price-old">$44.99</span></div></div></div>
-          <div class="product-card"><div class="product-card-img" style="background:linear-gradient(140deg,#E8E0F0,#D8E4ED);"><div class="product-card-wish"><svg width="14" height="13" viewBox="0 0 14 13" fill="none"><path d="M7 11.5S1 7.5 1 4a3 3 0 0 1 6-1 3 3 0 0 1 6 1c0 3.5-6 7.5-6 7.5Z" fill="var(--blue)" stroke="var(--blue)" stroke-width="1.3" stroke-linejoin="round"/></svg></div><div class="product-card-quick"><button class="quick-add-btn">Quick Add</button></div></div><div class="product-card-body"><div class="product-card-brand">UrbanWear</div><div class="product-card-name">Slim Fit Cotton Tee</div><div class="product-card-rating"><div class="stars"><svg class="star" viewBox="0 0 12 12" fill="#FAAA39"><path d="M6 1l1.1 3.4H11L8.2 6.5l1 3.4L6 8.1 2.8 9.9l1-3.4L1 4.4h3.9L6 1Z"/></svg><svg class="star" viewBox="0 0 12 12" fill="#FAAA39"><path d="M6 1l1.1 3.4H11L8.2 6.5l1 3.4L6 8.1 2.8 9.9l1-3.4L1 4.4h3.9L6 1Z"/></svg><svg class="star" viewBox="0 0 12 12" fill="#FAAA39"><path d="M6 1l1.1 3.4H11L8.2 6.5l1 3.4L6 8.1 2.8 9.9l1-3.4L1 4.4h3.9L6 1Z"/></svg><svg class="star" viewBox="0 0 12 12" fill="#FAAA39"><path d="M6 1l1.1 3.4H11L8.2 6.5l1 3.4L6 8.1 2.8 9.9l1-3.4L1 4.4h3.9L6 1Z"/></svg><svg class="star" viewBox="0 0 12 12" fill="#FAAA39"><path d="M6 1l1.1 3.4H11L8.2 6.5l1 3.4L6 8.1 2.8 9.9l1-3.4L1 4.4h3.9L6 1Z"/></svg></div><span class="rating-count">(203)</span></div><div class="product-card-price"><span class="price">$19.99</span><span class="price-old">$34.99</span><span class="price-discount">43% off</span></div></div></div>
-          <div class="product-card"><div class="product-card-img" style="background:linear-gradient(140deg,#F5E6D3,#E8D5C0);"><div class="product-card-wish"><svg width="14" height="13" viewBox="0 0 14 13" fill="none"><path d="M7 11.5S1 7.5 1 4a3 3 0 0 1 6-1 3 3 0 0 1 6 1c0 3.5-6 7.5-6 7.5Z" stroke="#C4C0B9" stroke-width="1.3" stroke-linejoin="round"/></svg></div><div class="product-card-quick"><button class="quick-add-btn">Quick Add</button></div></div><div class="product-card-body"><div class="product-card-brand">ClassicLine</div><div class="product-card-name">Oxford Button-Down Shirt</div><div class="product-card-rating"><div class="stars"><svg class="star" viewBox="0 0 12 12" fill="#FAAA39"><path d="M6 1l1.1 3.4H11L8.2 6.5l1 3.4L6 8.1 2.8 9.9l1-3.4L1 4.4h3.9L6 1Z"/></svg><svg class="star" viewBox="0 0 12 12" fill="#FAAA39"><path d="M6 1l1.1 3.4H11L8.2 6.5l1 3.4L6 8.1 2.8 9.9l1-3.4L1 4.4h3.9L6 1Z"/></svg><svg class="star" viewBox="0 0 12 12" fill="#FAAA39"><path d="M6 1l1.1 3.4H11L8.2 6.5l1 3.4L6 8.1 2.8 9.9l1-3.4L1 4.4h3.9L6 1Z"/></svg><svg class="star" viewBox="0 0 12 12" fill="#FAAA39"><path d="M6 1l1.1 3.4H11L8.2 6.5l1 3.4L6 8.1 2.8 9.9l1-3.4L1 4.4h3.9L6 1Z"/></svg><svg class="star" viewBox="0 0 12 12" fill="#E8E5E0"><path d="M6 1l1.1 3.4H11L8.2 6.5l1 3.4L6 8.1 2.8 9.9l1-3.4L1 4.4h3.9L6 1Z"/></svg></div><span class="rating-count">(91)</span></div><div class="product-card-price"><span class="price">$54.99</span></div></div></div>
-          <div class="product-card"><div class="product-card-img" style="background:linear-gradient(140deg,#D8EDE4,#C8E0D0);"><span class="product-card-badge badge-hot">Hot</span><div class="product-card-wish"><svg width="14" height="13" viewBox="0 0 14 13" fill="none"><path d="M7 11.5S1 7.5 1 4a3 3 0 0 1 6-1 3 3 0 0 1 6 1c0 3.5-6 7.5-6 7.5Z" stroke="#C4C0B9" stroke-width="1.3" stroke-linejoin="round"/></svg></div><div class="product-card-quick"><button class="quick-add-btn">Quick Add</button></div></div><div class="product-card-body"><div class="product-card-brand">SportMax</div><div class="product-card-name">Performance Track Jacket</div><div class="product-card-rating"><div class="stars"><svg class="star" viewBox="0 0 12 12" fill="#FAAA39"><path d="M6 1l1.1 3.4H11L8.2 6.5l1 3.4L6 8.1 2.8 9.9l1-3.4L1 4.4h3.9L6 1Z"/></svg><svg class="star" viewBox="0 0 12 12" fill="#FAAA39"><path d="M6 1l1.1 3.4H11L8.2 6.5l1 3.4L6 8.1 2.8 9.9l1-3.4L1 4.4h3.9L6 1Z"/></svg><svg class="star" viewBox="0 0 12 12" fill="#FAAA39"><path d="M6 1l1.1 3.4H11L8.2 6.5l1 3.4L6 8.1 2.8 9.9l1-3.4L1 4.4h3.9L6 1Z"/></svg><svg class="star" viewBox="0 0 12 12" fill="#FAAA39"><path d="M6 1l1.1 3.4H11L8.2 6.5l1 3.4L6 8.1 2.8 9.9l1-3.4L1 4.4h3.9L6 1Z"/></svg><svg class="star" viewBox="0 0 12 12" fill="#FAAA39"><path d="M6 1l1.1 3.4H11L8.2 6.5l1 3.4L6 8.1 2.8 9.9l1-3.4L1 4.4h3.9L6 1Z"/></svg></div><span class="rating-count">(476)</span></div><div class="product-card-price"><span class="price">$79.99</span><span class="price-old">$110.00</span></div></div></div>
-          <div class="product-card"><div class="product-card-img" style="background:linear-gradient(140deg,#EDE5D8,#E8E0F0);"><div class="product-card-wish"><svg width="14" height="13" viewBox="0 0 14 13" fill="none"><path d="M7 11.5S1 7.5 1 4a3 3 0 0 1 6-1 3 3 0 0 1 6 1c0 3.5-6 7.5-6 7.5Z" stroke="#C4C0B9" stroke-width="1.3" stroke-linejoin="round"/></svg></div><div class="product-card-quick"><button class="quick-add-btn">Quick Add</button></div></div><div class="product-card-body"><div class="product-card-brand">MoodCo</div><div class="product-card-name">Relaxed Linen Shirt — Long Sleeve</div><div class="product-card-rating"><div class="stars"><svg class="star" viewBox="0 0 12 12" fill="#FAAA39"><path d="M6 1l1.1 3.4H11L8.2 6.5l1 3.4L6 8.1 2.8 9.9l1-3.4L1 4.4h3.9L6 1Z"/></svg><svg class="star" viewBox="0 0 12 12" fill="#FAAA39"><path d="M6 1l1.1 3.4H11L8.2 6.5l1 3.4L6 8.1 2.8 9.9l1-3.4L1 4.4h3.9L6 1Z"/></svg><svg class="star" viewBox="0 0 12 12" fill="#FAAA39"><path d="M6 1l1.1 3.4H11L8.2 6.5l1 3.4L6 8.1 2.8 9.9l1-3.4L1 4.4h3.9L6 1Z"/></svg><svg class="star" viewBox="0 0 12 12" fill="#FAAA39"><path d="M6 1l1.1 3.4H11L8.2 6.5l1 3.4L6 8.1 2.8 9.9l1-3.4L1 4.4h3.9L6 1Z"/></svg><svg class="star" viewBox="0 0 12 12" fill="#E8E5E0"><path d="M6 1l1.1 3.4H11L8.2 6.5l1 3.4L6 8.1 2.8 9.9l1-3.4L1 4.4h3.9L6 1Z"/></svg></div><span class="rating-count">(76)</span></div><div class="product-card-price"><span class="price">$54.99</span></div></div></div>
-          <div class="product-card"><div class="product-card-img" style="background:linear-gradient(140deg,#E8D5C0,#F5E6D3);"><span class="product-card-badge badge-new">New</span><div class="product-card-wish"><svg width="14" height="13" viewBox="0 0 14 13" fill="none"><path d="M7 11.5S1 7.5 1 4a3 3 0 0 1 6-1 3 3 0 0 1 6 1c0 3.5-6 7.5-6 7.5Z" stroke="#C4C0B9" stroke-width="1.3" stroke-linejoin="round"/></svg></div><div class="product-card-quick"><button class="quick-add-btn">Quick Add</button></div></div><div class="product-card-body"><div class="product-card-brand">TrendCo</div><div class="product-card-name">Chino Trousers — Slim Fit</div><div class="product-card-rating"><div class="stars"><svg class="star" viewBox="0 0 12 12" fill="#FAAA39"><path d="M6 1l1.1 3.4H11L8.2 6.5l1 3.4L6 8.1 2.8 9.9l1-3.4L1 4.4h3.9L6 1Z"/></svg><svg class="star" viewBox="0 0 12 12" fill="#FAAA39"><path d="M6 1l1.1 3.4H11L8.2 6.5l1 3.4L6 8.1 2.8 9.9l1-3.4L1 4.4h3.9L6 1Z"/></svg><svg class="star" viewBox="0 0 12 12" fill="#FAAA39"><path d="M6 1l1.1 3.4H11L8.2 6.5l1 3.4L6 8.1 2.8 9.9l1-3.4L1 4.4h3.9L6 1Z"/></svg><svg class="star" viewBox="0 0 12 12" fill="#FAAA39"><path d="M6 1l1.1 3.4H11L8.2 6.5l1 3.4L6 8.1 2.8 9.9l1-3.4L1 4.4h3.9L6 1Z"/></svg><svg class="star" viewBox="0 0 12 12" fill="#FAAA39"><path d="M6 1l1.1 3.4H11L8.2 6.5l1 3.4L6 8.1 2.8 9.9l1-3.4L1 4.4h3.9L6 1Z"/></svg></div><span class="rating-count">(142)</span></div><div class="product-card-price"><span class="price">$64.99</span></div></div></div>
+          <div class="product-card"><div class="product-card-img" style="background:linear-gradient(140deg,#D8E4ED,#EDE5D8);"><span class="product-card-badge badge-sale">–33%</span><div class="product-card-wish"><svg width="14" height="13" viewBox="0 0 14 13" fill="none"><path d="M7 11.5S1 7.5 1 4a3 3 0 0 1 6-1 3 3 0 0 1 6 1c0 3.5-6 7.5-6 7.5Z" stroke="#C4C0B9" stroke-width="1.3" stroke-linejoin="round"/></svg></div><div class="product-card-quick"><button class="quick-add-btn">Quick Add</button></div></div><div class="product-card-body"><div class="product-card-brand">Maison Lume</div><div class="product-card-name">Silk Repair Conditioner</div><div class="product-card-rating"><div class="stars"><svg class="star" viewBox="0 0 12 12" fill="#C8A772"><path d="M6 1l1.1 3.4H11L8.2 6.5l1 3.4L6 8.1 2.8 9.9l1-3.4L1 4.4h3.9L6 1Z"/></svg><svg class="star" viewBox="0 0 12 12" fill="#C8A772"><path d="M6 1l1.1 3.4H11L8.2 6.5l1 3.4L6 8.1 2.8 9.9l1-3.4L1 4.4h3.9L6 1Z"/></svg><svg class="star" viewBox="0 0 12 12" fill="#C8A772"><path d="M6 1l1.1 3.4H11L8.2 6.5l1 3.4L6 8.1 2.8 9.9l1-3.4L1 4.4h3.9L6 1Z"/></svg><svg class="star" viewBox="0 0 12 12" fill="#C8A772"><path d="M6 1l1.1 3.4H11L8.2 6.5l1 3.4L6 8.1 2.8 9.9l1-3.4L1 4.4h3.9L6 1Z"/></svg><svg class="star" viewBox="0 0 12 12" fill="#E8E5E0"><path d="M6 1l1.1 3.4H11L8.2 6.5l1 3.4L6 8.1 2.8 9.9l1-3.4L1 4.4h3.9L6 1Z"/></svg></div><span class="rating-count">(128)</span></div><div class="product-card-price"><span class="price">$29.99</span><span class="price-old">$44.99</span></div></div></div>
+          <div class="product-card"><div class="product-card-img" style="background:linear-gradient(140deg,#E8E0F0,#D8E4ED);"><div class="product-card-wish"><svg width="14" height="13" viewBox="0 0 14 13" fill="none"><path d="M7 11.5S1 7.5 1 4a3 3 0 0 1 6-1 3 3 0 0 1 6 1c0 3.5-6 7.5-6 7.5Z" fill="var(--blue)" stroke="var(--blue)" stroke-width="1.3" stroke-linejoin="round"/></svg></div><div class="product-card-quick"><button class="quick-add-btn">Quick Add</button></div></div><div class="product-card-body"><div class="product-card-brand">Strand Studio</div><div class="product-card-name">Slim Fit Cotton Tee</div><div class="product-card-rating"><div class="stars"><svg class="star" viewBox="0 0 12 12" fill="#C8A772"><path d="M6 1l1.1 3.4H11L8.2 6.5l1 3.4L6 8.1 2.8 9.9l1-3.4L1 4.4h3.9L6 1Z"/></svg><svg class="star" viewBox="0 0 12 12" fill="#C8A772"><path d="M6 1l1.1 3.4H11L8.2 6.5l1 3.4L6 8.1 2.8 9.9l1-3.4L1 4.4h3.9L6 1Z"/></svg><svg class="star" viewBox="0 0 12 12" fill="#C8A772"><path d="M6 1l1.1 3.4H11L8.2 6.5l1 3.4L6 8.1 2.8 9.9l1-3.4L1 4.4h3.9L6 1Z"/></svg><svg class="star" viewBox="0 0 12 12" fill="#C8A772"><path d="M6 1l1.1 3.4H11L8.2 6.5l1 3.4L6 8.1 2.8 9.9l1-3.4L1 4.4h3.9L6 1Z"/></svg><svg class="star" viewBox="0 0 12 12" fill="#C8A772"><path d="M6 1l1.1 3.4H11L8.2 6.5l1 3.4L6 8.1 2.8 9.9l1-3.4L1 4.4h3.9L6 1Z"/></svg></div><span class="rating-count">(203)</span></div><div class="product-card-price"><span class="price">$19.99</span><span class="price-old">$34.99</span><span class="price-discount">43% off</span></div></div></div>
+          <div class="product-card"><div class="product-card-img" style="background:linear-gradient(140deg,#F5E6D3,#E8D5C0);"><div class="product-card-wish"><svg width="14" height="13" viewBox="0 0 14 13" fill="none"><path d="M7 11.5S1 7.5 1 4a3 3 0 0 1 6-1 3 3 0 0 1 6 1c0 3.5-6 7.5-6 7.5Z" stroke="#C4C0B9" stroke-width="1.3" stroke-linejoin="round"/></svg></div><div class="product-card-quick"><button class="quick-add-btn">Quick Add</button></div></div><div class="product-card-body"><div class="product-card-brand">Maison Lume</div><div class="product-card-name">Hydrating Daily Shampoo</div><div class="product-card-rating"><div class="stars"><svg class="star" viewBox="0 0 12 12" fill="#C8A772"><path d="M6 1l1.1 3.4H11L8.2 6.5l1 3.4L6 8.1 2.8 9.9l1-3.4L1 4.4h3.9L6 1Z"/></svg><svg class="star" viewBox="0 0 12 12" fill="#C8A772"><path d="M6 1l1.1 3.4H11L8.2 6.5l1 3.4L6 8.1 2.8 9.9l1-3.4L1 4.4h3.9L6 1Z"/></svg><svg class="star" viewBox="0 0 12 12" fill="#C8A772"><path d="M6 1l1.1 3.4H11L8.2 6.5l1 3.4L6 8.1 2.8 9.9l1-3.4L1 4.4h3.9L6 1Z"/></svg><svg class="star" viewBox="0 0 12 12" fill="#C8A772"><path d="M6 1l1.1 3.4H11L8.2 6.5l1 3.4L6 8.1 2.8 9.9l1-3.4L1 4.4h3.9L6 1Z"/></svg><svg class="star" viewBox="0 0 12 12" fill="#E8E5E0"><path d="M6 1l1.1 3.4H11L8.2 6.5l1 3.4L6 8.1 2.8 9.9l1-3.4L1 4.4h3.9L6 1Z"/></svg></div><span class="rating-count">(91)</span></div><div class="product-card-price"><span class="price">$54.99</span></div></div></div>
+          <div class="product-card"><div class="product-card-img" style="background:linear-gradient(140deg,#D8EDE4,#C8E0D0);"><span class="product-card-badge badge-hot">Hot</span><div class="product-card-wish"><svg width="14" height="13" viewBox="0 0 14 13" fill="none"><path d="M7 11.5S1 7.5 1 4a3 3 0 0 1 6-1 3 3 0 0 1 6 1c0 3.5-6 7.5-6 7.5Z" stroke="#C4C0B9" stroke-width="1.3" stroke-linejoin="round"/></svg></div><div class="product-card-quick"><button class="quick-add-btn">Quick Add</button></div></div><div class="product-card-body"><div class="product-card-brand">Strand Studio</div><div class="product-card-name">Bond Repair Treatment Duo</div><div class="product-card-rating"><div class="stars"><svg class="star" viewBox="0 0 12 12" fill="#C8A772"><path d="M6 1l1.1 3.4H11L8.2 6.5l1 3.4L6 8.1 2.8 9.9l1-3.4L1 4.4h3.9L6 1Z"/></svg><svg class="star" viewBox="0 0 12 12" fill="#C8A772"><path d="M6 1l1.1 3.4H11L8.2 6.5l1 3.4L6 8.1 2.8 9.9l1-3.4L1 4.4h3.9L6 1Z"/></svg><svg class="star" viewBox="0 0 12 12" fill="#C8A772"><path d="M6 1l1.1 3.4H11L8.2 6.5l1 3.4L6 8.1 2.8 9.9l1-3.4L1 4.4h3.9L6 1Z"/></svg><svg class="star" viewBox="0 0 12 12" fill="#C8A772"><path d="M6 1l1.1 3.4H11L8.2 6.5l1 3.4L6 8.1 2.8 9.9l1-3.4L1 4.4h3.9L6 1Z"/></svg><svg class="star" viewBox="0 0 12 12" fill="#C8A772"><path d="M6 1l1.1 3.4H11L8.2 6.5l1 3.4L6 8.1 2.8 9.9l1-3.4L1 4.4h3.9L6 1Z"/></svg></div><span class="rating-count">(476)</span></div><div class="product-card-price"><span class="price">$79.99</span><span class="price-old">$110.00</span></div></div></div>
+          <div class="product-card"><div class="product-card-img" style="background:linear-gradient(140deg,#EDE5D8,#E8E0F0);"><div class="product-card-wish"><svg width="14" height="13" viewBox="0 0 14 13" fill="none"><path d="M7 11.5S1 7.5 1 4a3 3 0 0 1 6-1 3 3 0 0 1 6 1c0 3.5-6 7.5-6 7.5Z" stroke="#C4C0B9" stroke-width="1.3" stroke-linejoin="round"/></svg></div><div class="product-card-quick"><button class="quick-add-btn">Quick Add</button></div></div><div class="product-card-body"><div class="product-card-brand">MoodCo</div><div class="product-card-name">Argan Nourishing Hair Oil</div><div class="product-card-rating"><div class="stars"><svg class="star" viewBox="0 0 12 12" fill="#C8A772"><path d="M6 1l1.1 3.4H11L8.2 6.5l1 3.4L6 8.1 2.8 9.9l1-3.4L1 4.4h3.9L6 1Z"/></svg><svg class="star" viewBox="0 0 12 12" fill="#C8A772"><path d="M6 1l1.1 3.4H11L8.2 6.5l1 3.4L6 8.1 2.8 9.9l1-3.4L1 4.4h3.9L6 1Z"/></svg><svg class="star" viewBox="0 0 12 12" fill="#C8A772"><path d="M6 1l1.1 3.4H11L8.2 6.5l1 3.4L6 8.1 2.8 9.9l1-3.4L1 4.4h3.9L6 1Z"/></svg><svg class="star" viewBox="0 0 12 12" fill="#C8A772"><path d="M6 1l1.1 3.4H11L8.2 6.5l1 3.4L6 8.1 2.8 9.9l1-3.4L1 4.4h3.9L6 1Z"/></svg><svg class="star" viewBox="0 0 12 12" fill="#E8E5E0"><path d="M6 1l1.1 3.4H11L8.2 6.5l1 3.4L6 8.1 2.8 9.9l1-3.4L1 4.4h3.9L6 1Z"/></svg></div><span class="rating-count">(76)</span></div><div class="product-card-price"><span class="price">$54.99</span></div></div></div>
+          <div class="product-card"><div class="product-card-img" style="background:linear-gradient(140deg,#E8D5C0,#F5E6D3);"><span class="product-card-badge badge-new">New</span><div class="product-card-wish"><svg width="14" height="13" viewBox="0 0 14 13" fill="none"><path d="M7 11.5S1 7.5 1 4a3 3 0 0 1 6-1 3 3 0 0 1 6 1c0 3.5-6 7.5-6 7.5Z" stroke="#C4C0B9" stroke-width="1.3" stroke-linejoin="round"/></svg></div><div class="product-card-quick"><button class="quick-add-btn">Quick Add</button></div></div><div class="product-card-body"><div class="product-card-brand">Maison Lume</div><div class="product-card-name">Chino Trousers — Slim Fit</div><div class="product-card-rating"><div class="stars"><svg class="star" viewBox="0 0 12 12" fill="#C8A772"><path d="M6 1l1.1 3.4H11L8.2 6.5l1 3.4L6 8.1 2.8 9.9l1-3.4L1 4.4h3.9L6 1Z"/></svg><svg class="star" viewBox="0 0 12 12" fill="#C8A772"><path d="M6 1l1.1 3.4H11L8.2 6.5l1 3.4L6 8.1 2.8 9.9l1-3.4L1 4.4h3.9L6 1Z"/></svg><svg class="star" viewBox="0 0 12 12" fill="#C8A772"><path d="M6 1l1.1 3.4H11L8.2 6.5l1 3.4L6 8.1 2.8 9.9l1-3.4L1 4.4h3.9L6 1Z"/></svg><svg class="star" viewBox="0 0 12 12" fill="#C8A772"><path d="M6 1l1.1 3.4H11L8.2 6.5l1 3.4L6 8.1 2.8 9.9l1-3.4L1 4.4h3.9L6 1Z"/></svg><svg class="star" viewBox="0 0 12 12" fill="#C8A772"><path d="M6 1l1.1 3.4H11L8.2 6.5l1 3.4L6 8.1 2.8 9.9l1-3.4L1 4.4h3.9L6 1Z"/></svg></div><span class="rating-count">(142)</span></div><div class="product-card-price"><span class="price">$64.99</span></div></div></div>
         </div>
 
         <!-- Pagination -->
@@ -193,7 +151,7 @@
         <div class="footer-logo-mark"></div>
         <span class="footer-logo-text">ambe</span>
       </div>
-      <p class="footer-desc">Your one-stop shop for fashion, electronics, home goods, and more. Premium brands, unbeatable prices.</p>
+      <p class="footer-desc">Cosmetics, skincare, body care, wellness, hair, nails and men's grooming — chosen well, priced fairly.</p>
       <div class="footer-social">
         <div class="footer-social-btn"><svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M16 8.05C16 3.6 12.4 0 8 0S0 3.6 0 8.05c0 3.9 2.8 7.2 6.5 7.85v-5.5H4.5v-2.4H6.5V6.2c0-2 1.2-3.1 3-3.1.85 0 1.7.15 1.7.15v1.9h-1c-.95 0-1.2.6-1.2 1.2v1.4H11l-.4 2.4H9v5.5C12.7 15.2 16 11.9 16 8.05Z" fill="rgba(255,255,255,0.6)"/></svg></div>
         <div class="footer-social-btn"><svg width="14" height="14" viewBox="0 0 16 16" fill="none"><rect x="1" y="1" width="14" height="14" rx="3.5" stroke="rgba(255,255,255,0.6)" stroke-width="1.3"/><circle cx="8" cy="8" r="3" stroke="rgba(255,255,255,0.6)" stroke-width="1.3"/><circle cx="12" cy="4" r="1" fill="rgba(255,255,255,0.6)"/></svg></div>
@@ -201,15 +159,7 @@
         <div class="footer-social-btn"><svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M1 1l6 6-6 8h2l5-6.5L13 15h3L10 8.5 15.5 1H13.5L8 7 3.5 1H1Z" fill="rgba(255,255,255,0.6)"/></svg></div>
       </div>
     </div>
-    <div>
-      <div class="footer-col-title">Shop</div>
-      <a class="footer-link">Men's Fashion</a>
-      <a class="footer-link">Women's Fashion</a>
-      <a class="footer-link">Kids & Baby</a>
-      <a class="footer-link">Electronics</a>
-      <a class="footer-link">Home & Living</a>
-      <a class="footer-link">Sale</a>
-    </div>
+    {% include "common/footer-shop.html" %}
     <div>
       <div class="footer-col-title">Account</div>
       <a class="footer-link" href="/account/profile">My Profile</a>
@@ -220,29 +170,27 @@
     </div>
     <div>
       <div class="footer-col-title">Help</div>
-      <a class="footer-link">Help Center</a>
-      <a class="footer-link">Track Order</a>
-      <a class="footer-link">Returns</a>
+      <a class="footer-link" href="/account/support">Help Center</a>
+      <a class="footer-link" href="/account/orders">Track Order</a>
+      <a class="footer-link" href="/account/returns">Returns</a>
       <a class="footer-link">Shipping Info</a>
-      <a class="footer-link">Contact Us</a>
+      <a class="footer-link" href="/account/support">Contact Us</a>
     </div>
     <div>
       <div class="footer-col-title">Company</div>
-      <a class="footer-link">About Us</a>
-      <a class="footer-link">Careers</a>
-      <a class="footer-link">Blog</a>
-      <a class="footer-link">Press</a>
-      <a class="footer-link">Affiliates</a>
+      <a class="footer-link" href="/about">About Us</a>
+      <a class="footer-link" href="/privacy">Privacy Policy</a>
+      <a class="footer-link" href="/terms">Terms of Use</a>
     </div>
   </div>
   <div class="footer-bottom">
-    <span>© 2026 Bambe Inc. · Privacy Policy · Terms of Service</span>
+    <span>© 2026 Bambe Inc. · <a href="/privacy">Privacy Policy</a> · <a href="/terms">Terms of Use</a></span>
     <div class="footer-pay-icons">
       <div class="pay-icon">VISA</div>
       <div class="pay-icon">MC</div>
       <div class="pay-icon">AMEX</div>
-      <div class="pay-icon">PayPal</div>
-      <div class="pay-icon">Apple Pay</div>
+      <div class="pay-icon">MOBILE BANKING</div>
+      <div class="pay-icon">CASH ON DELIVERY</div>
     </div>
   </div>
 </footer>
@@ -254,28 +202,14 @@
   if (icons[1]) icons[1].onclick = function() { location.href = '/cart'; };
   var userBtn = document.querySelector('.nav-user-btn');
   if (userBtn) userBtn.onclick = function() { location.href = '/account/profile'; };
-  var searchBtn = document.querySelector('.nav-search-btn');
-  if (searchBtn) searchBtn.onclick = function() { location.href = '/search'; };
-  document.querySelectorAll('.subnav-link').forEach(function(l) {
-    l.onclick = function() { location.href = '/listing'; };
-  });
-  document.querySelectorAll('.product-card').forEach(function(c) {
-    c.onclick = function(e) {
-      if (!e.target.closest('button') && !e.target.closest('.product-card-wish') && !e.target.closest('.product-card-quick')) {
-        location.href = '/product';
-      }
-    };
-  });
-  document.querySelectorAll('.quick-add-btn').forEach(function(b) {
-    b.onclick = function(e) { e.stopPropagation(); location.href = '/cart'; };
-  });
-  document.querySelectorAll('.page-btn:not(.disabled):not(.active)').forEach(function(b) {
-    b.onclick = function() { location.href = '/listing'; };
-  });
+  // Cards, Quick Add, the search box and the pager are all driven by
+  // listing.js against real data now — the placeholder handlers that
+  // used to send every card to /product are gone.
 })();
 </script>
 <script src="/assets/js/select.js"></script>
-<script src="/assets/js/listing.js"></script>
+<script type="module" src="/assets/js/listing.js"></script>
 <script src="/assets/js/skeleton.js"></script>
+<script type="module" src="/assets/js/navbar.js"></script>
 </body>
 </html>

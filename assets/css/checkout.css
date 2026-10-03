@@ -132,7 +132,8 @@
   border-top: 1px solid var(--border);
 }
 /* The last cart item already draws a bottom border — don't double it up */
-.cart-item + .coupon-row {
+.cart-item + .coupon-row,
+.cart-items + .coupon-row {
   border-top: none;
   margin-top: 0;
 }
@@ -207,7 +208,7 @@
 .checkout-btn {
   width: 100%;
   height: 52px;
-  background: var(--blue);
+  background: var(--primary-grad);
   color: var(--on-primary);
   border: none;
   border-radius: var(--radius-md);
@@ -219,10 +220,10 @@
   align-items: center;
   justify-content: center;
   gap: 10px;
-  transition: background 0.15s;
+  transition: filter 0.15s;
   margin-bottom: 12px;
 }
-.checkout-btn:hover { background: var(--blue-dk); }
+.checkout-btn:hover { filter: brightness(0.90); }
 .checkout-btn.disabled,
 .checkout-btn.disabled:hover {
   background: var(--border);
@@ -431,7 +432,7 @@
   justify-content: center;
   flex-shrink: 0;
 }
-.delivery-option.selected .delivery-option-icon { background: rgba(250,170,57,0.2); }
+.delivery-option.selected .delivery-option-icon { background: color-mix(in srgb, var(--primary) 20%, transparent); }
 .delivery-option-info { flex: 1; }
 .delivery-option-name { font-size: 13.5px; font-weight: 700; color: var(--dark); }
 .delivery-option-date { font-size: 12px; color: var(--subtle); margin-top: 2px; }
@@ -698,4 +699,104 @@
 .addr-form-foot .form-check.is-locked {
   cursor: default;
   opacity: 0.6;
+}
+
+/* ── ══════════════════════════════════════════════════════
+   RESPONSIVE — CART & CHECKOUT
+
+   Same two breakpoints as common.css: 1024px folds the order summary
+   under the content it flanks, 640px stops the cart pretending to be
+   a table.
+══════════════════════════════════════════════════════ ── */
+
+/*
+  "Ship to" beside "Delivery" on the review step. This was an inline
+  `display:flex` on the element, which no media query could override —
+  hence the class.
+*/
+.ck-ship-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+}
+.ck-ship-row > * { min-width: 0; }
+
+@media (max-width: 1024px) {
+  /* The summary sits beside the cart on desktop. Under it here, but
+     before the footer, so "what am I paying" is the last thing read
+     before the checkout button. */
+  .cart-layout,
+  .checkout-page-layout { grid-template-columns: 1fr; gap: 22px; }
+  /* Grid items default to `min-width: auto` and will not shrink below
+     their content, so the track has to be told twice. */
+  .cart-layout > *,
+  .checkout-page-layout > * { min-width: 0; }
+  .address-cards { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 640px) {
+  /*
+    A four-column row (item / unit price / subtotal / actions) cannot
+    survive 390px, so the row stops being a table row and becomes a
+    card: picture on the left, everything else stacked beside it.
+
+    The head row goes with it — column labels over a single column of
+    cards would be captioning nothing.
+  */
+  .cart-table-head { display: none; }
+
+  .cart-item {
+    grid-template-columns: 84px 1fr;
+    grid-template-areas:
+      "img  info"
+      "img  price"
+      "act  act";
+    gap: 12px 14px;
+    padding: 16px 0;
+  }
+  .cart-item-info { grid-area: info; }
+  .cart-item-price-col {
+    grid-area: price;
+    /* Left, not centre: in a card it reads as part of the item's own
+       block rather than a column heading of its own. */
+    text-align: left;
+  }
+  .cart-item-actions {
+    grid-area: act;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .cart-item-img { grid-area: img; width: 84px; height: 84px; }
+
+  /* Two columns of address text do not fit at 390px — "Standard
+     Delivery" alone wrapped onto three lines. Stack them. */
+  .ck-ship-row { flex-direction: column; gap: 16px; }
+
+  /*
+    A payment row is radio / icon / name / note / badge on one flex
+    line. At 390px the name and the note fight over what is left after
+    the two fixed items, and "Card, mobile banking or net banking"
+    collapses into a five-line ribbon 49px wide.
+
+    On a phone the row becomes a grid instead: the radio and the icon
+    hold their own column and span the full height, while the name,
+    note and badge stack in the third column and each get the whole
+    remaining width.
+  */
+  .payment-method-head {
+    display: grid;
+    grid-template-columns: auto auto minmax(0, 1fr);
+    column-gap: 10px;
+    row-gap: 3px;
+    align-items: center;
+  }
+  .payment-method-head > .payment-radio,
+  .payment-method-head > .payment-method-icon { grid-row: 1 / -1; }
+  .payment-method-name,
+  .payment-method-note,
+  .payment-method-badge { grid-column: 3; }
+  .payment-method-badge:empty { display: none; }
+
+  .card-form-row { grid-template-columns: 1fr; }
 }

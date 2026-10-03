@@ -34,6 +34,29 @@ async fn breadcrumb(db: &mongodb::Database, category_id: &str) -> Vec<serde_json
     chain
 }
 
+/// The image documents for `ids`, keyed by uuid. Unreadable ones are skipped.
+async fn load_images(db: &mongodb::Database, ids: &[String]) -> HashMap<String, ImageStruct> {
+    let mut map = HashMap::new();
+    if ids.is_empty() {
+        return map;
+    }
+
+    let mut cursor = db
+        .collection::<ImageStruct>("image")
+        .find(doc! { "uuid": { "$in": ids } })
+        .await
+        .expect("image lookup");
+    while let Some(result) = cursor.next().await {
+        match result {
+            Ok(i) => { map.insert(i.uuid.clone(), i); }
+            Err(error) => {
+                log::error!("{}: skipping unreadable document: {:?}", module_path!(), error);
+            }
+        }
+    }
+    map
+}
+
 pub async fn task(path: web::Path<String>) -> Result<HttpResponse, Error> {
     let slug = path.into_inner();
     let db = MongoDB.connect();
@@ -58,43 +81,43 @@ pub async fn task(path: web::Path<String>) -> Result<HttpResponse, Error> {
         .await
         .expect("variant lookup");
     let mut variants = Vec::new();
-    while let Some(Ok(v)) = variant_cursor.next().await {
+    while let Some(result) = variant_cursor.next().await {
+        let v = match result {
+            Ok(v) => v,
+            Err(error) => {
+                log::error!("{}: skipping unreadable document: {:?}", module_path!(), error);
+                continue;
+            }
+        };
         variants.push(v);
     }
+    // Oldest first, so the swatch row and the gallery below it stay in the
+    // same order across reloads — the cursor has no order of its own.
+    variants.sort_by(|a, b| a.created_at.cmp(&b.created_at).then_with(|| a.uuid.cmp(&b.uuid)));
 
     let brand = match &product.brand_id {
         Some(id) => db.collection::<Brand>("brand").find_one(doc! { "uuid": id }).await.ok().flatten(),
         None => None,
     };
 
-    let image_ids: Vec<String> = product.images.iter().map(|i| i.image_id.clone()).collect();
-    let images: HashMap<String, ImageStruct> = if image_ids.is_empty() {
-        HashMap::new()
-    } else {
-        let mut cursor = db
-            .collection::<ImageStruct>("image")
-            .find(doc! { "uuid": { "$in": &image_ids } })
-            .await
-            .expect("image lookup");
-        let mut map = HashMap::new();
-        while let Some(Ok(i)) = cursor.next().await {
-            map.insert(i.uuid.clone(), i);
+    /*
+      The gallery is the variants' images, in variant order. Two variants of
+      one colourway (a size run, say) share a photo, so the ids are deduped —
+      otherwise a shirt in five sizes shows the same picture five times.
+    */
+    let mut image_ids: Vec<String> = Vec::new();
+    for variant in &variants {
+        if !image_ids.contains(&variant.image_id) {
+            image_ids.push(variant.image_id.clone());
         }
-        map
-    };
+    }
 
-    let mut gallery: Vec<_> = product
-        .images
+    let images = load_images(&db, &image_ids).await;
+
+    let gallery: Vec<_> = image_ids
         .iter()
-        .map(|pi| {
-            json!({
-                "image": images.get(&pi.image_id),
-                "alt": pi.alt,
-                "position": pi.position,
-            })
-        })
+        .map(|id| json!({ "image_id": id, "image": images.get(id) }))
         .collect();
-    gallery.sort_by_key(|v| v["position"].as_i64().unwrap_or(0));
 
     let breadcrumb = breadcrumb(&db, &product.category_id).await;
 
@@ -110,14 +133,33 @@ pub async fn task(path: web::Path<String>) -> Result<HttpResponse, Error> {
         .limit(8)
         .await
         .expect("related lookup");
+    let mut related_products = Vec::new();
+    while let Some(result) = related_cursor.next().await {
+        match result {
+            Ok(p) => related_products.push(p),
+            Err(error) => {
+                log::error!("{}: skipping unreadable document: {:?}", module_path!(), error);
+            }
+        }
+    }
+
+    // The whole image, not just its id, so the card can show the blur hash
+    // while the photo loads — the same shape the listing endpoints send.
+    let cover_ids: Vec<String> = related_products
+        .iter()
+        .filter_map(|p| p.cover_image_id.clone())
+        .collect();
+    let covers = load_images(&db, &cover_ids).await;
+
     let mut related = Vec::new();
-    while let Some(Ok(p)) = related_cursor.next().await {
-        let cover_id = p.images.iter().min_by_key(|i| i.position).map(|i| i.image_id.clone());
+    for p in related_products {
+        let image = p.cover_image_id.as_ref().and_then(|id| covers.get(id));
         related.push(json!({
             "uuid": p.uuid,
             "slug": p.slug,
             "title": p.title,
-            "image_id": cover_id,
+            "image_id": p.cover_image_id,
+            "image": image,
             "price_min": p.price_min,
             "price_max": p.price_max,
             "compare_at_price": p.compare_at_price,

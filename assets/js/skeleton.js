@@ -19,14 +19,23 @@
    its own layout.
 
        <div class="product-grid" data-skeleton>…</div>
-       <tbody data-skeleton data-skeleton-delay="900">…</tbody>
+       <tbody data-skeleton>…</tbody>
 
-   The real content is hidden from JS, so with scripting off the
-   page simply renders as it always did.
+   The markup inside a target is wireframe sample content — it exists
+   to give the placeholder its shape, never to be read. So it is
+   never shown: common.css keeps every target invisible until it is
+   loaded, the placeholder takes its place as soon as this script
+   runs, and the target only comes back when the page module that
+   owns it has real data in it and calls Skeleton.clear(target).
+   There is no timer. A timer used to end the shimmer after ~1.4s,
+   which on any slower request revealed the sample content — fake
+   names, fake totals — until the real data arrived.
 ═══════════════════════════════════════════════════════════════ */
 (function() {
 
-  var DEFAULT_DELAY = 1400;
+  /* Live placeholders, keyed by the element each one stands in for,
+     so a page module can clear its own without touching the others. */
+  var mounted = new Map();
 
   /* Elements with no text to strip — they are replaced outright by a
      box of the same size rather than walked into. */
@@ -191,37 +200,83 @@
     }
   }
 
+  /* Targets a page module cleared before this script reached them —
+     data that arrived first. They must not get a placeholder over
+     what is already real. */
+  var cleared = new WeakSet();
+
   function mount(target) {
+    if (mounted.has(target) || cleared.has(target)) return;
     var clone = target.cloneNode(true);
     paint(target, clone);
     clone.classList.add('skeleton-clone');
     clone.setAttribute('aria-hidden', 'true');
     strip(clone);
+    // A nested target copied into this clone is a picture of one, not
+    // a target: it must not be hidden as unloaded or mounted itself.
+    clone.querySelectorAll('[data-skeleton]').forEach(function(el) {
+      el.removeAttribute('data-skeleton');
+    });
 
-    target.parentNode.insertBefore(clone, target);
+    /*
+      After the target, not before it. The clone is a full copy —
+      same classes, same structure — so while it is mounted every
+      `querySelector` on the page can match it. Placed first, it
+      shadowed the real element, and a page module that filled in
+      the product title wrote into the placeholder instead; the
+      swap back then "restored" the wireframe's dummy text over
+      live data. The target is display:none either way, so the two
+      orderings look identical.
+    */
+    target.parentNode.insertBefore(clone, target.nextSibling);
     // Inline display so the swap back restores whatever the
     // stylesheet had — grid, table-row-group, flex.
     target.style.display = 'none';
     target.setAttribute('aria-busy', 'true');
 
-    setTimeout(function() {
-      clone.parentNode.removeChild(clone);
-      target.style.display = '';
-      target.removeAttribute('aria-busy');
+    mounted.set(target, { clone: clone });
+  }
+
+  /* Idempotent. Called by a page module the moment its data lands —
+     and safe to call before the placeholder exists, in which case the
+     target is simply marked loaded and never gets one. */
+  function unmount(target) {
+    var entry = mounted.get(target);
+    if (!entry) {
+      cleared.add(target);
       target.classList.add('is-loaded');
-    }, parseInt(target.getAttribute('data-skeleton-delay'), 10) || DEFAULT_DELAY);
+      return;
+    }
+
+    mounted.delete(target);
+    if (entry.clone.parentNode) entry.clone.parentNode.removeChild(entry.clone);
+
+    target.style.display = '';
+    target.removeAttribute('aria-busy');
+    target.classList.add('is-loaded');
   }
 
   function start() {
     document.querySelectorAll('[data-skeleton]').forEach(mount);
   }
 
-  /* Measuring needs the real layout, so this waits for the document
-     rather than running inline. */
+  /* Whoever gets the response calls `clear` with the target it filled.
+     Pages that fail to load should still call it, after drawing their
+     error state, so the shimmer does not run forever. */
+  window.Skeleton = {
+    clear: function(target) {
+      if (!target) return;
+      unmount(target);
+    },
+  };
+
+  /* This script is loaded at the end of <body>, so every target above
+     it is already parsed and laid out (invisibly) — mount them now,
+     before the first paint, and again at DOMContentLoaded for any that
+     come later. mount() skips targets it has already handled. */
+  start();
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', start);
-  } else {
-    start();
   }
 
 })();

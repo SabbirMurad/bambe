@@ -26,7 +26,14 @@ pub async fn task(req: HttpRequest) -> Result<HttpResponse, Error> {
     let mut cursor = result.unwrap();
     let mut notifications = Vec::new();
 
-    while let Some(Ok(n)) = cursor.next().await {
+    while let Some(result) = cursor.next().await {
+        let n = match result {
+            Ok(n) => n,
+            Err(error) => {
+                log::error!("{}: skipping unreadable document: {:?}", module_path!(), error);
+                continue;
+            }
+        };
         // Resolved here rather than by the client so the list arrives with the
         // blur hash and dimensions already attached — the row can be drawn at
         // its final size before the thumbnail loads.

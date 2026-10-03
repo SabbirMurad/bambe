@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en" data-store-theme="{{ store_theme | default(value='orange') }}">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Returns — Bambe Admin</title>
+{% include "common/favicon.html" %}
+<link rel="stylesheet" href="/assets/css/common.css">
+<link rel="stylesheet" href="/assets/css/admin.css">
+</head>
+<body class="admin">
+<nav class="navbar"><div class="navbar-inner"><a href="/" class="nav-logo"><div class="nav-logo-mark"></div><span class="nav-logo-text">ambe</span></a><div class="nav-search"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="7" cy="7" r="5" stroke="#94908A" stroke-width="1.4"/><path d="M11 11 14.5 14.5" stroke="#94908A" stroke-width="1.4" stroke-linecap="round"/></svg><input type="text" placeholder="Search orders, products, customers…" aria-label="Search the admin console"><div class="nav-search-btn"><svg width="14" height="14" viewBox="0 0 16 16" fill="none"><circle cx="7" cy="7" r="5" stroke="white" stroke-width="1.4"/><path d="M11 11 14.5 14.5" stroke="white" stroke-width="1.4" stroke-linecap="round"/></svg></div></div><div class="nav-actions"><div class="nav-user-btn" style="background:var(--blue-lt);"><div class="nav-avatar"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="5.5" r="3" stroke="var(--blue)" stroke-width="1.4"/><path d="M2 14c0-3.3 2.7-6 6-6s6 2.7 6 6" stroke="var(--blue)" stroke-width="1.4" stroke-linecap="round"/></svg></div><span class="nav-user-name"></span></div></div></div></nav>
+
+<main>
+  <div class="container">
+    <div class="admin-layout">
+
+      <aside class="admin-sidebar">
+        <div class="admin-brand">
+          <div class="admin-brand-mark">
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M3 7.5 9 3l6 4.5V15a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V7.5Z" stroke="var(--warn)" stroke-width="1.5" stroke-linejoin="round"/><path d="M7 16v-5h4v5" stroke="var(--warn)" stroke-width="1.5" stroke-linejoin="round"/></svg>
+          </div>
+          <div>
+            <div class="admin-brand-title">Admin Console</div>
+            <div class="admin-brand-sub">Bambe Store</div>
+          </div>
+        </div>
+        <nav class="admin-nav" aria-label="Admin sections">
+          <div class="admin-nav-group-label">Workspace</div>
+          <a href="/admin"><div class="admin-nav-item"><svg class="admin-nav-icon" viewBox="0 0 18 18" fill="none"><rect x="2" y="2" width="6" height="6" rx="1.5" stroke="currentColor" stroke-width="1.4"/><rect x="10" y="2" width="6" height="6" rx="1.5" stroke="currentColor" stroke-width="1.4"/><rect x="2" y="10" width="6" height="6" rx="1.5" stroke="currentColor" stroke-width="1.4"/><rect x="10" y="10" width="6" height="6" rx="1.5" stroke="currentColor" stroke-width="1.4"/></svg>Overview</div></a>
+          <a href="/admin/orders"><div class="admin-nav-item"><svg class="admin-nav-icon" viewBox="0 0 18 18" fill="none"><path d="M2.5 5.5 9 2l6.5 3.5v7L9 16l-6.5-3.5v-7Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path d="M2.5 5.5 9 9m0 0 6.5-3.5M9 9v7" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>Orders<span class="admin-nav-count"></span></div></a>
+          <a href="/admin/returns"><div class="admin-nav-item active"><svg class="admin-nav-icon" viewBox="0 0 18 18" fill="none"><path d="M6 4.5 2.5 8 6 11.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.5 8h8a4 4 0 0 1 0 8H7" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Returns<span class="admin-nav-count"></span></div></a>
+          <a href="/admin/products"><div class="admin-nav-item"><svg class="admin-nav-icon" viewBox="0 0 18 18" fill="none"><path d="M2.5 8.2V3.5a1 1 0 0 1 1-1h4.7a1 1 0 0 1 .7.3l6.3 6.3a1 1 0 0 1 0 1.4l-4.7 4.7a1 1 0 0 1-1.4 0L2.8 8.9a1 1 0 0 1-.3-.7Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><circle cx="6" cy="6" r="1.2" fill="currentColor"/></svg>Products<span class="admin-nav-count"></span></div></a>
+          <a href="/admin/categories"><div class="admin-nav-item"><svg class="admin-nav-icon" viewBox="0 0 18 18" fill="none"><path d="M2.5 5a1.5 1.5 0 0 1 1.5-1.5h3a1 1 0 0 1 .8.4l.9 1.2h5.3A1.5 1.5 0 0 1 15.5 6.6V13a1.5 1.5 0 0 1-1.5 1.5H4A1.5 1.5 0 0 1 2.5 13V5Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>Categories<span class="admin-nav-count"></span></div></a>
+          <a href="/admin/customers"><div class="admin-nav-item"><svg class="admin-nav-icon" viewBox="0 0 18 18" fill="none"><circle cx="7" cy="6" r="3" stroke="currentColor" stroke-width="1.4"/><path d="M1.5 15.5c0-3 2.5-5.5 5.5-5.5s5.5 2.5 5.5 5.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><path d="M12.5 3.5a3 3 0 0 1 0 5.5M14 15.5c0-2-.6-3.6-1.6-4.8" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>Customers<span class="admin-nav-count"></span></div></a>
+
+          <a href="/admin/coupons"><div class="admin-nav-item"><svg class="admin-nav-icon" viewBox="0 0 18 18" fill="none"><path d="M2.5 5.5a1 1 0 0 1 1-1h11a1 1 0 0 1 1 1v1.9a1.6 1.6 0 0 0 0 3.2v1.9a1 1 0 0 1-1 1h-11a1 1 0 0 1-1-1v-1.9a1.6 1.6 0 0 0 0-3.2V5.5Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path d="M11 6.5v1M11 8.5v1M11 10.5v1" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>Coupons<span class="admin-nav-count"></span></div></a>
+          <div class="admin-nav-group-label">Service</div>
+          <a href="/admin/support"><div class="admin-nav-item"><svg class="admin-nav-icon" viewBox="0 0 18 18" fill="none"><path d="M2.5 4.5a1.5 1.5 0 0 1 1.5-1.5h10a1.5 1.5 0 0 1 1.5 1.5v6a1.5 1.5 0 0 1-1.5 1.5H7l-3.5 3v-3a1 1 0 0 1-1-1v-6Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>Support<span class="admin-nav-count alert"></span></div></a>
+
+          <div class="admin-nav-group-label">Configure</div>
+          <a href="/admin/settings"><div class="admin-nav-item"><svg class="admin-nav-icon" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="9" r="2.5" stroke="currentColor" stroke-width="1.4"/><path d="M9 1.5v2M9 14.5v2M1.5 9h2M14.5 9h2M3.7 3.7l1.4 1.4M12.9 12.9l1.4 1.4M14.3 3.7l-1.4 1.4M5.1 12.9l-1.4 1.4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>Settings</div></a>
+
+          <div class="admin-nav-logout" tabindex="0"><svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M7 2H3a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h4M12 13l4-4-4-4M16 9H7" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Log Out</div>
+        </nav>
+      </aside>
+
+      <div>
+        <div class="admin-head">
+          <div>
+            <h1 class="admin-title">Returns</h1>
+            <div class="admin-subtitle" data-subtitle></div>
+          </div>
+          <div class="admin-head-actions">
+            <button class="btn btn-outline btn-sm" data-export>Export CSV</button>
+          </div>
+        </div>
+
+        <div class="admin-panel">
+          <div class="admin-tabs" role="tablist">
+            <div class="admin-tab active" role="tab" tabindex="0" data-status="all">All<span class="admin-tab-count"></span></div>
+            <div class="admin-tab" role="tab" tabindex="0" data-status="requested">Requested<span class="admin-tab-count"></span></div>
+            <div class="admin-tab" role="tab" tabindex="0" data-status="approved">Approved<span class="admin-tab-count"></span></div>
+            <div class="admin-tab" role="tab" tabindex="0" data-status="in_transit">In transit<span class="admin-tab-count"></span></div>
+            <div class="admin-tab" role="tab" tabindex="0" data-status="received">Received<span class="admin-tab-count"></span></div>
+            <div class="admin-tab" role="tab" tabindex="0" data-status="refunded">Refunded<span class="admin-tab-count"></span></div>
+            <div class="admin-tab" role="tab" tabindex="0" data-status="rejected">Rejected<span class="admin-tab-count"></span></div>
+          </div>
+
+          <div class="admin-toolbar">
+            <div class="admin-search">
+              <svg width="15" height="15" viewBox="0 0 16 16" fill="none"><circle cx="7" cy="7" r="5" stroke="#94908A" stroke-width="1.4"/><path d="M11 11 14.5 14.5" stroke="#94908A" stroke-width="1.4" stroke-linecap="round"/></svg>
+              <input type="text" placeholder="Search by order number…" aria-label="Search returns">
+            </div>
+          </div>
+
+          <div class="table-scroll">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th scope="col">Order</th>
+                  <th scope="col">Customer</th>
+                  <th scope="col">Reason</th>
+                  <th scope="col">Requested</th>
+                  <th scope="col" class="num">Units</th>
+                  <th scope="col">Status</th>
+                  <th scope="col" class="col-actions"><span class="sr-only">Actions</span></th>
+                </tr>
+              </thead>
+              <tbody data-skeleton>
+                <tr>
+                  <td><span class="cell-id">#BM-0000</span></td>
+                  <td><div class="cell-strong">Customer name</div></td>
+                  <td>Reason</td>
+                  <td class="nowrap">1 Jan, 00:00</td>
+                  <td class="num">1</td>
+                  <td><span class="tag tag-gold">Requested</span></td>
+                  <td class="col-actions"><span class="row-btn" tabindex="0" title="More actions"><svg width="15" height="15" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="3" r="1.3" fill="currentColor"/><circle cx="8" cy="8" r="1.3" fill="currentColor"/><circle cx="8" cy="13" r="1.3" fill="currentColor"/></svg></span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="admin-table-foot">
+            <span data-count></span>
+            <div class="pagination"></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</main>
+
+<script src="/assets/js/admin.js"></script>
+<script src="/assets/js/select.js"></script>
+<script src="/assets/js/skeleton.js"></script>
+<script type="module" src="/assets/js/admin-returns.js"></script>
+</body>
+</html>

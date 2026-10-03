@@ -6,6 +6,7 @@ pub fn router(cfg: &mut web::ServiceConfig) {
         web::scope("/api/v1/checkout")
             .route("/delivery-methods", web::get().to(Handler::Checkout::DeliveryMethods::task))
             .route("/packaging-options", web::get().to(Handler::Checkout::PackagingOptions::task))
+            .route("/quote", web::get().to(Handler::Checkout::Quote::task))
             .route("/place-order", web::post().to(Handler::Checkout::PlaceOrder::task)),
     );
 }

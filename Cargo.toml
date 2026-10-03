@@ -19,6 +19,12 @@ rustls-pemfile = "1"
 # Random bytes generator
 rand = "0.9.0"
 
+# Password hashing. Argon2id is the current OWASP default, and the
+# PHC string it produces carries its own salt and parameters, so a
+# stored hash stays verifiable if those parameters are ever raised.
+argon2 = "0.5.3"
+password-hash = { version = "0.5.0", features = ["rand_core"] }
+
 # Regular expression
 regex = "1.11.1"
 
@@ -41,7 +47,6 @@ zip = "0.6"
 chrono = "0.4.40"
 
 # Email library
-lettre = "0.11.15"
 
 # Environment variables
 dotenv = "0.15.0"

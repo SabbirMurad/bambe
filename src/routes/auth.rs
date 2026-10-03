@@ -29,6 +29,10 @@ pub fn router(cfg: &mut web::ServiceConfig) {
             web::post().to(Handler::Auth::SignIn::task)
         )
         .route(
+            "/verify-sign-in-code",
+            web::post().to(Handler::Auth::VerifySignInCode::task)
+        )
+        .route(
             "/admin/sign-in",
             web::post().to(Handler::Auth::AdminSignIn::task)
         )

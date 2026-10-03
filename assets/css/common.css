@@ -55,6 +55,25 @@
   --warn:     #C8A772;
   ──────────────────────────────────────────────────────────────────────── */
 
+  /* ── INHERITED THEME — near-white ground, light-orange accent (reference) ──
+  --black:    #1A1A18;
+  --dark:     #32302C;
+  --mid:      #6A665F;
+  --subtle:   #94908A;
+  --faint:    #C4C0B9;
+  --border:   #E8E5E0;
+  --input-bg: #F6F5F2;
+  --surface:  #FCFBF9;
+  --ink:      #1A1A18;
+  --cream:    #DFD3C7;
+  --greige:   #D0C3B3;
+  --primary:      #FAAA39;
+  --primary-dk:   #E8951F;
+  --primary-lt:   rgba(250,170,57,0.13);
+  --primary-text: var(--primary);
+  --on-primary:   #2A1B06;
+  ──────────────────────────────────────────────────────────────────────── */
+
   /* ── ACTIVE THEME — near-white ground, light-orange accent ─────────────
      Surfaces carry only a trace of warmth so the orange reads as the
      accent rather than tinting the whole page.                       */
@@ -67,7 +86,7 @@
   --input-bg: #F6F5F2;
   --surface:  #FCFBF9;   /* page ground — near-white                   */
   --white:    #FFFFFF;   /* raised card / panel                        */
-  --ink:      #1A1A18;   /* dark surfaces: footer, auth panel, toasts  */
+  --ink:      #1A1A18;   /* dark surfaces: auth panel, toasts          */
 
   --gold:     #C8A772;   /* foil gold — star ratings, hot badge        */
   --gold-lt:  rgba(200,167,114,0.16);
@@ -82,6 +101,11 @@
      links and active labels need to be readable at small sizes. */
   --primary-text: var(--primary);
   --on-primary:   #2A1B06;   /* dark ink on an orange fill             */
+
+  /* The two oranges as a gradient, for faces big enough to show it —
+     buttons, progress fills, the avatar. Small chips, dots and badges
+     stay flat --primary. */
+  --primary-grad: linear-gradient(135deg, #FAAA39 0%, #E8951F 100%);
 
   /* The --blue* names are kept as aliases so the ~225 existing usages
      adopt the theme without a site-wide rename. */
@@ -114,10 +138,37 @@
   --z-modal: 50;
 }
 
+/* ── Store themes ─────────────────────────────────────────────
+   The palette above is the default, orange. The store's theme is
+   chosen in Admin → Settings → Store and written by the server onto
+   <html data-store-theme="…">, so every page is drawn in it from the
+   first frame. A theme overrides only the accent: the neutrals, gold
+   and status colours stay. Everything else reads these tokens — the
+   translucent accents use color-mix() on --primary — so a new theme
+   is one block here plus its name in update_store.rs's THEMES. */
+:root[data-store-theme="crimson"] {
+  --primary:      #E32326;   /* red — buttons, badges, fills, links    */
+  --primary-dk:   #C21A1D;   /* hover                                  */
+  --primary-lt:   rgba(227,35,38,0.10);
+  --primary-text: #E32326;   /* the same red for links and active text  */
+  --on-primary:   #FFFFFF;   /* 4.4:1 on the fill — fine for the bold button labels */
+  /* Flat, not a gradient: buttons and fills are the one red. */
+  --primary-grad: #E32326;
+}
+
 /* ── Reset & Base ─────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 html { scroll-behavior: smooth; }
+
+/* Lenis (assets/js/smooth-scroll.js) eases the storefront's wheel
+   scrolling. While it runs it owns the animation, so the CSS smoothing
+   above has to stand down or the two fight and the page stutters. */
+html.lenis, html.lenis body { height: auto; }
+.lenis:not(.lenis-autoToggle).lenis-stopped { overflow: clip; }
+.lenis [data-lenis-prevent] { overscroll-behavior: contain; }
+.lenis.lenis-smooth { scroll-behavior: auto !important; }
+.lenis.lenis-smooth iframe { pointer-events: none; }
 
 body {
   font-family: var(--font-body);
@@ -126,7 +177,15 @@ body {
   color: var(--dark);
   background: var(--surface);
   -webkit-font-smoothing: antialiased;
-  min-width: 960px;
+  /*
+    No min-width here.
+
+    It used to be 960px, which put a floor under every page: at phone
+    width the body stayed 960 wide, the viewport scrolled sideways, and
+    not one of the media queries in this codebase could take effect,
+    because none of them ever saw a width below 960. Every responsive
+    rule written anywhere was dead on arrival.
+  */
 }
 
 a { color: inherit; text-decoration: none; }
@@ -212,7 +271,7 @@ body::-webkit-scrollbar-corner {
   flex-shrink: 0;
 }
 /* Brand mark — the stag is a single-colour silhouette, so it's applied as a
-   mask and tinted per context (dark on light pages, white on dark panels).
+   mask and tinted per context (dark on light grounds, white on dark panels).
    One asset, no per-page recolouring. */
 .nav-logo-mark {
   width: 32px;
@@ -266,7 +325,7 @@ body::-webkit-scrollbar-corner {
   width: 28px;
   height: 28px;
   border-radius: 7px;
-  background: var(--blue);
+  background: var(--primary-grad);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -275,10 +334,81 @@ body::-webkit-scrollbar-corner {
 
 /* Deliver to */
 .nav-deliver {
+  position: relative;
   flex-shrink: 0;
   font-size: 11.5px;
   line-height: 1.3;
 }
+.nav-deliver-text {
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.nav-deliver-loc:focus-visible { outline: 2px solid var(--primary); outline-offset: 3px; border-radius: 4px; }
+
+/* The address picker (navbar.js) */
+.nav-deliver-menu {
+  position: absolute;
+  top: calc(100% + 10px);
+  left: -12px;
+  z-index: calc(var(--z-nav) + 2);
+  width: 300px;
+  max-width: calc(100vw - 24px);
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  padding: 8px;
+}
+.nav-deliver-menu-title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--subtle);
+  padding: 6px 10px 8px;
+}
+.nav-deliver-option {
+  padding: 9px 10px 9px 32px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  position: relative;
+}
+.nav-deliver-option:hover,
+.nav-deliver-option:focus-visible { background: var(--input-bg); outline: none; }
+.nav-deliver-option.selected::before {
+  content: '';
+  position: absolute;
+  left: 11px;
+  top: 13px;
+  width: 10px;
+  height: 6px;
+  border-left: 2px solid var(--primary);
+  border-bottom: 2px solid var(--primary);
+  transform: rotate(-45deg);
+}
+.nav-deliver-option-name { font-size: 13px; font-weight: 700; color: var(--black); }
+.nav-deliver-option-detail {
+  font-size: 12px;
+  color: var(--mid);
+  margin-top: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.nav-deliver-menu-foot {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  border-top: 1px solid var(--border);
+  margin-top: 6px;
+  padding: 10px 10px 4px;
+  font-size: 12.5px;
+  font-weight: 600;
+}
+.nav-deliver-menu-foot a { color: var(--primary-text); }
+.nav-deliver-menu-foot a:hover { text-decoration: underline; }
 .nav-deliver-lbl { color: var(--subtle); font-size: 10px; }
 .nav-deliver-loc {
   display: flex;
@@ -327,6 +457,8 @@ body::-webkit-scrollbar-corner {
   align-items: center;
   justify-content: center;
 }
+/* Ships empty; navbar.js fills it only when there is a real count. */
+.nav-badge:empty { display: none; }
 
 /* User button */
 .nav-user-btn {
@@ -389,6 +521,7 @@ body::-webkit-scrollbar-corner {
   transition: color 0.15s, border-color 0.15s;
   white-space: nowrap;
 }
+a.subnav-link { text-decoration: none; }
 .subnav-link:hover { color: var(--black); }
 .subnav-link.active { color: var(--primary-text); border-bottom-color: var(--primary-text); font-weight: 600; }
 .subnav-link.sale { color: var(--error); }
@@ -396,9 +529,14 @@ body::-webkit-scrollbar-corner {
 /* ── ══════════════════════════════════════════════════════
    FOOTER
 ══════════════════════════════════════════════════════ ── */
+/* A light footer: one ground, one text colour, and a hairline in that
+   text colour for every divider and outline drawn on it. */
 .footer {
-  background: var(--ink);
-  color: rgba(255,255,255,0.7);
+  --footer-bg:   #E7E7E7;
+  --footer-text: #181818;
+  --footer-rule: rgba(24,24,24,0.12);
+  background: var(--footer-bg);
+  color: var(--footer-text);
   margin-top: 80px;
 }
 .footer-main {
@@ -416,11 +554,13 @@ body::-webkit-scrollbar-corner {
   gap: 0;
   margin-bottom: 14px;
 }
+/* Tinted with the footer's own text colour: the footer is light now, so
+   the stag is drawn dark rather than the white it was on the old ink. */
 .footer-logo-mark {
   width: 63px;
   height: 68px;
   flex-shrink: 0;
-  background-color: white;
+  background-color: var(--footer-text);
   -webkit-mask: url('/assets/icons/bambe_logo.svg') center / contain no-repeat;
   mask: url('/assets/icons/bambe_logo.svg') center / contain no-repeat;
 }
@@ -430,7 +570,7 @@ body::-webkit-scrollbar-corner {
   font-weight: 400;
   line-height: 1;
   margin-bottom: -0.153em;
-  color: white;
+  color: var(--footer-text);
 }
 .footer-desc {
   font-size: 12.5px;
@@ -443,7 +583,7 @@ body::-webkit-scrollbar-corner {
   width: 34px;
   height: 34px;
   border-radius: 8px;
-  background: rgba(255,255,255,0.08);
+  background: rgba(24,24,24,0.07);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -451,6 +591,13 @@ body::-webkit-scrollbar-corner {
   transition: background 0.15s;
 }
 .footer-social-btn:hover { background: var(--blue); }
+/* The icons carry a white stroke or fill in their markup, from when the
+   footer was dark; CSS outranks those attributes, so they are recoloured
+   here rather than in every page. White again on the green hover. */
+.footer-social-btn svg [stroke]:not([stroke="none"]) { stroke: var(--footer-text); }
+.footer-social-btn svg [fill]:not([fill="none"])     { fill: var(--footer-text); }
+.footer-social-btn:hover svg [stroke]:not([stroke="none"]) { stroke: var(--on-primary); }
+.footer-social-btn:hover svg [fill]:not([fill="none"])     { fill: var(--on-primary); }
 
 .footer-col-title {
   font-family: var(--font-head);
@@ -458,21 +605,22 @@ body::-webkit-scrollbar-corner {
   font-weight: 700;
   letter-spacing: 0.8px;
   text-transform: uppercase;
-  color: white;
+  color: var(--footer-text);
   margin-bottom: 16px;
 }
 .footer-link {
   display: block;
   font-size: 12.5px;
-  color: rgba(255,255,255,0.6);
+  color: var(--footer-text);
   margin-bottom: 9px;
   cursor: pointer;
-  transition: color 0.15s;
+  text-underline-offset: 3px;
 }
-.footer-link:hover { color: white; }
+/* Same colour at rest and on hover, so hover is marked by underline. */
+.footer-link:hover { text-decoration: underline; }
 
 .footer-bottom {
-  border-top: 1px solid rgba(255,255,255,0.08);
+  border-top: 1px solid var(--footer-rule);
   max-width: var(--content-max);
   margin: 0 auto;
   padding: 18px 32px;
@@ -480,19 +628,19 @@ body::-webkit-scrollbar-corner {
   align-items: center;
   justify-content: space-between;
   font-size: 11.5px;
-  color: rgba(255,255,255,0.4);
+  color: var(--footer-text);
 }
-.footer-pay-icons { display: flex; gap: 8px; align-items: center; }
+.footer-pay-icons { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 .pay-icon {
   height: 20px;
   padding: 0 8px;
-  background: rgba(255,255,255,0.12);
+  background: rgba(24,24,24,0.08);
   border-radius: 4px;
   display: flex;
   align-items: center;
   font-size: 9px;
   font-weight: 700;
-  color: rgba(255,255,255,0.7);
+  color: var(--footer-text);
   letter-spacing: 0.5px;
 }
 
@@ -523,7 +671,16 @@ body::-webkit-scrollbar-corner {
   font-size: 13.5px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.15s;
+  /*
+    Deliberately not `background` or `all`. Two linear-gradients cannot
+    be interpolated, so a browser asked to transition between them
+    cross-fades through the element's background-color — which a
+    gradient sets to transparent. On these buttons that showed the page
+    behind them: a white flash on every hover. The hover shift is a
+    brightness filter instead, which does interpolate.
+  */
+  transition: color 0.15s, background-color 0.15s, border-color 0.15s,
+              box-shadow 0.15s, filter 0.15s, transform 0.15s;
   white-space: nowrap;
   border: 1.5px solid transparent;
 }
@@ -533,11 +690,11 @@ body::-webkit-scrollbar-corner {
 .btn-icon-only.btn-sm { width: 34px; }
 
 .btn-primary {
-  background: var(--blue);
+  background: var(--primary-grad);
   color: var(--on-primary);
   border-color: var(--blue);
 }
-.btn-primary:hover { background: var(--blue-dk); border-color: var(--blue-dk); }
+.btn-primary:hover { filter: brightness(0.90); border-color: var(--primary-dk); }
 
 .btn-secondary {
   background: var(--ink);
@@ -601,18 +758,26 @@ body::-webkit-scrollbar-corner {
   position: relative;
 }
 .form-input-icon .form-input { padding-left: 42px; }
-.form-input-icon .input-icon {
+/* display:flex is load-bearing, not decoration. These spans wrap an
+   inline <svg>, which sits on the text baseline — so a block span is
+   as tall as the line box and keeps the descender space underneath
+   the icon. Centring that box lands the icon three-odd pixels high.
+   Flex makes the span exactly as tall as the svg, so translateY
+   centres the icon itself. */
+.form-input-icon .input-icon,
+.form-input-icon .input-icon-right {
   position: absolute;
-  left: 14px;
   top: 50%;
   transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+}
+.form-input-icon .input-icon {
+  left: 14px;
   pointer-events: none;
 }
 .form-input-icon .input-icon-right {
-  position: absolute;
   right: 14px;
-  top: 50%;
-  transform: translateY(-50%);
   cursor: pointer;
 }
 
@@ -665,6 +830,21 @@ body::-webkit-scrollbar-corner {
    written as button.select-btn to out-specify it rather than
    relying on source order.
 ══════════════════════════════════════════════════════ ── */
+/* Visible to screen readers only — for a label whose field already
+   explains itself visually, like the newsletter input. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
 .select-native {
   /* Kept in the DOM for its value and any form that submits it, but
      taken out of the layout and the tab order. */
@@ -772,7 +952,7 @@ button.select-btn:disabled { cursor: not-allowed; opacity: 0.55; }
   color: var(--dark);
 }
 .select-option[aria-selected="true"]:hover,
-.select-option[aria-selected="true"].active { background: rgba(250,170,57,0.22); }
+.select-option[aria-selected="true"].active { background: color-mix(in srgb, var(--primary) 22%, transparent); }
 .select-option-text { flex: 1; min-width: 0; }
 .select-check {
   flex-shrink: 0;
@@ -1202,6 +1382,11 @@ button.select-btn:disabled { cursor: not-allowed; opacity: 0.55; }
   pointer-events: none;
   user-select: none;
 }
+/* A target's own markup is wireframe sample content: it gives the
+   placeholder its shape and is never meant to be seen. Hidden — still
+   laid out, so skeleton.js can measure it — until the page module has
+   real data in it and clears it, which adds .is-loaded. */
+[data-skeleton]:not(.is-loaded) { visibility: hidden; }
 .skeleton-box { display: inline-block; vertical-align: middle; }
 
 .skeleton-text { display: inline-block; vertical-align: middle; max-width: 100%; }
@@ -1228,24 +1413,19 @@ button.select-btn:disabled { cursor: not-allowed; opacity: 0.55; }
 /* ── ══════════════════════════════════════════════════════
    TOAST / NOTIFICATION SNACKBAR
 ══════════════════════════════════════════════════════ ── */
-.toast {
-  position: fixed;
-  bottom: 28px;
-  right: 28px;
-  z-index: var(--z-modal);
-  background: var(--ink);
-  color: white;
-  padding: 13px 18px;
-  border-radius: var(--radius-md);
-  font-size: 13px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  box-shadow: var(--shadow-lg);
-  max-width: 340px;
-}
-.toast-success { background: var(--success); }
-.toast-error { background: var(--error); }
+/*
+  The snackbar that used to live here is gone. js/toast.js owns toasts
+  now: it injects its own stylesheet at runtime and stacks items inside
+  a fixed .toast-viewport.
+
+  These rules had to go rather than merely being unused. They matched
+  toast.js's items — it names them `.toast` too — and since a stylesheet
+  injected at runtime lands after this file, the two fought: toast.js
+  set `position: relative` while `bottom`/`right` survived from here, so
+  every toast was displaced out of its container and rendered past the
+  right edge of the window. Nothing else referenced .toast-success or
+  .toast-error.
+*/
 
 /* ── ══════════════════════════════════════════════════════
    EMPTY STATE
@@ -1357,6 +1537,28 @@ button.select-btn:disabled { cursor: not-allowed; opacity: 0.55; }
   top: calc(var(--nav-h) + 20px);
 }
 
+/* ── Auto-hiding top bars ─────────────────────────────────────
+   assets/js/nav-autohide.js sets html.nav-hidden while the shopper
+   scrolls down and clears it on any scroll up. Both bars slide up by
+   their combined height, and the sticky side panels (filters, order
+   summary, product info) rise into the space instead of leaving a gap
+   where the bar was. */
+.navbar,
+.subnav {
+  transition: transform 0.3s ease, background-color 0.3s ease, border-color 0.3s ease;
+}
+html.nav-hidden .navbar,
+html.nav-hidden .subnav {
+  transform: translateY(calc(-1 * (var(--nav-h) + var(--subnav-h))));
+}
+.sticky-top,
+.sticky-top-no-sub { transition: top 0.3s ease; }
+html.nav-hidden .sticky-top,
+html.nav-hidden .sticky-top-no-sub { top: 20px; }
+@media (prefers-reduced-motion: reduce) {
+  .navbar, .subnav, .sticky-top, .sticky-top-no-sub { transition: none; }
+}
+
 
 /* ── ══════════════════════════════════════════════════════
    ACCENT CONTRAST
@@ -1385,7 +1587,6 @@ button.select-btn:disabled { cursor: not-allowed; opacity: 0.55; }
 .price-range-fill svg [stroke="white"],
 .profile-avatar svg [stroke="white"],
 .profile-avatar-edit svg [stroke="white"],
-.promo-strip svg [stroke="white"],
 .pw-bar.filled-mid svg [stroke="white"],
 .rbar-fill svg [stroke="white"],
 .reg-step.active .reg-step-num svg [stroke="white"],
@@ -1415,7 +1616,6 @@ button.select-btn:disabled { cursor: not-allowed; opacity: 0.55; }
 .price-range-fill svg [fill="white"],
 .profile-avatar svg [fill="white"],
 .profile-avatar-edit svg [fill="white"],
-.promo-strip svg [fill="white"],
 .pw-bar.filled-mid svg [fill="white"],
 .rbar-fill svg [fill="white"],
 .reg-step.active .reg-step-num svg [fill="white"],
@@ -1425,3 +1625,217 @@ button.select-btn:disabled { cursor: not-allowed; opacity: 0.55; }
 .view-btn.active svg [fill="white"] {
   fill: var(--on-primary);
 }
+
+/* ── ══════════════════════════════════════════════════════
+   RESPONSIVE — SITE CHROME
+
+   The project had a `body { min-width: 960px }` until now, which
+   meant no query below that width could ever match and nothing here
+   would have had any effect. These are written fresh rather than
+   adapted from anything.
+
+   Two breakpoints throughout, used the same way in every stylesheet:
+     1024px — tablet: side panels fold under the content they flank
+      640px — phone: one column, and tables stop being tables
+
+   `--nav-h` and `--subnav-h` shrink here rather than in each rule
+   that references them, so anything positioned against the header —
+   the home page's overlaid hero, sticky panels — follows along
+   without knowing the breakpoint exists.
+══════════════════════════════════════════════════════ ── */
+
+@media (max-width: 1024px) {
+  .container { padding: 0 20px; }
+
+  /* Categories scroll sideways from here down — at 768 the row was
+     still 19px too long for the viewport. */
+  .subnav-inner {
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .subnav-inner::-webkit-scrollbar { display: none; }
+  .subnav-link { flex: 0 0 auto; }
+  .navbar-inner { padding: 0 20px; gap: 16px; }
+  .subnav-inner { padding: 0 20px; }
+
+  .footer-main {
+    grid-template-columns: 1fr 1fr;
+    padding: 44px 20px 32px;
+    gap: 32px;
+  }
+  /* The brand blurb and socials read as a header for the columns
+     rather than a fifth one. */
+  .footer-brand { grid-column: 1 / -1; }
+
+  .product-grid,
+  .product-grid-3,
+  .product-grid-5 { grid-template-columns: repeat(3, 1fr); }
+
+  /* Side panels fold under the content they flank. `min-width: 0` on
+     the children for the same reason as the search field: a grid item
+     also defaults to `min-width: auto` and will not shrink below its
+     content, so a wide filter card kept the column at its desktop
+     width even after the track was set to 1fr. */
+  .with-sidebar,
+  .with-sidebar-wide,
+  .with-right-panel { grid-template-columns: 1fr; }
+  .with-sidebar > *,
+  .with-sidebar-wide > *,
+  .with-right-panel > * { min-width: 0; }
+}
+
+@media (max-width: 640px) {
+  :root {
+    --nav-h: 56px;
+    --subnav-h: 40px;
+  }
+
+  .container { padding: 0 16px; }
+  .navbar-inner { padding: 0 16px; gap: 12px; }
+  .subnav-inner { padding: 0 16px; }
+
+  /* The search field takes the whole middle of a phone header, so the
+     delivery-location control gives up its space to it. The address
+     is still reachable from the account pages. */
+  .nav-deliver { display: none; }
+  /*
+    The search collapses to its magnifier and opens on tap.
+
+    A phone header cannot hold a logo, a full search field and three
+    icons — laid out flat, the icons were pushed 108px off the right
+    edge of every storefront page. Rather than shrink the field to a
+    stub too narrow to type in, it becomes an icon and takes the whole
+    row when it has focus, hiding the account icons while it is open.
+
+    Done with :focus-within rather than a toggle button, so it needs no
+    markup change and works on every page that carries the navbar —
+    storefront, account, checkout and admin alike — with no script.
+
+    min-width:0 is what lets it shrink at all: a flex item defaults to
+    `min-width: auto` and will not go below the intrinsic width of the
+    input inside it.
+  */
+  .nav-search {
+    flex: 0 0 var(--nav-h);
+    width: var(--nav-h);
+    min-width: 0;
+    padding: 0;
+    justify-content: center;
+    border-radius: 999px;
+    transition: flex-basis 0.18s ease, width 0.18s ease;
+  }
+  .nav-search input {
+    width: 0;
+    min-width: 0;
+    padding: 0;
+    opacity: 0;
+    font-size: 16px;   /* under 16px iOS zooms the page on focus */
+  }
+  /* The submit button is redundant once the field is a single row —
+     the keyboard's own Go key does the same job. */
+  .nav-search-btn { display: none; }
+
+  .nav-search:focus-within {
+    flex: 1 1 auto;
+    width: auto;
+    padding: 0 6px 0 12px;
+    border-radius: 8px;
+  }
+  .nav-search:focus-within input {
+    width: 100%;
+    opacity: 1;
+    padding: 0 8px;
+  }
+  /* Everything to its right stands down while the field is open. */
+  .nav-search:focus-within ~ .nav-actions { display: none; }
+  .nav-search:focus-within ~ .nav-logo,
+  .nav-logo:has(~ .nav-search:focus-within) .nav-logo-text { display: none; }
+  .nav-actions { gap: 4px; }
+  /* Name off, avatar stays: the button is still recognisably the
+     account control at a fraction of the width. */
+  .nav-user-name,
+  /* Only the dropdown chevron (a direct child) — not the avatar icon, which
+     is the last child of .nav-avatar and was being hidden too. */
+  .nav-user-btn > svg:last-child { display: none; }
+  .nav-user-btn { padding: 6px; }
+
+  /* Categories scroll sideways instead of wrapping into a second row
+     that pushes the page down. */
+  .subnav-inner {
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .subnav-inner::-webkit-scrollbar { display: none; }
+  .subnav-link { flex: 0 0 auto; padding: 0 12px; font-size: 12.5px; }
+
+  .product-grid,
+  .product-grid-3,
+  .product-grid-5 { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+
+  .footer-main { grid-template-columns: 1fr; gap: 26px; padding: 36px 16px 28px; }
+  .footer-bottom { flex-direction: column; gap: 12px; text-align: center; }
+
+  /* A list-view card is an image beside text at desktop width; below
+     this there is no room for the text column. */
+  .is-list .product-card { grid-template-columns: 1fr; }
+
+  /* Any form field: 16px minimum, same iOS zoom reason as above. */
+  .form-input,
+  .form-textarea,
+  .form-select { font-size: 16px; }
+}
+
+/*
+  Very narrow phones (320px — iPhone SE and the like). The 640px rules
+  already collapse the bar to logo / search icon / actions; at 320 the
+  last 13px still have to come from somewhere, so the gutters and the
+  icon buttons give it up rather than any control disappearing.
+*/
+@media (max-width: 360px) {
+  /*
+    A 320px bar can't hold the wordmark beside the search and the icons,
+    so below 360 the stag is shown alone — still plainly the brand. The
+    <a> is what a screen reader announces, so nothing is lost.
+  */
+  .nav-logo-text { display: none; }
+
+  .navbar-inner { padding: 0 12px; gap: 8px; }
+  .nav-actions { gap: 0; }
+  .nav-icon-btn { width: 34px; height: 34px; }
+  .nav-user-btn { padding: 5px; }
+}
+
+/* ── Country suggestions (utils/country-suggest.js) ─────────── */
+.country-suggest { position: relative; }
+.country-suggest-list {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 50;
+  max-height: 264px;
+  overflow-y: auto;
+  margin: 0;
+  padding: 4px;
+  list-style: none;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+}
+.country-suggest-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 13.5px;
+  color: var(--dark);
+  cursor: pointer;
+}
+.country-suggest-option.active { background: var(--input-bg); }
+.country-suggest-flag { font-size: 16px; line-height: 1; }
+.country-suggest-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.country-suggest-dial { font-size: 12px; color: var(--subtle); }

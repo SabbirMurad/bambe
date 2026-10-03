@@ -108,7 +108,14 @@ pub async fn compute_subtotal(db: &Database, cart_id: &str) -> (i64, Vec<String>
         .await
         .expect("cart item lookup");
     let mut items = Vec::new();
-    while let Some(Ok(i)) = cursor.next().await {
+    while let Some(result) = cursor.next().await {
+        let i = match result {
+            Ok(i) => i,
+            Err(error) => {
+                log::error!("{}: skipping unreadable document: {:?}", module_path!(), error);
+                continue;
+            }
+        };
         items.push(i);
     }
 
@@ -122,7 +129,14 @@ pub async fn compute_subtotal(db: &Database, cart_id: &str) -> (i64, Vec<String>
             .await
             .expect("variant lookup");
         let mut map = HashMap::new();
-        while let Some(Ok(v)) = cursor.next().await {
+        while let Some(result) = cursor.next().await {
+            let v = match result {
+                Ok(v) => v,
+                Err(error) => {
+                    log::error!("{}: skipping unreadable document: {:?}", module_path!(), error);
+                    continue;
+                }
+            };
             map.insert(v.uuid.clone(), v);
         }
         map
@@ -151,7 +165,14 @@ pub async fn build_response(db: &Database, cart: &Cart) -> Value {
         .await
         .expect("cart item lookup");
     let mut cart_items = Vec::new();
-    while let Some(Ok(i)) = item_cursor.next().await {
+    while let Some(result) = item_cursor.next().await {
+        let i = match result {
+            Ok(i) => i,
+            Err(error) => {
+                log::error!("{}: skipping unreadable document: {:?}", module_path!(), error);
+                continue;
+            }
+        };
         cart_items.push(i);
     }
 
@@ -165,7 +186,14 @@ pub async fn build_response(db: &Database, cart: &Cart) -> Value {
             .await
             .expect("variant lookup");
         let mut map = HashMap::new();
-        while let Some(Ok(v)) = cursor.next().await {
+        while let Some(result) = cursor.next().await {
+            let v = match result {
+                Ok(v) => v,
+                Err(error) => {
+                    log::error!("{}: skipping unreadable document: {:?}", module_path!(), error);
+                    continue;
+                }
+            };
             map.insert(v.uuid.clone(), v);
         }
         map
@@ -181,8 +209,42 @@ pub async fn build_response(db: &Database, cart: &Cart) -> Value {
             .await
             .expect("product lookup");
         let mut map = HashMap::new();
-        while let Some(Ok(p)) = cursor.next().await {
+        while let Some(result) = cursor.next().await {
+            let p = match result {
+                Ok(p) => p,
+                Err(error) => {
+                    log::error!("{}: skipping unreadable document: {:?}", module_path!(), error);
+                    continue;
+                }
+            };
             map.insert(p.uuid.clone(), p);
+        }
+        map
+    };
+
+    /* The cart page links each line back to its product and names the
+       brand, and a line only carries ids — so the slug and the brand name
+       are resolved here rather than leaving the page to fetch a product
+       detail per line just to build an href. */
+    let brand_ids: Vec<String> = products.values().filter_map(|p| p.brand_id.clone()).collect();
+    let brands: HashMap<String, crate::model::Product::Brand> = if brand_ids.is_empty() {
+        HashMap::new()
+    } else {
+        let mut cursor = db
+            .collection::<crate::model::Product::Brand>("brand")
+            .find(doc! { "uuid": { "$in": &brand_ids } })
+            .await
+            .expect("brand lookup");
+        let mut map = HashMap::new();
+        while let Some(result) = cursor.next().await {
+            let b = match result {
+                Ok(b) => b,
+                Err(error) => {
+                    log::error!("{}: skipping unreadable document: {:?}", module_path!(), error);
+                    continue;
+                }
+            };
+            map.insert(b.uuid.clone(), b);
         }
         map
     };
@@ -202,22 +264,32 @@ pub async fn build_response(db: &Database, cart: &Cart) -> Value {
                 cart_product_ids.push(item.product_id.clone());
             }
 
-            let cover_image_id = product.and_then(|p| p.images.iter().min_by_key(|i| i.position).map(|i| i.image_id.clone()));
+            // The line's own variant, not the product cover — a cart showing
+            // the black one when you added the tan one is just wrong.
+            let line_image_id = variant.map(|v| v.image_id.clone());
 
             json!({
                 "uuid": item.uuid,
                 "product_id": item.product_id,
                 "variant_id": item.variant_id,
                 "title": product.map(|p| p.title.clone()),
+                "slug": product.map(|p| p.slug.clone()),
+                "brand_name": product
+                    .and_then(|p| p.brand_id.as_ref())
+                    .and_then(|id| brands.get(id))
+                    .map(|b| b.name.clone()),
                 "size": variant.and_then(|v| v.size.clone()),
                 "color": variant.and_then(|v| v.color.clone()),
-                "image_id": cover_image_id,
+                "image_id": line_image_id,
                 "quantity": item.quantity,
                 "unit_price": variant.map(|v| v.price),
                 "price_when_added": item.price_when_added,
                 "price_changed": variant.map(|v| v.price != item.price_when_added).unwrap_or(false),
                 "line_total": variant.map(|v| v.price * item.quantity as i64),
                 "in_stock": variant.map(|v| v.stock >= item.quantity as i32).unwrap_or(false),
+                // The ceiling the quantity stepper has to respect. `in_stock`
+                // only answers whether the line as it stands is fillable.
+                "stock": variant.map(|v| v.stock),
                 "available": available,
                 "added_at": item.added_at,
             })
