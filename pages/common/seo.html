@@ -12,6 +12,8 @@
 {% if seo.description %}<meta property="og:description" content="{{ seo.description }}">{% endif %}
 <meta property="og:url" content="{{ seo.canonical }}">
 {% if seo.image %}<meta property="og:image" content="{{ seo.image }}">{% endif %}
+{% if seo.image_size %}<meta property="og:image:width" content="{{ seo.image_size[0] }}">
+<meta property="og:image:height" content="{{ seo.image_size[1] }}">{% endif %}
 {% if seo.product_price %}<meta property="product:price:amount" content="{{ seo.product_price }}">
 <meta property="product:price:currency" content="{{ seo.product_currency }}">{% endif %}
 <meta name="twitter:card" content="summary_large_image">
