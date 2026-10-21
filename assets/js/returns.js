@@ -252,7 +252,7 @@ export async function openReturnComposer(orderId, onDone) {
   const reason = selectInput(REASONS.map((r) => ({ value: r, label: r })), REASONS[0]);
   form.appendChild(field('Reason', reason));
 
-  const details = textArea({ placeholder: 'Anything else we should know? (optional)', rows: 4 });
+  const details = textArea({ placeholder: 'bKash or Nagad number for your refund, and anything else we should know', rows: 4 });
   form.appendChild(field('Details', details,
     'Photos help with a damage claim — email them to us once the request is open.'));
 

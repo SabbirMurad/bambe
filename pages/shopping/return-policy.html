@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en" data-store-theme="{{ store_theme | default(value='orange') }}">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+{% include "common/seo.html" %}
+{% include "common/favicon.html" %}
+<link rel="stylesheet" href="/assets/css/common.css">
+<link rel="stylesheet" href="/assets/css/shopping.css">
+</head>
+<body>
+<nav class="navbar"><div class="navbar-inner"><a href="/" class="nav-logo"><div class="nav-logo-mark"></div><span class="nav-logo-text">ambee</span></a><div class="nav-search"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="7" cy="7" r="5" stroke="#94908A" stroke-width="1.4"/><path d="M11 11 14.5 14.5" stroke="#94908A" stroke-width="1.4" stroke-linecap="round"/></svg><input type="text" placeholder="Search products, brands…"><div class="nav-search-btn"><svg width="14" height="14" viewBox="0 0 16 16" fill="none"><circle cx="7" cy="7" r="5" stroke="white" stroke-width="1.4"/><path d="M11 11 14.5 14.5" stroke="white" stroke-width="1.4" stroke-linecap="round"/></svg></div></div><div class="nav-actions"><div class="nav-icon-btn" data-nav="wishlist"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M10 17S2 12 2 6.5a4 4 0 0 1 8-1 4 4 0 0 1 8 1C18 12 10 17 10 17Z" stroke="#32302C" stroke-width="1.5" stroke-linejoin="round"/></svg><div class="nav-badge"></div></div><div class="nav-icon-btn" data-nav="cart"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M2 2h2.5l3 10h9l2-7H5.5" stroke="#32302C" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="9" cy="17" r="1.5" fill="#32302C"/><circle cx="15" cy="17" r="1.5" fill="#32302C"/></svg><div class="nav-badge"></div></div><div class="nav-user-btn"><div class="nav-avatar"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="5.5" r="3" stroke="var(--blue)" stroke-width="1.4"/><path d="M2 14c0-3.3 2.7-6 6-6s6 2.7 6 6" stroke="var(--blue)" stroke-width="1.4" stroke-linecap="round"/></svg></div><span class="nav-user-name">John D.</span></div></div></div></nav>
+
+<main class="legal">
+  <section class="legal-hero">
+    <div class="container">
+      <div class="about-kicker">Help</div>
+      <h1 class="legal-title">Return &amp; Refund Policy</h1>
+      <p class="legal-lead">Changed your mind, or something isn't right? You have 10 days from delivery to send it back, and return shipping is on us.</p>
+      <p class="legal-updated">Last updated October 22, 2026</p>
+    </div>
+  </section>
+
+  <div class="legal-layout container">
+    <nav class="legal-toc" aria-label="On this page">
+      <div class="legal-toc-title">On this page</div>
+      <ol>
+          <li><a href="#summary">1. At a glance</a></li>
+          <li><a href="#eligible">2. What you can return</a></li>
+          <li><a href="#not-eligible">3. What we can't take back</a></li>
+          <li><a href="#how">4. How to return an item</a></li>
+          <li><a href="#damaged">5. Damaged, faulty or wrong items</a></li>
+          <li><a href="#refunds">6. Refunds</a></li>
+          <li><a href="#exchanges">7. Exchanges</a></li>
+          <li><a href="#contact">8. Contact us</a></li>
+      </ol>
+      <a class="legal-toc-other" href="/terms">Read our Terms of Use →</a>
+    </nav>
+
+    <article class="legal-body">
+      <section class="legal-section" id="summary">
+        <h2>1. At a glance</h2>
+        <ul>
+          <li><strong>Return window:</strong> 10 days from the day your order is delivered.</li>
+          <li><strong>Return shipping:</strong> free. Once your return is approved we email you a prepaid label.</li>
+          <li><strong>Condition:</strong> unopened and unused, in the original packaging, unless the item arrived damaged, faulty or wrong.</li>
+          <li><strong>Refund:</strong> sent to your bKash or Nagad account within 3 days of the item reaching us.</li>
+          <li><strong>Where:</strong> returns are accepted for orders delivered within Bangladesh.</li>
+        </ul>
+      </section>
+
+      <section class="legal-section" id="eligible">
+        <h2>2. What you can return</h2>
+        <p>You can return any item bought from bambee.store within 10 days of delivery, as long as it is:</p>
+        <ul>
+          <li>unopened, unused and with any seals intact;</li>
+          <li>in its original packaging, with any tags, boxes and free gifts that came with it.</li>
+        </ul>
+        <p>You can return part of an order — each item on an order can be returned once.</p>
+      </section>
+
+      <section class="legal-section" id="not-eligible">
+        <h2>3. What we can't take back</h2>
+        <p>Because most of what we sell goes on skin, hair or nails, we can't resell anything that has been opened. For hygiene and safety we're unable to accept:</p>
+        <ul>
+          <li>opened, used or unsealed cosmetics, skincare, fragrance, hair and nail products;</li>
+          <li>items marked as final sale at the time of purchase;</li>
+          <li>items returned more than 10 days after delivery;</li>
+          <li>items that weren't bought from Bambee.</li>
+        </ul>
+        <p>None of this applies when an item arrived damaged, faulty or wasn't what you ordered — see section 5.</p>
+      </section>
+
+      <section class="legal-section" id="how">
+        <h2>4. How to return an item</h2>
+        <ol>
+          <li>Sign in and go to <a href="/account/returns">Account → Returns</a>, then choose <strong>Request a Return</strong>.</li>
+          <li>Pick the order and the items you're sending back, and tell us why.</li>
+          <li>We review your request and, once it's approved, email you a prepaid return label.</li>
+          <li>Pack the items securely in their original packaging, attach the label and hand the parcel to the courier.</li>
+          <li>When it reaches us we check it and issue your refund. You can follow each step from your Returns page.</li>
+        </ol>
+        <p>Please don't send anything back before your return has been approved — parcels without an approved return can't be matched to your order.</p>
+      </section>
+
+      <section class="legal-section" id="damaged">
+        <h2>5. Damaged, faulty or wrong items</h2>
+        <p>If something arrives damaged, leaking, faulty, or isn't what you ordered, we'll put it right whether or not it has been opened. Please let us know as soon as possible after delivery through your <a href="/account/returns">Returns page</a> or the <a href="/account/support">Help Center</a>, with a photo of the item and its packaging if you can.</p>
+        <p>We'll send a replacement or give you a full refund, including any delivery charge you paid for that item, and you won't pay anything to send it back.</p>
+      </section>
+
+      <section class="legal-section" id="refunds">
+        <h2>6. Refunds</h2>
+        <ul>
+          <li>We refund the price you paid for the returned items within 3 days of the return reaching us and being checked.</li>
+          <li>Every refund — whether you paid by cash on delivery, bKash or Nagad — is sent to your bKash or Nagad account. Tell us which number to use when you request the return.</li>
+          <li>The original delivery charge is refunded when the whole order is returned because of our mistake, or when an item arrived damaged, faulty or wrong.</li>
+          <li>Once we've sent a refund, how quickly it reaches you depends on your bank or payment provider.</li>
+          <li>If a return doesn't meet this policy, we'll explain why and can send the item back to you.</li>
+        </ul>
+      </section>
+
+      <section class="legal-section" id="exchanges">
+        <h2>7. Exchanges</h2>
+        <p>We don't swap items directly. The quickest way to get a different shade, size or product is to return the original for a refund and place a new order.</p>
+      </section>
+
+      <section class="legal-section" id="contact">
+        <h2>8. Contact us</h2>
+        <p>Questions about a return? Reach us through the <a href="/account/support">Help Center</a> in your account. This policy sits alongside our <a href="/terms">Terms of Use</a> and doesn't affect your legal rights as a consumer.</p>
+      </section>
+    </article>
+  </div>
+</main>
+
+<footer class="footer">
+  <div class="footer-main">
+    <div class="footer-brand">
+      <div class="footer-logo">
+        <div class="footer-logo-mark"></div>
+        <span class="footer-logo-text">ambee</span>
+      </div>
+      <p class="footer-desc">Cosmetics, skincare, body care, wellness, hair, nails and men's grooming — chosen well, priced fairly.</p>
+      <div class="footer-social">
+        {% if facebook_url %}<a class="footer-social-btn" href="{{ facebook_url }}" target="_blank" rel="noopener" aria-label="Bambee on Facebook"><svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M16 8.05C16 3.6 12.4 0 8 0S0 3.6 0 8.05c0 3.9 2.8 7.2 6.5 7.85v-5.5H4.5v-2.4H6.5V6.2c0-2 1.2-3.1 3-3.1.85 0 1.7.15 1.7.15v1.9h-1c-.95 0-1.2.6-1.2 1.2v1.4H11l-.4 2.4H9v5.5C12.7 15.2 16 11.9 16 8.05Z" fill="rgba(255,255,255,0.6)"/></svg></a>{% endif %}
+        {% if instagram_url %}<a class="footer-social-btn" href="{{ instagram_url }}" target="_blank" rel="noopener" aria-label="Bambee on Instagram"><svg width="14" height="14" viewBox="0 0 16 16" fill="none"><rect x="1" y="1" width="14" height="14" rx="3.5" stroke="rgba(255,255,255,0.6)" stroke-width="1.3"/><circle cx="8" cy="8" r="3" stroke="rgba(255,255,255,0.6)" stroke-width="1.3"/><circle cx="12" cy="4" r="1" fill="rgba(255,255,255,0.6)"/></svg></a>{% endif %}
+        {% if whatsapp_number %}<a class="footer-social-btn" href="https://wa.me/{{ whatsapp_number }}" target="_blank" rel="noopener" aria-label="Chat with Bambee on WhatsApp"><svg width="15" height="15" viewBox="0 0 24 24" aria-hidden="true"><path fill="rgba(255,255,255,0.6)" d="M17.47 14.38c-.3-.15-1.75-.86-2.02-.96-.27-.1-.47-.15-.67.15-.2.3-.77.96-.94 1.16-.17.2-.35.22-.64.07-.3-.15-1.25-.46-2.38-1.47-.88-.79-1.47-1.76-1.64-2.05-.17-.3-.02-.46.13-.6.13-.13.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.08-.15-.67-1.61-.92-2.2-.24-.58-.49-.5-.67-.5h-.57c-.2 0-.52.07-.79.37-.27.3-1.04 1.02-1.04 2.48s1.07 2.88 1.21 3.08c.15.2 2.1 3.2 5.08 4.49.71.31 1.26.49 1.7.63.71.23 1.36.2 1.87.12.57-.08 1.75-.72 2-1.41.25-.7.25-1.29.17-1.41-.07-.13-.27-.2-.57-.35M12.05 21.5h-.01a9.4 9.4 0 0 1-4.8-1.31l-.34-.2-3.57.94.95-3.48-.22-.36a9.42 9.42 0 0 1-1.44-5.02c0-5.2 4.24-9.43 9.44-9.43 2.52 0 4.89.98 6.67 2.77a9.37 9.37 0 0 1 2.76 6.67c0 5.2-4.23 9.43-9.44 9.43m8.03-17.46A11.27 11.27 0 0 0 12.05.72C5.8.72.7 5.8.7 12.06c0 2 .52 3.95 1.52 5.67L.6 23.28l5.68-1.49a11.32 11.32 0 0 0 5.77 1.56h.01c6.25 0 11.35-5.09 11.35-11.35 0-3.03-1.18-5.88-3.33-8.02"/></svg></a>{% endif %}
+      </div>
+    </div>
+    {% include "common/footer-shop.html" %}
+    <div>
+      <div class="footer-col-title">Account</div>
+      <a class="footer-link" href="/account/profile">My Profile</a>
+      <a class="footer-link" href="/account/orders">My Orders</a>
+      <a class="footer-link" href="/wishlist">Wishlist</a>
+      <a class="footer-link" href="/cart">Cart</a>
+      <a class="footer-link" href="/account/rewards">Loyalty Card</a>
+    </div>
+    <div>
+      <div class="footer-col-title">Help</div>
+      <a class="footer-link" href="/account/support">Help Center</a>
+      <a class="footer-link" href="/account/orders">Track Order</a>
+      <a class="footer-link" href="/account/returns">Returns</a>
+      <a class="footer-link" href="/return-policy">Return Policy</a>
+      <a class="footer-link">Shipping Info</a>
+      <a class="footer-link" href="/account/support">Contact Us</a>
+    </div>
+    <div>
+      <div class="footer-col-title">Company</div>
+      <a class="footer-link" href="/about">About Us</a>
+      <a class="footer-link" href="/privacy">Privacy Policy</a>
+      <a class="footer-link" href="/terms" aria-current="page">Terms of Use</a>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span>© 2026 Bambee Inc. · <a href="/privacy">Privacy Policy</a> · <a href="/terms" aria-current="page">Terms of Use</a></span>
+    <div class="footer-pay-icons">
+      <div class="pay-icon">VISA</div>
+      <div class="pay-icon">MC</div>
+      <div class="pay-icon">AMEX</div>
+      <div class="pay-icon">MOBILE BANKING</div>
+      <div class="pay-icon">CASH ON DELIVERY</div>
+    </div>
+  </div>
+</footer>
+<script>
+(function() {
+  var icons = document.querySelectorAll('.nav-icon-btn');
+  if (icons[0]) icons[0].onclick = function() { location.href = '/wishlist'; };
+  if (icons[1]) icons[1].onclick = function() { location.href = '/cart'; };
+  var userBtn = document.querySelector('.nav-user-btn');
+  if (userBtn) userBtn.onclick = function() { location.href = '/account/profile'; };
+  var searchBtn = document.querySelector('.nav-search-btn');
+  if (searchBtn) searchBtn.onclick = function() { location.href = '/search'; };
+})();
+</script>
+<script type="module" src="/assets/js/navbar.js"></script>
+</body>
+</html>

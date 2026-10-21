@@ -287,7 +287,7 @@ pub fn order_delivered_template(number: &str) -> String {
         "The courier has marked it delivered. We hope it's everything you wanted.",
         &[("Order", number.to_string())],
         Some(("Leave a review", orders_url())),
-        "Something not right? You can start a return from your account for 30 days after delivery.",
+        "Something not right? You can start a return from your account for 10 days after delivery.",
     )
 }
 

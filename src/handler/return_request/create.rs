@@ -49,6 +49,19 @@ pub async fn task(req: HttpRequest, body: web::Json<ReqBody>) -> Result<HttpResp
         return Ok(Response::bad_request("Only a delivered order can be returned"));
     }
 
+    // The window /return-policy promises: 10 days from delivery. An order
+    // marked Delivered before `delivered_at` was recorded has no date to
+    // measure from, so it is given the benefit of the doubt.
+    const RETURN_WINDOW_DAYS: i64 = 10;
+    if let Some(delivered_at) = order.delivered_at {
+        let closes = delivered_at + RETURN_WINDOW_DAYS * 24 * 60 * 60 * 1000;
+        if chrono::Utc::now().timestamp_millis() > closes {
+            return Ok(Response::bad_request(
+                "The 10-day return window for this order has closed. If an item arrived damaged or faulty, please contact us through the Help Center.",
+            ));
+        }
+    }
+
     // What the customer has already claimed on this order. `refunded_quantity`
     // alone isn't enough: it is only written when a return is actually
     // refunded, so between filing and resolution the same line would otherwise

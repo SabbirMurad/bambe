@@ -57,6 +57,10 @@ pub fn router(cfg: &mut web::ServiceConfig) {
             "/terms",
             web::get().to(Markup::terms)
         )
+        .route(
+            "/return-policy",
+            web::get().to(Markup::return_policy)
+        )
 
         /* ── Checkout ───────────────────────────────────── */
         .route(
