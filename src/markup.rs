@@ -85,7 +85,10 @@ async fn render_status(template: &web::Data<Tera>, name: &str, mut context: Cont
   }
   // Search Console's ownership check, when GOOGLE_SITE_VERIFICATION is set.
   if let Ok(code) = std::env::var("GOOGLE_SITE_VERIFICATION") {
-    if !code.trim().is_empty() { context.insert("google_site_verification", code.trim()); }
+    let code = code.trim();
+    if !code.is_empty() && !code.to_ascii_uppercase().contains("CHANGE_ME") {
+      context.insert("google_site_verification", code);
+    }
   }
   let res_data = template.render(name, &context)
     .map_err(|e| error::ErrorInternalServerError(e))?;
@@ -153,7 +156,7 @@ pub async fn home(template: web::Data<Tera>, req: HttpRequest) -> Result<HttpRes
     "Bambee — Cosmetics, Skincare, Body, Hair & Grooming",
     "Bambee stocks seven lines of everyday beauty: cosmetics and accessories, skincare, body care and sprays, wellness, hair care and extensions, nail care, and men's grooming.",
     format!("{}/", base),
-    Some(format!("{}/assets/brand/photos/hero_bg_3.png", base)),
+    None,
   );
   page["json_ld"] = json!(seo::home_json_ld(&base));
   render_seo(&template, "shopping/home.html", page).await

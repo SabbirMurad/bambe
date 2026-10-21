@@ -22,6 +22,10 @@ pub fn router(cfg: &mut web::ServiceConfig) {
             web::get().to(Markup::product)
         )
         .route(
+            "/favicon.ico",
+            web::get().to(crate::seo::favicon)
+        )
+        .route(
             "/robots.txt",
             web::get().to(crate::seo::robots)
         )

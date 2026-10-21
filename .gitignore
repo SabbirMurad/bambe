@@ -2,7 +2,7 @@
 /target
 
 # Environment
-# `.env.dev` and `.env.release` are COMMITTED examples — copy one to `.env`.
+# `.env.dev` (local) and `.env.example` (server) are COMMITTED examples — copy one to `.env`.
 # `.env` is the only file that ever holds live values (session key, JWT keys,
 # Resend and payment credentials), so it is the only one ignored.
 .env

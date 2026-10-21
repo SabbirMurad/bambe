@@ -87,12 +87,24 @@ pub async fn currency(db: &Database) -> String {
 }
 
 /// The `seo` object every public template's head reads (common/seo.html).
+/// The 1200x630 card link previews fall back to on pages with no picture of
+/// their own — a preview with no image is easy to scroll past.
+pub const DEFAULT_SHARE_IMAGE: &str = "/assets/brand/og-image.png";
+
 pub fn page(title: &str, description: &str, canonical: String, image: Option<String>) -> Value {
+    // The origin is the canonical URL up to its path.
+    let origin = canonical.splitn(4, '/').take(3).collect::<Vec<_>>().join("/");
+    let (image, default_image) = match image {
+        Some(image) => (image, false),
+        None => (format!("{}{}", origin, DEFAULT_SHARE_IMAGE), true),
+    };
     json!({
         "title": title,
         "description": plain(description, DESCRIPTION_MAX),
         "canonical": canonical,
         "image": image,
+        // Its size is known, so previews can lay out before fetching it.
+        "image_size": if default_image { json!([1200, 630]) } else { Value::Null },
         "og_type": "website",
         "noindex": false,
         "json_ld": Vec::<String>::new(),
@@ -247,6 +259,14 @@ pub async fn product_page(db: &Database, base: &str, slug: &str) -> Option<(Valu
         "brand": brand_name,
     });
     Some((seo, first_paint))
+}
+
+/* ── /favicon.ico ─────────────────────────────────────────────
+   Browsers request it from the root whatever the page's <link rel="icon">
+   says, and Google's search-result favicon fetcher looks there too.     */
+
+pub async fn favicon() -> actix_web::Result<actix_files::NamedFile> {
+    Ok(actix_files::NamedFile::open("assets/favicon/favicon.ico")?)
 }
 
 /* ── robots.txt ─────────────────────────────────────────────── */
