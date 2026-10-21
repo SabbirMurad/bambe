@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════
-   Bambe Web — toggle.js
+   Bambee Web — toggle.js
 
    Behaviour for the .toggle switch. It used to live inside admin.js,
    which meant the component only worked on admin pages — the account

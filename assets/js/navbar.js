@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════
-   Bambe Web — navbar.js
+   Bambee Web — navbar.js
 
    The storefront navbar's account button: whose name it shows, and
    where it goes.

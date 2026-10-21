@@ -62,6 +62,9 @@ pub struct Coupon {
     // Restricts the code to accounts with no completed order — the welcome
     // offer.
     pub first_order_only: bool,
+    // A personal code — a loyalty reward — that only this account can use.
+    #[serde(default)]
+    pub user_id: Option<String>,
 
     pub created_at: i64,
     pub created_by: String,

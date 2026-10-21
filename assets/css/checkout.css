@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════
-   Bambe Web — checkout.css
+   Bambee Web — checkout.css
    Styles for: Cart, Checkout (Address/Payment/Review), Confirmation
 ═══════════════════════════════════════════════════════════════ */
 
@@ -137,6 +137,42 @@
   border-top: none;
   margin-top: 0;
 }
+/* Packaging — picture cards, one per option */
+.pack-section { padding: 20px 0 4px; border-top: 1px solid var(--border); }
+.pack-title {
+  font-family: var(--font-head);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--black);
+  margin-bottom: 14px;
+}
+.pack-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 12px;
+}
+.pack-option {
+  display: flex;
+  flex-direction: column;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  cursor: pointer;
+  background: var(--white, #fff);
+  transition: all 0.15s;
+}
+.pack-option:hover { border-color: var(--primary-text); }
+.pack-option.selected { border-color: var(--primary-text); background: var(--blue-lt); box-shadow: 0 0 0 1px var(--primary-text); }
+.pack-option-img { aspect-ratio: 4 / 3; background: var(--input-bg); }
+.pack-option-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.pack-option-body { padding: 12px 14px 14px; display: flex; flex-direction: column; gap: 4px; flex: 1; }
+.pack-option-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.pack-option-name { font-size: 13.5px; font-weight: 700; color: var(--dark); }
+.pack-option-price { font-family: var(--font-head); font-size: 14px; font-weight: 700; color: var(--black); white-space: nowrap; }
+.pack-option-price.free { color: var(--success); }
+.pack-option-desc { font-size: 12px; color: var(--subtle); line-height: 1.45; }
+.pack-option:focus-visible { outline: 2px solid var(--primary-text); outline-offset: 2px; }
+
 .coupon-input-wrap {
   display: flex;
   flex: 1;

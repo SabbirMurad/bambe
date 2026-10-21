@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════
-   Bambe Web — admin-support.js
+   Bambee Web — admin-support.js
 
    The support inbox: a queue on the left, one thread on the right,
    against the five `/v1/admin/support/ticket/*` endpoints plus

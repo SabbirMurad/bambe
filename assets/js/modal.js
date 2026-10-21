@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════
-   Bambe Web — modal.js
+   Bambee Web — modal.js
 
    `common.css` has carried .modal-overlay / .modal / .modal-header
    / .modal-body / .modal-footer since the wireframe, but nothing

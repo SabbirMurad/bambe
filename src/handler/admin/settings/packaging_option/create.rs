@@ -19,6 +19,10 @@ pub struct ReqBody {
     enabled: bool,
     #[serde(default)]
     position: u16,
+    #[serde(default)]
+    image: String,
+    #[serde(default)]
+    multi_item_only: bool,
 }
 fn default_true() -> bool { true }
 
@@ -40,6 +44,8 @@ pub async fn task(req: HttpRequest, body: web::Json<ReqBody>) -> Result<HttpResp
         price: body.price,
         enabled: body.enabled,
         position: body.position,
+        image: body.image.trim().to_string(),
+        multi_item_only: body.multi_item_only,
     };
 
     if let Err(error) = db.collection::<PackagingOption>("packaging_option").insert_one(&option).await {

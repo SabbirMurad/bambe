@@ -25,7 +25,7 @@ model's hair is pulled back, so nothing says "hair shop".
 branding.** Most well-styled cosmetics photography on Unsplash shows real
 products — Dior, Guerlain, Bioderma, Chanel, The Ordinary, Anne Semonin,
 Kjaer Weis were all in the first two pages of results. Putting those on
-Bambe's own home page implies Bambe stocks them and reproduces someone
+Bambee's own home page implies Bambee stocks them and reproduces someone
 else's trade dress. Everything above is either unbranded, a blank-label
 render, or cropped so no maker's name is legible.
 

@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════
-   Bambe Web — admin-customers.js
+   Bambee Web — admin-customers.js
 
    The customer list, its four stat tiles, and a drawer per person
    holding what `GET /v1/admin/customer/{id}` returns: their
@@ -25,7 +25,7 @@
 import {
   Fetcher, toast, $, $$, money, fullDate, dateTime, dateValue, cell, fillTable, paintPager, paintShowing,
   debounce, rowButton, tag, orderTag, mountAdminChrome,
-  openModal, field, textInput, textArea,
+  openModal, confirmModal, field, textInput, textArea, selectInput,
 } from './admin-core.js';
 
 const TABS = [
@@ -129,6 +129,245 @@ function section(title) {
   return box;
 }
 
+/* ── Loyalty ──────────────────────────────────────────────────
+   One stamp per delivered order, ten to a card. The reward is a
+   personal coupon staff set here — before the card fills or after —
+   and the customer only sees its code once they redeem the full
+   card. The bell flags the two moments that need someone: one
+   stamp to go, and a full card with nothing set.                 */
+
+function stampDots(card) {
+  const dots = document.createElement('div');
+  dots.className = 'loyalty-dots';
+  dots.setAttribute('aria-label', card.stamps + ' of ' + card.size + ' stamps');
+  for (let i = 0; i < card.size; i++) {
+    const dot = document.createElement('span');
+    dot.className = 'loyalty-dot' + (i < card.stamps ? ' is-on' : '');
+    dots.appendChild(dot);
+  }
+  return dots;
+}
+
+function cardState(card) {
+  if (card.status === 'redeemed') {
+    const reward = card.reward || {};
+    return reward.used ? 'Redeemed · code used' : reward.expired ? 'Redeemed · code expired' : 'Redeemed · code not used yet';
+  }
+  if (card.status === 'full') return card.reward ? 'Full · waiting for the customer to redeem' : 'Full · no reward set — the customer is waiting';
+  return card.stamps + ' of ' + card.size + ' stamps';
+}
+
+function loyaltySection(customer, userId) {
+  const box = section('Loyalty card');
+  const cards = customer.loyalty_cards || [];
+  // The card a reward set now lands on: the oldest one not redeemed.
+  const open = cards.filter((c) => c.status !== 'redeemed').sort((a, b) => a.number - b.number);
+  const target = open[0] || null;
+
+  if (!cards.length) {
+    const none = document.createElement('div');
+    none.className = 'cell-sub';
+    none.textContent = 'No stamps yet — the first delivered order starts card 1.';
+    box.appendChild(none);
+  }
+
+  cards.forEach((card) => {
+    const wrap = document.createElement('div');
+    wrap.style.cssText = 'padding:8px 0;';
+    const headLine = document.createElement('div');
+    headLine.style.cssText = 'display:flex;justify-content:space-between;gap:10px;font-size:13px;color:var(--dark);';
+    const name = document.createElement('strong');
+    name.textContent = 'Card ' + card.number;
+    const state = document.createElement('span');
+    state.style.color = card.status === 'full' && !card.reward ? 'var(--error)' : 'var(--subtle)';
+    state.textContent = cardState(card);
+    headLine.append(name, state);
+    wrap.appendChild(headLine);
+    if (card.status !== 'redeemed') wrap.appendChild(stampDots(card));
+    if (card.reward) {
+      wrap.appendChild(line('Reward', card.reward.summary + (card.reward.code ? ' · ' + card.reward.code : '')));
+      if (card.reward.valid_days) wrap.appendChild(line('Valid for', card.reward.valid_days + ' days after redeeming'));
+    }
+    box.appendChild(wrap);
+  });
+
+  const actions = document.createElement('div');
+  actions.style.cssText = 'display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;';
+  const set = document.createElement('button');
+  set.type = 'button';
+  set.className = 'btn btn-outline btn-sm';
+  set.textContent = target && target.reward ? 'Edit reward' : 'Set reward';
+  set.onclick = () => rewardDialog(customer, userId, target);
+  actions.appendChild(set);
+
+  if (target && target.reward) {
+    const remove = document.createElement('button');
+    remove.type = 'button';
+    remove.className = 'btn btn-ghost btn-sm';
+    remove.textContent = 'Remove reward';
+    remove.onclick = async () => {
+      const confirmed = await confirmModal({
+        title: 'Remove this reward?',
+        message: 'Card ' + target.number + ' goes back to having no reward.'
+          + (target.status === 'full' ? ' The customer will see “your reward is coming soon” until you set another.' : ''),
+        confirmLabel: 'Remove',
+      });
+      if (!confirmed) return;
+      const response = await Fetcher.delete({ endpoint: '/v1/admin/customer/' + userId + '/loyalty-reward' });
+      if (!response.ok) return;
+      toast.success('Reward removed');
+      reopen(userId);
+    };
+    actions.appendChild(remove);
+  }
+  box.appendChild(actions);
+  return box;
+}
+
+function purchasesSection(purchases) {
+  const box = section(purchases.length ? 'What they buy' : 'No delivered purchases yet');
+  purchases.forEach((p) => {
+    box.appendChild(line(p.title, p.quantity + ' × · ' + money(p.spent)));
+  });
+  return box;
+}
+
+function reviewsSection(reviews) {
+  const box = section(reviews.count
+    ? 'Reviews · ' + reviews.count + ' written · ' + reviews.average.toFixed(1) + '★ average'
+    : 'No reviews yet');
+  (reviews.recent || []).forEach((r) => {
+    const row = document.createElement('div');
+    row.style.cssText = 'padding:6px 0;';
+    const top = document.createElement('div');
+    top.style.cssText = 'font-size:13px;color:var(--dark);';
+    const stars = document.createElement('span');
+    stars.style.cssText = 'color:#C8A772;margin-right:6px;';
+    stars.textContent = '★'.repeat(r.rating) + '☆'.repeat(5 - r.rating);
+    top.appendChild(stars);
+    top.appendChild(document.createTextNode((r.title || '') + (r.scope === 'Order' ? ' (whole order)' : r.product ? ' — ' + r.product : '')));
+    const text = document.createElement('div');
+    text.className = 'cell-sub';
+    text.style.cssText = 'overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:460px;';
+    text.textContent = r.body;
+    row.append(top, text);
+    box.appendChild(row);
+  });
+  return box;
+}
+
+const REWARD_TYPES = [
+  { value: 'Percentage', label: 'Percentage off' },
+  { value: 'Fixed', label: 'Amount off' },
+  { value: 'FreeShipping', label: 'Free shipping' },
+];
+
+function rewardDialog(customer, userId, card) {
+  const reward = card && card.reward;
+  const body = document.createElement('div');
+
+  const intro = document.createElement('p');
+  intro.style.cssText = 'margin:0 0 14px;font-size:13px;line-height:1.6;color:var(--mid);';
+  intro.textContent = card
+    ? 'For card ' + card.number + ' (' + card.stamps + ' of ' + card.size + ' stamps). '
+      + 'It becomes a one-time code only ' + (customer.username || 'this customer') + ' can use, revealed when they redeem the full card.'
+    : 'Lined up for their first card. It becomes a one-time code only this customer can use, revealed when they redeem the full card.';
+  body.appendChild(intro);
+
+  const terms = (reward && reward.terms) || null;
+  const type = selectInput(REWARD_TYPES, terms ? terms.discount_type : 'Percentage');
+  const asMoney = (cents) => (cents === null || cents === undefined ? '' : (cents / 100).toFixed(2));
+  body.appendChild(field('Reward', type));
+
+  // Basis points and cents both read as hundredths: 2000 → 20, 1500 → 15.00.
+  const value = textInput({
+    placeholder: '20',
+    value: terms && terms.discount_type !== 'FreeShipping'
+      ? (terms.discount_type === 'Percentage' ? String(terms.value / 100) : asMoney(terms.value))
+      : '',
+  });
+  const valueField = field('Value', value);
+  body.appendChild(valueField);
+
+  const max = textInput({ placeholder: 'No cap', value: terms ? asMoney(terms.max_discount) : '' });
+  const maxField = field('Up to (optional)', max, 'Caps a percentage discount, e.g. 20% off up to $15.');
+  body.appendChild(maxField);
+
+  const min = textInput({ placeholder: 'No minimum', value: terms ? asMoney(terms.min_spend) : '' });
+  body.appendChild(field('Minimum spend (optional)', min));
+
+  const days = textInput({
+    value: reward ? (reward.valid_days ? String(reward.valid_days) : '') : '30',
+    placeholder: 'Never expires',
+  });
+  body.appendChild(field('Valid for (days)', days, 'Counted from when the customer redeems. Blank never expires.'));
+
+  const note = textInput({ value: reward ? reward.description || '' : '', placeholder: 'Thank you for being a regular!' });
+  body.appendChild(field('Message (optional)', note, 'Shown to the customer with the reward.'));
+
+  const sync = () => {
+    const label = valueField.querySelector('.form-label');
+    valueField.hidden = type.value === 'FreeShipping';
+    maxField.hidden = type.value !== 'Percentage';
+    if (label) label.textContent = type.value === 'Percentage' ? 'Percent off' : 'Amount off ($)';
+    value.placeholder = type.value === 'Percentage' ? '20' : '10.00';
+  };
+  type.addEventListener('change', sync);
+  sync();
+
+  const cents = (input) => {
+    const raw = input.value.trim();
+    return raw ? Math.round(parseFloat(raw) * 100) : null;
+  };
+
+  openModal({
+    title: reward ? 'Edit loyalty reward' : 'Set loyalty reward',
+    body,
+    width: '500px',
+    actions: [
+      { label: 'Cancel', className: 'btn-ghost', onClick: (close) => close() },
+      {
+        label: 'Save reward',
+        className: 'btn-primary',
+        onClick: async (close, button) => {
+          const kind = type.value;
+          const amount = parseFloat(value.value);
+          if (kind !== 'FreeShipping' && !(amount > 0)) { toast.error('Enter how much the reward takes off.'); return; }
+          if (kind === 'Percentage' && amount > 100) { toast.error('A percentage can’t be over 100.'); return; }
+          const validDays = days.value.trim() ? parseInt(days.value, 10) : null;
+          if (validDays !== null && !(validDays > 0)) { toast.error('Valid days must be a whole number, or blank.'); return; }
+
+          button.disabled = true;
+          const saved = await Fetcher.put({
+            endpoint: '/v1/admin/customer/' + userId + '/loyalty-reward',
+            body: {
+              discount_type: kind,
+              // Percentages travel as basis points: 20% → 2000.
+              value: kind === 'FreeShipping' ? 0 : Math.round(amount * 100),
+              max_discount: kind === 'Percentage' ? cents(max) : null,
+              min_spend: cents(min),
+              valid_days: validDays,
+              description: note.value.trim(),
+            },
+          });
+          button.disabled = false;
+          if (!saved.ok) return;
+          close();
+          toast.success(saved.data.status === 'full' ? 'Reward set — the customer has been told it’s ready' : 'Reward set');
+          reopen(userId);
+        },
+      },
+    ],
+  });
+}
+
+/* Re-reads the customer and shows the drawer again with the change. */
+let drawer = null;
+function reopen(userId) {
+  if (drawer) drawer.close();
+  openCustomer(userId);
+}
+
 async function openCustomer(userId) {
   const response = await Fetcher.get({ endpoint: '/v1/admin/customer/' + userId });
   if (!response.ok) return;
@@ -153,8 +392,11 @@ async function openCustomer(userId) {
   const commerce = section('Commerce');
   commerce.appendChild(line('Orders', String(customer.order_count || 0)));
   commerce.appendChild(line('Lifetime spend', money(customer.lifetime_spend || 0)));
-  commerce.appendChild(line('Loyalty points', String(customer.loyalty_points || 0)));
   body.appendChild(commerce);
+
+  body.appendChild(loyaltySection(customer, userId));
+  body.appendChild(purchasesSection(customer.purchases || []));
+  body.appendChild(reviewsSection(customer.reviews || { count: 0, recent: [] }));
 
   const orders = customer.recent_orders || [];
   const recent = section(orders.length ? 'Recent orders' : 'No orders yet');
@@ -205,7 +447,7 @@ async function openCustomer(userId) {
   staffBox.appendChild(field('Note', note));
   body.appendChild(staffBox);
 
-  openModal({
+  drawer = openModal({
     title: customer.username || customer.email,
     body,
     width: '560px',
@@ -386,7 +628,7 @@ function exportCsv() {
   const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
   const link = document.createElement('a');
   link.href = url;
-  link.download = 'bambe-customers-page-' + state.page + '.csv';
+  link.download = 'bambee-customers-page-' + state.page + '.csv';
   link.click();
   URL.revokeObjectURL(url);
   toast.success('This page saved as CSV');
@@ -497,4 +739,8 @@ async function load() {
 
   loadCounts();
   load();
+
+  // The bell links here with ?customer=<id> to open that customer at once.
+  const linked = new URLSearchParams(location.search).get('customer');
+  if (linked) openCustomer(linked);
 })();

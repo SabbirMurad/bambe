@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════
-   Bambe Web — orders.js
+   Bambee Web — orders.js
 
    The order history: five tabs, a search box, and a card per order.
 
@@ -191,17 +191,14 @@ function actions(order, card) {
 }
 
 /*
-  A multi-line order has to say which line is being reviewed before
-  the composer can open; a single-line one goes straight through.
+  A multi-product order asks first: one item, or the whole order in
+  one review. A single-product order goes straight to the composer.
 */
 function review(order) {
-  openOrderReviewPicker(order, (item) => {
-    openReviewComposer({
-      productId: item.product_id,
-      productTitle: item.title,
-      orderId: order.uuid,
-      image: item.image_id,
-    });
+  openOrderReviewPicker(order, (item, items) => {
+    openReviewComposer(item
+      ? { orderId: order.uuid, productId: item.product_id, productTitle: item.title, image: item.image_id }
+      : { orderId: order.uuid, items });
   });
 }
 

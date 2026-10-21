@@ -2,7 +2,7 @@ use resend_rs::types::CreateEmailBaseOptions;
 use resend_rs::{Resend, Result};
 use std::env;
 
-const BRAND: &str = "Bambe";
+const BRAND: &str = "Bambee";
 const ACCENT: &str = "#FAAA39"; // light orange — matches --primary in common.css
 const ACCENT_DARK: &str = "#E8951F";
 const ON_ACCENT: &str = "#2A1B06"; // dark ink on an orange fill; white is 1.9:1 here
@@ -123,9 +123,9 @@ fn code_email(heading: &str, intro: &str, code: &str, note: &str) -> String {
 pub fn sign_up_verification_code_template(code: &str) -> String {
     code_email(
         "Verify your email",
-        "Enter the code below to confirm your email and finish setting up your Bambe account.",
+        "Enter the code below to confirm your email and finish setting up your Bambee account.",
         code,
-        "Didn't sign up for Bambe? You can safely ignore this email — no account is created without this code.",
+        "Didn't sign up for Bambee? You can safely ignore this email — no account is created without this code.",
     )
 }
 
@@ -133,7 +133,7 @@ pub fn sign_up_verification_code_template(code: &str) -> String {
 pub fn sign_in_verification_code_template(code: &str) -> String {
     code_email(
         "Confirm it's you",
-        "Use the code below to finish signing in to your Bambe account.",
+        "Use the code below to finish signing in to your Bambee account.",
         code,
         "Didn't try to sign in? Someone may have your password — we recommend changing it right away.",
     )
@@ -143,7 +143,7 @@ pub fn sign_in_verification_code_template(code: &str) -> String {
 pub fn password_reset_verification_code_template(code: &str) -> String {
     code_email(
         "Reset your password",
-        "Use the code below to reset the password on your Bambe account.",
+        "Use the code below to reset the password on your Bambee account.",
         code,
         "Didn't request a password reset? You can safely ignore this email — your password won't change.",
     )
@@ -346,14 +346,23 @@ pub fn return_update_template(number: &str, status: &str, staff_note: Option<&st
 }
 
 pub async fn send_email(email: &str, sub: &str, body: &str) -> Result<(), resend_rs::Error> {
-    let resend_api = env::var("RESEND_API_KEY").expect("RESEND_API_KEY must be set on .env file");
+    // Without a key there is no mail to send — say so and carry on, rather
+    // than panicking the worker mid-request (which took down "mark
+    // delivered" and everything after it on a machine with no key).
+    let resend_api = match env::var("RESEND_API_KEY") {
+        Ok(key) if !key.trim().is_empty() => key,
+        _ => {
+            log::warn!("RESEND_API_KEY is not set; not sending \"{}\" to {}", sub, email);
+            return Ok(());
+        }
+    };
 
     let resend = Resend::new(&resend_api);
 
     // The sending domain has to be one verified in Resend; override it with
-    // MAIL_FROM once Bambe has its own.
+    // MAIL_FROM once Bambee has its own.
     let from = env::var("MAIL_FROM")
-        .unwrap_or_else(|_| "Bambe <no-reply@sabbirhassan.com>".to_string());
+        .unwrap_or_else(|_| "Bambee <no-reply@sabbirhassan.com>".to_string());
     let to = [email];
 
     let email = CreateEmailBaseOptions::new(&from, to, sub).with_html(body);

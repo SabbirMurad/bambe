@@ -150,6 +150,10 @@ pub async fn account_notifications(template: web::Data<Tera>) -> Result<HttpResp
   render_with_nav(&template, "account/notifications.html").await
 }
 
+pub async fn account_rewards(template: web::Data<Tera>) -> Result<HttpResponse, Error> {
+  render_with_nav(&template, "account/rewards.html").await
+}
+
 pub async fn account_returns(template: web::Data<Tera>) -> Result<HttpResponse, Error> {
   render_with_nav(&template, "account/returns.html").await
 }
@@ -205,6 +209,10 @@ pub async fn admin_orders(template: web::Data<Tera>) -> Result<HttpResponse, Err
 
 pub async fn admin_returns(template: web::Data<Tera>) -> Result<HttpResponse, Error> {
   render(&template, "admin/returns.html").await
+}
+
+pub async fn admin_reviews(template: web::Data<Tera>) -> Result<HttpResponse, Error> {
+  render(&template, "admin/reviews.html").await
 }
 
 pub async fn admin_customers(template: web::Data<Tera>) -> Result<HttpResponse, Error> {

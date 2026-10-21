@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════
-   Bambe Web — dial-codes.js
+   Bambee Web — dial-codes.js
 
    Country calling codes for the phone field on sign-up. Rows are
    [ISO 3166-1 alpha-2, name, dial code]; the flag is derived from

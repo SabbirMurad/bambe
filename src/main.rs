@@ -232,7 +232,7 @@ async fn main() -> io::Result<()> {
             .wrap(BuiltIns::cors::get_policy())
             .wrap(ActixMiddleware::Compress::default())
             /* Custom HTTP Headers */
-            .wrap(ActixMiddleware::DefaultHeaders::new().add(("X-Signature", "Bambe")))
+            .wrap(ActixMiddleware::DefaultHeaders::new().add(("X-Signature", "Bambee")))
             /*
               SAMEORIGIN rather than DENY: still refuses to be framed by
               anyone else, which is what stops clickjacking, but lets the
@@ -312,6 +312,7 @@ async fn main() -> io::Result<()> {
             .configure(Routes::Review::router)
             .configure(Routes::Cart::router)
             .configure(Routes::Wishlist::router)
+            .configure(Routes::Loyalty::router)
             .configure(Routes::RecentlyViewed::router)
             .configure(Routes::Address::router)
             .configure(Routes::Checkout::router)

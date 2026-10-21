@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════
-   Bambe Web — admin-returns.js
+   Bambee Web — admin-returns.js
 
    The staff side of returns, against the three
    `/v1/admin/return/*` endpoints.

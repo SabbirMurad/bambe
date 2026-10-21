@@ -126,7 +126,7 @@ pub async fn task(req: HttpRequest, path: web::Path<String>, body: web::Json<Req
                 format!("Order {} has shipped", order.number),
                 "It's with the courier now.".to_string(),
                 Some(Email {
-                    subject: format!("Your Bambe order {} is on its way", order.number),
+                    subject: format!("Your Bambee order {} is on its way", order.number),
                     html: crate::Integrations::Resend::order_shipped_template(
                         &order.number,
                         order.tracking.as_ref().map(|t| t.tracking_number.as_str()),
@@ -139,7 +139,7 @@ pub async fn task(req: HttpRequest, path: web::Path<String>, body: web::Json<Req
                 format!("Order {} was delivered", order.number),
                 "Let us know how it went.".to_string(),
                 Some(Email {
-                    subject: format!("Your Bambe order {} has arrived", order.number),
+                    subject: format!("Your Bambee order {} has arrived", order.number),
                     html: crate::Integrations::Resend::order_delivered_template(&order.number),
                 }),
             )),
@@ -148,7 +148,7 @@ pub async fn task(req: HttpRequest, path: web::Path<String>, body: web::Json<Req
                 format!("Order {} was cancelled", order.number),
                 "It won't be shipped.".to_string(),
                 Some(Email {
-                    subject: format!("Your Bambe order {} was cancelled", order.number),
+                    subject: format!("Your Bambee order {} was cancelled", order.number),
                     html: crate::Integrations::Resend::order_cancelled_template(&order.number, None),
                 }),
             )),
@@ -168,6 +168,11 @@ pub async fn task(req: HttpRequest, path: web::Path<String>, body: web::Json<Req
                 email,
             }).await;
         }
+    }
+
+    // First time it reaches Delivered: one stamp on the customer's card.
+    if body.fulfilment_status == FulfilmentStatus::Delivered && order.fulfilment_status != FulfilmentStatus::Delivered {
+        crate::utils::loyalty::stamp_delivery(&db, &order.user_id, &order_id, &order.number).await;
     }
 
     Ok(Response::ok_message("Order status updated"))

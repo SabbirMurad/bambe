@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════
-   Bambe Web — select.js
+   Bambee Web — select.js
 
    Replaces every native <select> on the page with a themed button
    and listbox, so dropdowns look like the rest of the design system

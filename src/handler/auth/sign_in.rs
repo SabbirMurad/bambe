@@ -110,7 +110,7 @@ async fn perform(
 
         let result = Resend::send_email(
             &account_core.email_address,
-            "Your Bambe sign-in code",
+            "Your Bambee sign-in code",
             &message
         ).await;
         if let Err(_) = result {

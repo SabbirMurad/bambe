@@ -94,6 +94,8 @@ pub async fn task(query: web::Query<ReqQuery>) -> Result<HttpResponse, Error> {
                 "author": authors.get(&r.user_id).cloned().unwrap_or_else(|| "Customer".to_string()),
                 "verified_purchase": r.order_id.is_some(),
                 "variant_id": r.variant_id,
+                "variant_label": r.variant_label,
+                "scope": r.scope,
                 "rating": r.rating,
                 "title": r.title,
                 "body": r.body,

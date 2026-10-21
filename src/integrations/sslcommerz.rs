@@ -135,7 +135,7 @@ pub async fn init_session(request: SessionRequest<'_>) -> Result<String, String>
     form.insert("ship_postcode", request.customer_postcode.to_string());
     form.insert("ship_country", request.customer_country.to_string());
 
-    form.insert("product_name", format!("Bambe order {}", request.order_number));
+    form.insert("product_name", format!("Bambee order {}", request.order_number));
     form.insert("product_category", "Retail".to_string());
     form.insert("product_profile", "physical-goods".to_string());
 

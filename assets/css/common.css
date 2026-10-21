@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════
-   Bambe Web — common.css
+   Bambee Web — common.css
    Shared design tokens, typography, layout, navbar, footer,
    buttons, forms, product cards, and reusable UI atoms.
    All page-specific CSS lives in its own section file.
@@ -155,6 +155,14 @@
   /* Flat, not a gradient: buttons and fills are the one red. */
   --primary-grad: #E32326;
 }
+:root[data-store-theme="green"] {
+  --primary:      #1A8338;   /* green — buttons, badges, fills, links  */
+  --primary-dk:   #146B2D;   /* hover                                  */
+  --primary-lt:   rgba(26,131,56,0.10);
+  --primary-text: #1A8338;   /* the same green for links and active text */
+  --on-primary:   #FFFFFF;   /* 4.8:1 on the fill                      */
+  --primary-grad: #1A8338;
+}
 
 /* ── Reset & Base ─────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -262,7 +270,7 @@ body::-webkit-scrollbar-corner {
 }
 
 /* Logo */
-/* The stag mark stands in for the "B", so the mark and "ambe" sit on a
+/* The stag mark stands in for the "B", so the mark and "ambee" sit on a
    shared baseline with almost no gap and read as one word. */
 .nav-logo {
   display: flex;
@@ -286,7 +294,7 @@ body::-webkit-scrollbar-corner {
   font-size: 18px;
   font-weight: 400;
   line-height: 1;
-  /* Drops the line box's descender space so "ambe" sits on its baseline,
+  /* Drops the line box's descender space so "ambee" sits on its baseline,
      level with the stag's feet rather than floating above them. */
   margin-bottom: -0.153em;
   color: var(--black);

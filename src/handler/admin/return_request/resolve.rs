@@ -318,7 +318,7 @@ pub async fn task(req: HttpRequest, path: web::Path<String>, body: web::Json<Req
             format!("Refund issued for order {}", order_number),
             "Your return was accepted and the refund is on its way.".to_string(),
             Some(crate::utils::notify::Email {
-                subject: format!("Your Bambe refund for order {}", order_number),
+                subject: format!("Your Bambee refund for order {}", order_number),
                 html: crate::Integrations::Resend::refund_issued_template(&order_number, amount, &refund_currency),
             }),
         ),
@@ -327,7 +327,7 @@ pub async fn task(req: HttpRequest, path: web::Path<String>, body: web::Json<Req
             format!("Return update for order {}", order_number),
             format!("Your return is now {}.", body.status),
             Some(crate::utils::notify::Email {
-                subject: format!("An update on your Bambe return for order {}", order_number),
+                subject: format!("An update on your Bambee return for order {}", order_number),
                 html: crate::Integrations::Resend::return_update_template(
                     &order_number,
                     &body.status.to_string(),

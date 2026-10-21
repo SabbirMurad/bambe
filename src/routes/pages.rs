@@ -78,6 +78,10 @@ pub fn router(cfg: &mut web::ServiceConfig) {
             web::get().to(Markup::account_notifications)
         )
         .route(
+            "/account/rewards",
+            web::get().to(Markup::account_rewards)
+        )
+        .route(
             "/account/returns",
             web::get().to(Markup::account_returns)
         )
@@ -132,6 +136,10 @@ pub fn router(cfg: &mut web::ServiceConfig) {
         .route(
             "/admin/returns",
             web::get().to(Markup::admin_returns)
+        )
+        .route(
+            "/admin/reviews",
+            web::get().to(Markup::admin_reviews)
         )
         .route(
             "/admin/customers",

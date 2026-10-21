@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════
-   Bambe Web — wishlist.js
+   Bambee Web — wishlist.js
 
    Saved items. The cards are the shared product card with two
    things bolted on that only make sense here: the heart is a

@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════
-   Bambe Web — review.js
+   Bambee Web — review.js
 
    The last screen before the money moves, and the only one where
    being wrong actually costs something. So nothing here is carried

@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════
-   Bambe Web — notifications.js
+   Bambee Web — notifications.js
 
    `GET /v1/notification/list` returns the last 50, newest first, as
    a bare array — no paging, no filter, no unread count. So the

@@ -64,6 +64,12 @@ pub use account as Account;
 pub mod notification;
 pub use notification as Notification;
 
+pub mod loyalty;
+pub use loyalty as Loyalty;
+
+pub mod admin_notification;
+pub use admin_notification as AdminNotification;
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum AllowedImageType { Gif, Png, Jpeg, Webp }
 

@@ -124,7 +124,7 @@ pub async fn task(req: HttpRequest, path: web::Path<String>, body: web::Json<Req
             related_id: Some(order_id.clone()),
             link: Some("/account/orders".to_string()),
             email: Some(crate::utils::notify::Email {
-                subject: format!("Your Bambe refund for order {}", order.number),
+                subject: format!("Your Bambee refund for order {}", order.number),
                 html: crate::Integrations::Resend::refund_issued_template(&order.number, amount, &order.currency),
             }),
         },

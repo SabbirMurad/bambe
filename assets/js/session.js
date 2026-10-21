@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════
-   Bambe Web — session.js
+   Bambee Web — session.js
 
    Everything about who the caller is: the tokens from sign-in, the
    guest id a signed-out cart is keyed on, and the refresh handshake.

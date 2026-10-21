@@ -10,3 +10,4 @@ pub mod counter;
 pub mod notify;
 pub mod order;
 pub mod customer;
+pub mod loyalty;

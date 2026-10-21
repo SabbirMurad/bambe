@@ -105,6 +105,7 @@ pub async fn task(req: HttpRequest, body: web::Json<ReqBody>) -> Result<HttpResp
         product_ids: body.product_ids.clone(),
         category_ids: body.category_ids.clone(),
         first_order_only: body.first_order_only,
+        user_id: None,
         created_at: now,
         created_by: admin.user_id,
         modified_at: now,

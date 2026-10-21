@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════
-   Bambe Web — support.js
+   Bambee Web — support.js
 
    The four support endpoints were complete and unreachable: the
    admin console has a whole inbox to answer tickets in, and there
@@ -166,7 +166,7 @@ function messageBubble(message) {
   const meta = document.createElement('div');
   meta.style.cssText = 'font-size:11.5px;color:var(--subtle);'
     + (staff ? '' : 'text-align:right;');
-  meta.textContent = (staff ? (message.author_name || 'Bambe Support') : 'You')
+  meta.textContent = (staff ? (message.author_name || 'Bambee Support') : 'You')
     + ' · ' + when(message.created_at);
 
   row.appendChild(bubble);

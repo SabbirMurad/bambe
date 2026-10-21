@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════
-   Bambe Web — utils/country-suggest.js
+   Bambee Web — utils/country-suggest.js
 
    Country suggestions for a plain text input: type a few letters and
    matching countries appear underneath, with their flag and calling

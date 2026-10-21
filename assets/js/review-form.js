@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════
-   Bambe Web — review-form.js
+   Bambee Web — review-form.js
 
    `POST /v1/review` has been live the whole time with nothing
    calling it: the product page's "Write a Review" button used to
@@ -8,15 +8,17 @@
 
    Two surfaces open the same composer, which is why it lives here:
 
-   - the product page, which knows the product but has to go and
-     find whether the caller ever bought it;
-   - the orders page, which knows the order and asks which of its
-     lines is being reviewed.
+   - the product page, which only offers it when the caller has a
+     delivered order with this product still unreviewed on it
+     (GET /v1/review/eligible);
+   - the orders page, which asks whether the review is for one item
+     or for the whole order.
 
-   `order_id` is what earns the "Verified Purchase" badge. The
-   backend re-checks it against the caller's own orders
-   (review/create.rs), so sending one we cannot prove just loses
-   the badge — it never fakes it.
+   Only buyers can review, so every review names its order, and the
+   backend checks the order is the caller's own and delivered. A
+   whole-order review is posted without a `product_id`; the server
+   writes it onto every product on the order not yet reviewed, and
+   each of those products' ratings moves with it.
 ═══════════════════════════════════════════════════════════════ */
 import { Fetcher } from './fetcher.js';
 import { toast } from './toast.js';
@@ -99,14 +101,14 @@ function starPicker(onChange) {
 /* ── The composer ─────────────────────────────────────────────  */
 
 /**
- * @param {string} options.productId
- * @param {string} options.productTitle  shown at the top, so a picker's choice stays visible
- * @param {string} [options.orderId]     earns the verified badge when it checks out
- * @param {string} [options.variantId]
- * @param {*}      [options.image]       ImageStruct or bare id
+ * @param {string} options.orderId        the delivered order the review comes from
+ * @param {string} [options.productId]    omitted for a review of the whole order
+ * @param {string} [options.productTitle] shown at the top, so a picker's choice stays visible
+ * @param {*}      [options.image]        ImageStruct or bare id
+ * @param {Array}  [options.items]        the order lines a whole-order review covers
  * @param {Function} [options.onDone]
  */
-export function openReviewComposer({ productId, productTitle, orderId, variantId, image, onDone }) {
+export function openReviewComposer({ orderId, productId, productTitle, image, items, onDone }) {
   if (!session.isSignedIn()) {
     toast.info('Sign in to write a review');
     setTimeout(() => session.requireSignedIn(), 700);
@@ -114,8 +116,11 @@ export function openReviewComposer({ productId, productTitle, orderId, variantId
   }
 
   const form = document.createElement('div');
+  const whole = !productId;
 
-  if (productTitle) {
+  if (whole) {
+    form.appendChild(wholeOrderHead(items || []));
+  } else if (productTitle) {
     const head = document.createElement('div');
     head.style.cssText = 'display:flex;gap:12px;align-items:center;padding-bottom:16px;'
       + 'margin-bottom:18px;border-bottom:1px solid var(--border);';
@@ -144,13 +149,14 @@ export function openReviewComposer({ productId, productTitle, orderId, variantId
   form.appendChild(field('Headline', title));
 
   const body = textArea({ placeholder: 'What did you like, or not like, about it?', rows: 5 });
-  form.appendChild(field('Your review', body,
-    'Reviews are published once a moderator has read them.'));
+  form.appendChild(field('Your review', body, whole
+    ? 'This review will show on each of these products and count towards their ratings.'
+    : 'Your review will show on the product page.'));
 
   form.appendChild(error);
 
   const { close } = openModal({
-    title: 'Write a review',
+    title: whole ? 'Review your order' : 'Write a review',
     body: form,
     width: '520px',
     actions: [
@@ -177,9 +183,8 @@ export function openReviewComposer({ productId, productTitle, orderId, variantId
           const response = await Fetcher.post({
             endpoint: '/v1/review',
             body: {
-              product_id: productId,
-              order_id: orderId || null,
-              variant_id: variantId || null,
+              order_id: orderId,
+              product_id: productId || null,
               rating: picker.value,
               title: title.value.trim() || null,
               body: body.value.trim(),
@@ -190,9 +195,7 @@ export function openReviewComposer({ productId, productTitle, orderId, variantId
           if (!response.ok) return;
 
           done();
-          // It lands as ReviewStatus::Pending, so promising it will show
-          // up on the product page straight away would be a lie.
-          toast.success('Thanks — your review is with our moderators');
+          toast.success('Thanks — your review is live');
           if (onDone) onDone();
         },
       },
@@ -202,51 +205,131 @@ export function openReviewComposer({ productId, productTitle, orderId, variantId
   return close;
 }
 
+/* "3 items from this order" with a strip of their pictures. */
+function wholeOrderHead(items) {
+  const head = document.createElement('div');
+  head.style.cssText = 'padding-bottom:16px;margin-bottom:18px;border-bottom:1px solid var(--border);';
+
+  const strip = document.createElement('div');
+  strip.style.cssText = 'display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap;';
+  items.forEach((item) => {
+    const thumb = document.createElement('div');
+    thumb.title = item.title;
+    thumb.style.cssText = 'width:44px;height:44px;border-radius:var(--radius-sm);'
+      + 'background:var(--input-bg);flex-shrink:0;';
+    paintImage(thumb, item.image_id || item.image);
+    strip.appendChild(thumb);
+  });
+
+  const label = document.createElement('div');
+  label.style.cssText = 'font-size:13.5px;font-weight:600;color:var(--dark);line-height:1.4;';
+  label.textContent = items.length === 1 ? '1 item from this order' : items.length + ' items from this order';
+
+  head.append(strip, label);
+  return head;
+}
+
+function pickerRow({ thumbFrom, text, note, disabled, onClick }) {
+  const row = document.createElement('div');
+  row.style.cssText = 'display:flex;gap:12px;align-items:center;padding:10px;'
+    + 'border:1px solid var(--border);border-radius:var(--radius-sm);'
+    + (disabled ? 'opacity:.55;cursor:default;' : 'cursor:pointer;');
+
+  const thumb = document.createElement('div');
+  thumb.style.cssText = 'width:40px;height:40px;border-radius:var(--radius-sm);'
+    + 'background:var(--input-bg);flex-shrink:0;display:flex;align-items:center;justify-content:center;';
+  if (thumbFrom) paintImage(thumb, thumbFrom);
+  else thumb.innerHTML = '<svg width="18" height="18" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M2.5 6.2 10 3l7.5 3.2v7.6L10 17l-7.5-3.2V6.2Z" stroke="var(--primary-text)" stroke-width="1.4" stroke-linejoin="round"/><path d="m2.5 6.2 7.5 3.3 7.5-3.3M10 9.5V17" stroke="var(--primary-text)" stroke-width="1.4" stroke-linejoin="round"/></svg>';
+
+  const name = document.createElement('div');
+  name.style.cssText = 'flex:1;font-size:13px;color:var(--dark);line-height:1.4;';
+  name.textContent = text;
+
+  row.append(thumb, name);
+  if (note) {
+    const tag = document.createElement('span');
+    tag.style.cssText = 'font-size:11.5px;font-weight:700;color:var(--success);white-space:nowrap;';
+    tag.textContent = note;
+    row.appendChild(tag);
+  }
+
+  if (!disabled) {
+    row.setAttribute('role', 'button');
+    row.tabIndex = 0;
+    row.addEventListener('click', onClick);
+    row.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); row.click(); }
+    });
+  }
+  return row;
+}
+
 /*
-  Asks which line of an order is being reviewed. A one-line order
-  skips the question entirely.
+  Asks what on an order is being reviewed: one item, or the whole
+  order at once. Items already reviewed from this order are shown but
+  can't be picked again. An order with a single product skips the
+  question.
+
+  `onPick(item)` for one item; `onPick(null, items)` for the whole
+  order, with the items that review will land on.
 */
-export function openOrderReviewPicker(order, onPick) {
-  const items = order.items || [];
-  if (!items.length) {
+export async function openOrderReviewPicker(order, onPick) {
+  // One entry per product — two shades of one lipstick are one review.
+  const seen = new Set();
+  const products = (order.items || []).filter((item) => {
+    if (seen.has(item.product_id)) return false;
+    seen.add(item.product_id);
+    return true;
+  });
+  if (!products.length) {
     toast.info('Nothing on this order to review');
     return;
   }
-  if (items.length === 1) {
-    onPick(items[0]);
+
+  const response = await Fetcher.get({
+    endpoint: '/v1/review/reviewed',
+    query: { order_id: order.uuid },
+  });
+  if (!response.ok) return;
+  const reviewed = new Set(response.data || []);
+  const pending = products.filter((item) => !reviewed.has(item.product_id));
+
+  if (!pending.length) {
+    toast.info("You've reviewed everything on this order");
+    return;
+  }
+  if (products.length === 1) {
+    onPick(pending[0]);
     return;
   }
 
   const list = document.createElement('div');
   list.style.cssText = 'display:flex;flex-direction:column;gap:8px;';
 
-  items.forEach((item) => {
-    const row = document.createElement('div');
-    row.setAttribute('role', 'button');
-    row.tabIndex = 0;
-    row.style.cssText = 'display:flex;gap:12px;align-items:center;padding:10px;cursor:pointer;'
-      + 'border:1px solid var(--border);border-radius:var(--radius-sm);';
+  if (pending.length > 1) {
+    list.appendChild(pickerRow({
+      text: 'The whole order — ' + pending.length + ' items, one review',
+      onClick: () => { close(); onPick(null, pending); },
+    }));
+    const or = document.createElement('div');
+    or.style.cssText = 'font-size:12px;color:var(--subtle);margin:6px 0 2px;';
+    or.textContent = 'Or review a single item';
+    list.appendChild(or);
+  }
 
-    const thumb = document.createElement('div');
-    thumb.style.cssText = 'width:40px;height:40px;border-radius:var(--radius-sm);'
-      + 'background:var(--input-bg);flex-shrink:0;';
-    paintImage(thumb, item.image_id || item.image);
-
-    const name = document.createElement('div');
-    name.style.cssText = 'font-size:13px;color:var(--dark);line-height:1.4;';
-    name.textContent = item.title;
-
-    row.appendChild(thumb);
-    row.appendChild(name);
-    row.addEventListener('click', () => { close(); onPick(item); });
-    row.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); row.click(); }
-    });
-    list.appendChild(row);
+  products.forEach((item) => {
+    const done = reviewed.has(item.product_id);
+    list.appendChild(pickerRow({
+      thumbFrom: item.image_id || item.image,
+      text: item.title,
+      note: done ? 'Reviewed' : null,
+      disabled: done,
+      onClick: () => { close(); onPick(item); },
+    }));
   });
 
   const { close } = openModal({
-    title: 'Which item are you reviewing?',
+    title: 'What are you reviewing?',
     body: list,
     width: '460px',
   });

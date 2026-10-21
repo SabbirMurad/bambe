@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════
-   Bambe Web — product-form.js
+   Bambee Web — product-form.js
 
    Create and edit a product with its variants. One page, two
    modes, told apart by `?id=` in the URL.
@@ -493,7 +493,7 @@ async function loadProduct() {
   paintSkus();
 
   // Page furniture: this is an edit, and it should say so.
-  document.title = 'Edit ' + product.title + ' — Bambe Admin';
+  document.title = 'Edit ' + product.title + ' — Bambee Admin';
   const heading = $('.admin-title');
   if (heading) heading.textContent = 'Edit product';
   const crumb = $('.breadcrumb span:last-child');

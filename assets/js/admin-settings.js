@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════
-   Bambe Web — admin-settings.js
+   Bambee Web — admin-settings.js
 
    Five panels behind five tabs, over the nine
    `/v1/admin/settings/*` endpoints plus the deletion queue.
@@ -81,7 +81,7 @@ function paintTheme(theme) {
   document.documentElement.dataset.storeTheme = theme;
 }
 
-const THEME_NAMES = { orange: 'Orange', crimson: 'Crimson' };
+const THEME_NAMES = { orange: 'Orange', crimson: 'Crimson', green: 'Green' };
 
 async function chooseTheme(theme) {
   const previous = selectedTheme();
@@ -530,6 +530,7 @@ function packagingRow(option) {
 
   row.appendChild(tag(option.price === 0 ? 'Free' : money(option.price),
     option.price === 0 ? 'tag-green' : 'tag-blue'));
+  if (option.multi_item_only) row.appendChild(tag('2+ items', 'tag-blue'));
   if (!option.enabled) row.appendChild(tag('Disabled', 'tag-red'));
 
   row.appendChild(rowButton('Edit', () => editPackaging(option)));
@@ -553,6 +554,20 @@ function editPackaging(option) {
   const price = textInput({ value: option ? (option.price / 100).toFixed(2) : '0.00' });
   form.appendChild(field('Price', price));
 
+  const image = textInput({
+    value: option ? (option.image || '') : '',
+    placeholder: '/assets/images/packaging/premium.svg',
+  });
+  form.appendChild(field('Image', image, 'Path to a picture shipped with the site, shown on the cart page.'));
+
+  const multiItem = document.createElement('input');
+  multiItem.type = 'checkbox';
+  multiItem.checked = !!(option && option.multi_item_only);
+  const multiLabel = document.createElement('label');
+  multiLabel.style.cssText = 'display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;';
+  multiLabel.append(multiItem, document.createTextNode('Only offer when the cart has two or more items'));
+  form.appendChild(field('Availability', multiLabel));
+
   openModal({
     title: option ? 'Edit ' + option.name : 'Add a packaging option',
     body: form,
@@ -569,6 +584,8 @@ function editPackaging(option) {
             name: name.value.trim(),
             description: description.value.trim(),
             price: Math.round(Number(price.value || 0) * 100),
+            image: image.value.trim(),
+            multi_item_only: multiItem.checked,
             enabled: option ? option.enabled : true,
             position: option ? option.position : packagingOptions.length,
           };
@@ -919,7 +936,7 @@ function inviteStaff() {
     + 'The account itself is created through admin sign-up — no email is sent from here.';
   form.appendChild(notice);
 
-  const email = textInput({ placeholder: 'name@bambe.store' });
+  const email = textInput({ placeholder: 'name@bambee.store' });
   form.appendChild(field('Admin account email', email));
 
   const role = selectInput(STAFF_ROLES.map((value) => ({ value, label: spaced(value) })), 'Manager');

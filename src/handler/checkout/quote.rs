@@ -65,6 +65,7 @@ pub async fn task(req: HttpRequest, query: web::Query<ReqQuery>) -> Result<HttpR
         // No cart yet is a perfectly ordinary state — quote it as zero
         // rather than as an error the page has to special-case.
         None => {
+            let packaging = packaging.filter(|p| !p.multi_item_only);
             let quote = pricing::totals(0, 0, false, delivery.as_ref(), packaging.as_ref(), tax_rate_bps, prices_include_tax);
             return Ok(HttpResponse::Ok().content_type("application/json").json(json!({
                 "items": [],
@@ -88,6 +89,12 @@ pub async fn task(req: HttpRequest, query: web::Query<ReqQuery>) -> Result<HttpR
 
     let body = build_response(&db, &cart).await;
     let subtotal = body["subtotal"].as_i64().unwrap_or(0);
+
+    // Priced as nothing rather than refused: the quote is a preview, and a
+    // shopper who took an item out since choosing one box is told so on
+    // the cart page. `place_order` is the one that says no.
+    let item_count = body["item_count"].as_u64().unwrap_or(0);
+    let packaging = packaging.filter(|p| !p.multi_item_only || item_count >= 2);
     let discount = body["discount"].as_i64().unwrap_or(0);
 
     // The coupon is evaluated again rather than read off the cart body,

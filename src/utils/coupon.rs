@@ -34,6 +34,11 @@ pub async fn evaluate(
         .map_err(|e| e.to_string())?
         .ok_or_else(|| "Coupon not found".to_string())?;
 
+    if let Some(owner) = &coupon.user_id {
+        if user_id != Some(owner.as_str()) {
+            return Err("This code belongs to another account".to_string());
+        }
+    }
     if !coupon.enabled {
         return Err("This coupon is disabled".to_string());
     }

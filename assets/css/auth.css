@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════
-   Bambe Web — auth.css
+   Bambee Web — auth.css
    Styles for: Login, Register, Forgot Password, OTP, Reset Password
 ═══════════════════════════════════════════════════════════════ */
 
@@ -54,7 +54,7 @@
 .auth-panel-left > *:not(.deco-circle) { position: relative; z-index: 1; }
 
 .auth-brand { display: flex; align-items: flex-end; gap: 0; }
-/* The stag in white on the dark panel, beside a white "ambe". */
+/* The stag in white on the dark panel, beside a white "ambee". */
 .auth-brand-mark {
   width: 36px;
   height: 40px;

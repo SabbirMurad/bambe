@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════
-   Bambe Web — product.js
+   Bambee Web — product.js
 
    The detail page. Everything here hangs off one call to
    `GET /v1/product/{slug}` plus a separate reviews page.
@@ -141,7 +141,7 @@ function renderHeader() {
 
   const title = $('.pd-title');
   if (title) title.textContent = product.title;
-  document.title = product.title + ' — Bambe';
+  document.title = product.title + ' — Bambee';
 
   const score = $('.pd-rating-score');
   if (score) score.textContent = (product.rating_average || 0).toFixed(1);
@@ -474,9 +474,9 @@ function reviewCard(review) {
   else headline.remove();
 
   const bought = [];
-  if (review.size) bought.push('Size ' + review.size);
-  if (review.color) bought.push(review.color);
+  if (review.variant_label) bought.push(review.variant_label);
   if (review.created_at) bought.push(new Date(review.created_at).toLocaleDateString());
+  if (review.scope === 'Order') bought.push('Reviewed with the whole order');
   card.querySelector('.review-meta').textContent = bought.length ? 'Purchased: ' + bought.join(' · ') : '';
 
   if (review.verified_purchase) {
@@ -496,7 +496,7 @@ function reviewCard(review) {
     reply.style.cssText = 'margin-top:12px;padding:12px 14px;background:var(--input-bg);'
       + 'border-radius:var(--radius-sm);border-left:2px solid var(--blue);';
     reply.innerHTML = '<div style="font-size:12px;font-weight:700;color:var(--blue);margin-bottom:4px;">'
-      + 'Response from Bambe</div>'
+      + 'Response from Bambee</div>'
       + '<div class="review-reply-body" style="font-size:13px;color:var(--subtle);line-height:1.6;"></div>';
     reply.querySelector('.review-reply-body').textContent = review.reply.body;
     card.appendChild(reply);
@@ -563,6 +563,12 @@ function helpfulButton(review) {
 }
 
 function renderRatingSummary(total, breakdown) {
+  /* Worked out from the breakdown rather than read off the product, so
+     a review written on this page moves the number without a reload. */
+  if (breakdown && total) {
+    const sum = [1, 2, 3, 4, 5].reduce((acc, n) => acc + n * (breakdown[n] || breakdown[String(n)] || 0), 0);
+    product.rating_average = sum / total;
+  }
   const big = $('.rating-big');
   if (big) big.textContent = (product.rating_average || 0).toFixed(1);
 
@@ -632,50 +638,38 @@ async function loadReviews(append = false) {
 /*
   Writing a review.
 
-  `POST /v1/review` accepts one from any signed-in customer; naming an
-  order is what earns the Verified Purchase badge, and the backend
-  re-checks that the order is the caller's own and contains this
-  product. So the page goes looking for a delivered order itself
-  rather than sending the customer off to find one — and when there
-  isn't one, the review is still accepted, just unbadged.
+  Only customers who bought the product can review it. The button
+  shows only when `GET /v1/review/eligible` finds a delivered order of
+  the caller's with this product still unreviewed on it, and the
+  review is filed against the newest such order.
 */
-async function findPurchase() {
-  if (!session.isSignedIn()) return null;
-
-  const response = await Fetcher.get({
-    endpoint: '/v1/order/list',
-    query: { status: 'delivered', limit: 50 },
-    showError: false,
-  });
-  if (!response.ok) return null;
-
-  const order = (response.data.items || [])
-    .find((o) => (o.items || []).some((i) => i.product_id === product.uuid));
-  return order ? order.uuid : null;
-}
-
-function wireWriteReview() {
+async function wireWriteReview() {
   const button = $('.section-head .btn-outline');
   if (!button) return;
+  button.style.display = 'none';
+  if (!session.isSignedIn()) return;
 
-  button.onclick = async () => {
-    if (!session.isSignedIn()) {
-      toast.info('Sign in to write a review');
-      setTimeout(() => session.requireSignedIn(), 700);
-      return;
-    }
+  const response = await Fetcher.get({
+    endpoint: '/v1/review/eligible',
+    query: { product_id: product.uuid },
+    showError: false,
+  });
+  const orders = response.ok ? (response.data || []) : [];
+  if (!orders.length) return;
 
-    button.disabled = true;
-    const orderId = await findPurchase();
-    button.disabled = false;
-
+  button.style.display = '';
+  button.onclick = () => {
     openReviewComposer({
+      orderId: orders[0].order_id,
       productId: product.uuid,
       productTitle: product.title,
-      orderId,
-      variantId: selected ? selected.uuid : null,
       image: (product.gallery || [])[0] || product.cover_image_id,
-      onDone: () => { reviewPage = 1; loadReviews(); },
+      onDone: () => {
+        reviewPage = 1;
+        loadReviews();
+        // That order is used up; re-ask in case another one is left.
+        wireWriteReview();
+      },
     });
   };
 }
@@ -805,7 +799,7 @@ function wireTabs() {
           ? 'It may have been removed. Try browsing the catalogue.'
           : 'Please try again in a moment.');
     }
-    document.title = 'Product not found — Bambe';
+    document.title = 'Product not found — Bambee';
     return;
   }
 

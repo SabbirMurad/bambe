@@ -43,6 +43,9 @@ pub use cart as Cart;
 pub mod wishlist;
 pub use wishlist as Wishlist;
 
+pub mod loyalty;
+pub use loyalty as Loyalty;
+
 pub mod recently_viewed;
 pub use recently_viewed as RecentlyViewed;
 

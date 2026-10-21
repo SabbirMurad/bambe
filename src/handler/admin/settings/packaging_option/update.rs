@@ -15,6 +15,8 @@ pub struct ReqBody {
     price: Option<Cents>,
     enabled: Option<bool>,
     position: Option<u16>,
+    image: Option<String>,
+    multi_item_only: Option<bool>,
 }
 
 pub async fn task(req: HttpRequest, path: web::Path<String>, body: web::Json<ReqBody>) -> Result<HttpResponse, Error> {
@@ -42,6 +44,8 @@ pub async fn task(req: HttpRequest, path: web::Path<String>, body: web::Json<Req
     if let Some(v) = body.price { set_doc.insert("price", v); }
     if let Some(v) = body.enabled { set_doc.insert("enabled", v); }
     if let Some(v) = body.position { set_doc.insert("position", v as i32); }
+    if let Some(v) = &body.image { set_doc.insert("image", v.trim()); }
+    if let Some(v) = body.multi_item_only { set_doc.insert("multi_item_only", v); }
 
     if set_doc.is_empty() {
         return Ok(HttpResponse::Ok().content_type("application/json").json(existing));

@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════
-   Bambe Web — categories.js
+   Bambee Web — categories.js
 
    The category tree and the Add-category panel beneath it, against
    the four `/v1/admin/category/*` endpoints.

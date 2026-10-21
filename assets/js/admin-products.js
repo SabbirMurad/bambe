@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════
-   Bambe Web — admin-products.js
+   Bambee Web — admin-products.js
 
    The catalogue table: four tabs, search, category and sort
    filters, per-row actions and the bulk bar.

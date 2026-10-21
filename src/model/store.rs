@@ -34,7 +34,7 @@ pub struct StoreSettings {
     pub maintenance_mode: bool,
 
     // The storefront's colour theme, chosen in Admin → Settings → Store:
-    // "orange" (the default, also what None means) or "crimson". Written
+    // "orange" (the default, also what None means), "crimson" or "green". Written
     // onto every page's <html> by src/markup.rs.
     #[serde(default)]
     pub theme: Option<String>,

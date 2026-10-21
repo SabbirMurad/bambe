@@ -172,7 +172,7 @@ pub async fn task(req: HttpRequest, path: web::Path<String>, body: web::Json<Req
             related_id: Some(order_id.clone()),
             link: Some("/account/orders".to_string()),
             email: Some(crate::utils::notify::Email {
-                subject: format!("Your Bambe order {} was cancelled", order.number),
+                subject: format!("Your Bambee order {} was cancelled", order.number),
                 html: crate::Integrations::Resend::order_cancelled_template(&order.number, refunded),
             }),
         },

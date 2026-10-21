@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════
-   Bambe Web — catalog.js
+   Bambee Web — catalog.js
 
    The pieces every product surface needs: money, images, stars and
    the product card itself. The listing grid, search results,

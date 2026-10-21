@@ -218,6 +218,10 @@ pub async fn task(req: HttpRequest, body: web::Json<ReqBody>) -> Result<HttpResp
         Some(id) => db.collection::<PackagingOption>("packaging_option").find_one(doc! { "uuid": id, "enabled": true }).await.ok().flatten(),
         None => None,
     };
+    let unit_count: u32 = cart_items.iter().map(|i| i.quantity).sum();
+    if packaging_option.as_ref().map(|p| p.multi_item_only && unit_count < 2).unwrap_or(false) {
+        return Ok(Response::bad_request("One-box packaging needs two or more items in the cart"));
+    }
 
     // Coupon is re-evaluated here rather than trusted from the cart — it
     // can expire or hit its limit in the minutes between browsing the cart
@@ -552,7 +556,7 @@ pub async fn task(req: HttpRequest, body: web::Json<ReqBody>) -> Result<HttpResp
             related_id: Some(order_id.clone()),
             link: Some("/account/orders".to_string()),
             email: Some(crate::utils::notify::Email {
-                subject: format!("Your Bambe order {}", order.number),
+                subject: format!("Your Bambee order {}", order.number),
                 html: crate::Integrations::Resend::order_placed_template(
                     &order.number,
                     item_count,

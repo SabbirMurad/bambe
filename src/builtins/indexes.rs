@@ -71,9 +71,15 @@ pub async fn ensure_indexes(db: &Database) {
     plain(db, "cart_item", doc! { "cart_id": 1 }, "cart_item_by_cart").await;
     plain(db, "cart", doc! { "user_id": 1 }, "cart_by_user").await;
     plain(db, "product_review", doc! { "product_id": 1, "created_at": -1 }, "review_by_product").await;
+    // One review per product per order — the create handler checks first,
+    // this stops two quick submits both getting through.
+    unique(db, "product_review", doc! { "user_id": 1, "order_id": 1, "product_id": 1 }, "review_per_order_product").await;
     // One vote per user per review — the vote endpoint reads it back to toggle.
     unique(db, "review_vote", doc! { "review_id": 1, "user_id": 1 }, "review_vote_pair").await;
     plain(db, "notification", doc! { "user_id": 1, "created_at": -1 }, "notification_by_user").await;
+    unique(db, "loyalty_card", doc! { "user_id": 1, "number": 1 }, "loyalty_card_number").await;
+    plain(db, "loyalty_card", doc! { "order_ids": 1 }, "loyalty_card_by_order").await;
+    plain(db, "admin_notification", doc! { "created_at": -1 }, "admin_notification_recent").await;
     plain(db, "return_request", doc! { "order_id": 1 }, "return_by_order").await;
     plain(db, "return_request", doc! { "user_id": 1, "requested_at": -1 }, "return_by_user").await;
     plain(db, "return_item", doc! { "return_request_id": 1 }, "return_item_by_request").await;

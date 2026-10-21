@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════
-   Bambe Web — returns.js
+   Bambee Web — returns.js
 
    `GET /v1/return/list` and `POST /v1/return` were both complete
    and had no page at all: a customer with a damaged delivery had

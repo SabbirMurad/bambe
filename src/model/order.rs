@@ -169,6 +169,14 @@ pub struct PackagingOption {
     pub price: Cents,
     pub enabled: bool,
     pub position: u16,
+    // A path under /assets — the pictures ship with the site rather than
+    // through the image upload, so this is just where to find one.
+    #[serde(default)]
+    pub image: String,
+    // One box for the whole order only makes sense with two things to put
+    // in it, so the cart hides it below that and checkout refuses it.
+    #[serde(default)]
+    pub multi_item_only: bool,
 }
 
 // What the customer picked, frozen into the order. Same reasoning as the

@@ -52,7 +52,10 @@ fn topic_allowed(kind: &NotifType, prefs: &Prefs) -> bool {
         NotifType::PriceDrop => prefs.price_drops,
         NotifType::BackInStock => prefs.back_in_stock,
         NotifType::ReviewReminder => prefs.review_reminders,
-        NotifType::Promotion | NotifType::LoyaltyPoints => prefs.promotions,
+        // Stamps and rewards are about the customer's own orders, not
+        // marketing, so they follow order updates rather than promotions.
+        NotifType::LoyaltyPoints => prefs.order_updates,
+        NotifType::Promotion => prefs.promotions,
 
         // Security and system messages are not opt-out.
         NotifType::Security | NotifType::System => true,

@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════
-   Bambe Web — admin-core.js
+   Bambee Web — admin-core.js
 
    The furniture every admin page carries, and the small vocabulary
    the nine page modules share: the guard, the signed-in identity,
@@ -273,6 +273,7 @@ async function paintNavCounts() {
     else if (label.startsWith('coupons')) items.coupons = count;
     else if (label.startsWith('support')) items.support = count;
     else if (label.startsWith('returns')) items.returns = count;
+    else if (label.startsWith('reviews')) items.reviews = count;
   });
 
   const set = (el, value) => {
@@ -281,7 +282,7 @@ async function paintNavCounts() {
     el.style.display = value ? '' : 'none';
   };
 
-  const [orders, products, categories, customers, coupons, tickets, returns] = await Promise.all([
+  const [orders, products, categories, customers, coupons, tickets, returns, reviews] = await Promise.all([
     Fetcher.get({ endpoint: '/v1/admin/order/list', query: { limit: 1 }, showError: false }),
     Fetcher.get({ endpoint: '/v1/admin/product/list', query: { limit: 1 }, showError: false }),
     Fetcher.get({ endpoint: '/v1/admin/category/list', showError: false }),
@@ -289,6 +290,7 @@ async function paintNavCounts() {
     Fetcher.get({ endpoint: '/v1/admin/coupon/list', query: { limit: 1 }, showError: false }),
     Fetcher.get({ endpoint: '/v1/admin/support/ticket/list', query: { status: 'open', limit: 1 }, showError: false }),
     Fetcher.get({ endpoint: '/v1/admin/return/list', query: { limit: 1 }, showError: false }),
+    Fetcher.get({ endpoint: '/v1/admin/review/list', query: { limit: 1 }, showError: false }),
   ]);
 
   set(items.orders, orders.ok ? orders.data.total : 0);
@@ -296,6 +298,7 @@ async function paintNavCounts() {
   set(items.categories, categories.ok ? (categories.data || []).length : 0);
   set(items.customers, customers.ok ? customers.data.total : 0);
   set(items.coupons, coupons.ok ? coupons.data.total : 0);
+  set(items.reviews, reviews.ok ? reviews.data.total : 0);
 
   /* The badge is the open queue, not the lifetime total — a count of
      every return ever filed tells staff nothing about today. */
@@ -346,22 +349,13 @@ export async function mountAdminChrome() {
   if (name) name.textContent = me.name || 'Admin';
 
   /*
-    The navbar bell was drawn with a badge reading 7 and nothing behind
-    it. There is no admin notification feed: `/v1/notification/list`
-    keys on the caller's uuid in `account_core`, and an admin lives in
-    `admin_account`, so it answers empty for every administrator. It has
-    no click handler either.
-
-    Removed rather than shown at zero, on the same rule the rest of this
-    console follows — a control that cannot do the one thing it depicts
-    is worse than no control. The counts that do mean something are in
-    the sidebar, painted by paintNavCounts() above.
+    The console's own bell, over `/v1/admin/notification/*` — a feed
+    shared by the whole team (staff live in `admin_account`, so the
+    shopper's `/v1/notification/list` can't serve it). Today it
+    carries the loyalty alerts: a customer one stamp from a full card,
+    and a full card with no reward set.
   */
-  // The bell is no longer in the console's markup; this only catches a
-  // page that still carries it. By title only — the old `|| first icon`
-  // fallback would now remove some other button.
-  const bell = $('.nav-icon-btn[title="Notifications"]');
-  if (bell) bell.remove();
+  mountAdminBell();
 
   const logout = $('.admin-nav-logout');
   if (logout) {
@@ -379,6 +373,118 @@ export async function mountAdminChrome() {
   paintNavCounts();
 
   return me;
+}
+
+/* ── Notification bell ────────────────────────────────────────  */
+
+const BELL_SVG = '<svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M10 2.5a5 5 0 0 1 5 5c0 4.2 1.6 5.5 1.6 5.5H3.4S5 11.7 5 7.5a5 5 0 0 1 5-5ZM8 16a2 2 0 0 0 4 0" stroke="#32302C" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const BELL_POLL_MS = 60000;
+
+function mountAdminBell() {
+  const actions = $('.nav-actions');
+  if (!actions || $('.admin-bell')) return;
+
+  const wrap = document.createElement('div');
+  wrap.className = 'admin-bell';
+
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = 'nav-icon-btn';
+  button.setAttribute('aria-label', 'Notifications');
+  button.setAttribute('aria-expanded', 'false');
+  button.innerHTML = BELL_SVG + '<div class="nav-badge"></div>';
+  wrap.appendChild(button);
+
+  const panel = document.createElement('div');
+  panel.className = 'admin-bell-panel';
+  panel.hidden = true;
+  wrap.appendChild(panel);
+  actions.insertBefore(wrap, actions.firstChild);
+
+  let items = [];
+
+  const paintPanel = () => {
+    panel.innerHTML = '';
+    const head = document.createElement('div');
+    head.className = 'admin-bell-head';
+    const title = document.createElement('span');
+    title.textContent = 'Notifications';
+    head.appendChild(title);
+    if (items.some((n) => !n.read_at)) {
+      const all = document.createElement('button');
+      all.type = 'button';
+      all.className = 'admin-bell-all';
+      all.textContent = 'Mark all read';
+      all.onclick = async () => {
+        await Fetcher.post({ endpoint: '/v1/admin/notification/read-all', body: {}, showError: false });
+        refresh();
+      };
+      head.appendChild(all);
+    }
+    panel.appendChild(head);
+
+    if (!items.length) {
+      const empty = document.createElement('div');
+      empty.className = 'admin-bell-empty';
+      empty.textContent = 'Nothing needs you right now.';
+      panel.appendChild(empty);
+      return;
+    }
+
+    items.forEach((n) => {
+      const row = document.createElement('button');
+      row.type = 'button';
+      row.className = 'admin-bell-item' + (n.read_at ? '' : ' is-unread');
+      const t = document.createElement('div');
+      t.className = 'admin-bell-title';
+      t.textContent = n.title;
+      const b = document.createElement('div');
+      b.className = 'admin-bell-body';
+      b.textContent = n.body;
+      const when = document.createElement('div');
+      when.className = 'admin-bell-when';
+      when.textContent = ago(n.created_at);
+      row.append(t, b, when);
+      row.onclick = async () => {
+        if (!n.read_at) {
+          await Fetcher.post({ endpoint: '/v1/admin/notification/' + n.uuid + '/read', body: {}, showError: false });
+        }
+        if (n.link) location.href = n.link;
+        else refresh();
+      };
+      panel.appendChild(row);
+    });
+  };
+
+  const refresh = async () => {
+    const response = await Fetcher.get({ endpoint: '/v1/admin/notification/list', query: { limit: 20 }, showError: false });
+    if (!response.ok) return;
+    items = response.data.items || [];
+    const unread = response.data.unread || 0;
+    button.querySelector('.nav-badge').textContent = unread ? (unread > 99 ? '99+' : String(unread)) : '';
+    button.setAttribute('aria-label', unread ? 'Notifications, ' + unread + ' unread' : 'Notifications');
+    if (!panel.hidden) paintPanel();
+  };
+
+  const close = () => {
+    panel.hidden = true;
+    button.setAttribute('aria-expanded', 'false');
+  };
+  button.onclick = (event) => {
+    event.stopPropagation();
+    if (panel.hidden) {
+      paintPanel();
+      panel.hidden = false;
+      button.setAttribute('aria-expanded', 'true');
+    } else {
+      close();
+    }
+  };
+  document.addEventListener('click', (event) => { if (!wrap.contains(event.target)) close(); });
+  document.addEventListener('keydown', (event) => { if (event.key === 'Escape') close(); });
+
+  refresh();
+  setInterval(() => { if (!document.hidden) refresh(); }, BELL_POLL_MS);
 }
 
 function wireConsoleSearch() {

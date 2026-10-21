@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════
-   Bambe Web — cart.js
+   Bambee Web — cart.js
 
    The cart is the one page where the server's arithmetic is the only
    arithmetic. The wireframe worked its own totals out in the browser
@@ -27,11 +27,17 @@
    the cart, whole — there is no way to check out three of five
    lines, so tick boxes that imply otherwise would be a promise the
    backend cannot keep. Removing a line is the way to leave it behind.
+
+   Packaging is picked here, before the address, because it is a
+   choice about these items. It goes into the checkout draft the later
+   steps read, and the one-box option only shows with two or more
+   items in the cart — the same rule `place-order` enforces.
 ═══════════════════════════════════════════════════════════════ */
 import { Fetcher } from './fetcher.js';
 import { toast } from './toast.js';
 import { session } from './session.js';
 import { money, paintImage, emptyState, hideSkeleton } from './catalog.js';
+import { draft, selectIn, wireKeyboardActivation } from './checkout.js';
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -43,6 +49,11 @@ let cart = null;
    request rather than one per click. */
 const pending = new Map();
 const QUIET_MS = 350;
+
+/* Every enabled packaging option, as the server listed them. Which of
+   them are offered depends on the cart, so they are kept whole and
+   filtered on each paint. */
+let packages = [];
 
 /* ── Line rendering ───────────────────────────────────────────  */
 
@@ -357,6 +368,89 @@ async function removeCoupon() {
   toast.success('Coupon removed');
 }
 
+/* ── Packaging ────────────────────────────────────────────────  */
+
+function offeredPackages() {
+  const units = cart ? unitCount() : 0;
+  return packages.filter((option) => !option.multi_item_only || units >= 2);
+}
+
+/* The draft's choice if it is still on offer, otherwise the first
+   option — so dropping to one item moves a one-box choice back to the
+   default instead of carrying a price the order would refuse. */
+function chosenPackage() {
+  const offered = offeredPackages();
+  if (!offered.length) return null;
+  const wanted = draft.read().packaging_option_id;
+  return offered.find((option) => option.uuid === wanted) || offered[0];
+}
+
+function packageCard(option) {
+  const card = document.createElement('div');
+  card.className = 'pack-option';
+  card.dataset.id = option.uuid;
+  card.setAttribute('role', 'radio');
+  card.setAttribute('aria-checked', 'false');
+  card.tabIndex = 0;
+  card.innerHTML =
+    '<div class="pack-option-img"></div>'
+    + '<div class="pack-option-body">'
+      + '<div class="pack-option-head">'
+        + '<span class="pack-option-name"></span>'
+        + '<span class="pack-option-price' + (option.price ? '' : ' free') + '"></span>'
+      + '</div>'
+      + '<div class="pack-option-desc"></div>'
+    + '</div>';
+
+  if (option.image) {
+    const img = document.createElement('img');
+    img.src = option.image;
+    img.alt = '';
+    img.loading = 'lazy';
+    card.querySelector('.pack-option-img').appendChild(img);
+  }
+  card.querySelector('.pack-option-name').textContent = option.name;
+  card.querySelector('.pack-option-price').textContent = option.price ? money(option.price) : 'Free';
+  const desc = card.querySelector('.pack-option-desc');
+  if (option.description) desc.textContent = option.description;
+  else desc.remove();
+
+  card.addEventListener('click', () => {
+    draft.write({ packaging_option_id: option.uuid });
+    paintSummary();
+  });
+  return card;
+}
+
+/* Rebuilt only when the set on offer changes — a quantity click that
+   keeps the cart at two or more items leaves the cards alone. */
+function paintPackaging() {
+  const section = $('#packaging');
+  const host = $('#packaging-options');
+  if (!section || !host) return;
+
+  const offered = cart && cart.items.length ? offeredPackages() : [];
+  section.hidden = !offered.length;
+
+  const chosen = chosenPackage();
+  draft.write({ packaging_option_id: chosen ? chosen.uuid : null });
+
+  const ids = offered.map((option) => option.uuid).join('|');
+  if (host.dataset.ids !== ids) {
+    host.dataset.ids = ids;
+    host.innerHTML = '';
+    offered.forEach((option) => host.appendChild(packageCard(option)));
+  }
+
+  const cards = Array.prototype.slice.call(host.querySelectorAll('.pack-option'));
+  selectIn(cards, cards.find((card) => chosen && card.dataset.id === chosen.uuid));
+}
+
+async function loadPackaging() {
+  const response = await Fetcher.get({ endpoint: '/v1/checkout/packaging-options', showError: false });
+  packages = response.ok ? (response.data || []) : [];
+}
+
 /* ── Summary ──────────────────────────────────────────────────  */
 
 function summaryRow(label, value, className) {
@@ -385,6 +479,9 @@ function paintSummary() {
   body.innerHTML = '';
   body.appendChild(summaryRow('Subtotal (' + units + (units === 1 ? ' item)' : ' items)'), money(cart.subtotal)));
 
+  const pack = chosenPackage();
+  if (pack) body.appendChild(summaryRow(pack.name, pack.price ? money(pack.price) : 'Free'));
+
   if (cart.coupon_code && !cart.coupon_error) {
     body.appendChild(cart.discount > 0
       ? summaryRow('Coupon (' + cart.coupon_code + ')', '–' + money(cart.discount), 'saving')
@@ -396,7 +493,7 @@ function paintSummary() {
      both are picked two steps later. */
   body.appendChild(summaryRow('Shipping', 'At checkout'));
   body.appendChild(summaryRow('Tax', 'At checkout'));
-  body.appendChild(summaryRow('Estimated total', money(cart.total), 'total'));
+  body.appendChild(summaryRow('Estimated total', money(cart.total + (pack ? pack.price : 0)), 'total'));
 
   const note = document.createElement('div');
   note.style.cssText = 'font-size:11.5px;color:var(--subtle);padding-top:10px;line-height:1.5;';
@@ -404,6 +501,7 @@ function paintSummary() {
   body.appendChild(note);
 
   paintCheckoutButton();
+  paintPackaging();
 }
 
 /* The optimistic half of the stepper: the same sum the server will
@@ -501,7 +599,10 @@ function render() {
 }
 
 async function reload() {
-  const response = await Fetcher.get({ endpoint: '/v1/cart' });
+  const [response] = await Promise.all([
+    Fetcher.get({ endpoint: '/v1/cart' }),
+    packages.length ? null : loadPackaging(),
+  ]);
   const host = itemsHost();
   if (host) hideSkeleton(host);
   // The summary is its own placeholder and ends here either way. Its
@@ -528,4 +629,5 @@ async function reload() {
   // The nav badges are navbar.js's job now, on every page rather than
   // just this one.
   reload();
+  wireKeyboardActivation('.pack-option');
 })();

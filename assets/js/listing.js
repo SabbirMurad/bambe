@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════
-   Bambe Web — listing.js
+   Bambee Web — listing.js
 
    Behaviour and data for the product listing pages (listing.html,
    the filtered/search-result view, and search.html). The sidebar
@@ -747,7 +747,7 @@ import { renderGrid, showSkeleton, hideSkeleton, emptyState } from './catalog.js
 
     document.title = name + ' — '
       + (total === 1 ? '1 result' : total.toLocaleString() + ' results')
-      + ' — Bambe';
+      + ' — Bambee';
   }
 
   /* The search page names the term in three places — crumb, headline
@@ -765,7 +765,7 @@ import { renderGrid, showSkeleton, hideSkeleton, emptyState } from './catalog.js
     if (subtitle) {
       subtitle.textContent = total === 1 ? 'Showing 1 result' : 'Showing ' + total.toLocaleString() + ' results';
     }
-    document.title = term ? 'Search: "' + term + '" — Bambe' : 'Search — Bambe';
+    document.title = term ? 'Search: "' + term + '" — Bambee' : 'Search — Bambee';
   }
 
   /* Any facet change is a new result set, so it goes back to

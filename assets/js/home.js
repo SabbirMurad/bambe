@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════
-   Bambe Web — home.js
+   Bambee Web — home.js
 
    The landing page has three data-backed strips: the category
    doors and the two product rows. Everything else on the page —

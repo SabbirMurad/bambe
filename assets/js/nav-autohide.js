@@ -6,8 +6,8 @@
 
   State lives in two classes on <html>, styled in common.css/shopping.css:
     nav-hidden     — the bars are slid up out of view
-    nav-past-hero  — home page only: the bars have left the dark hero, so
-                     they drop the red glass for the ordinary white bar
+    nav-past-hero  — home page only: the bars have left the hero, so they
+                     drop the white glass for the ordinary solid bar
 */
 const root = document.documentElement;
 const navbar = document.querySelector('.navbar');

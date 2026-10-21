@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════
-   Bambe Web — admin.js
+   Bambee Web — admin.js
 
    The storefront pages each carry a small inline <script>, but the
    six admin pages share the same table / tab / toggle behaviour, so

@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════
-   Bambe Web — account.js
+   Bambee Web — account.js
 
    The furniture every account page carries: the profile card at the
    top of the sidebar, the counts beside the nav items, and Log Out.

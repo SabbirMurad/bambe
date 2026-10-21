@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════
-   Bambe Web — admin-overview.js
+   Bambee Web — admin-overview.js
 
    `GET /v1/admin/dashboard` answers the whole screen in one call:
    four headline numbers, a revenue series, the last ten orders and
@@ -231,7 +231,7 @@ function exportCsv() {
   if (!data) return;
 
   const lines = [
-    ['Bambe — overview', PERIODS.find((p) => p.value === period).label],
+    ['Bambee — overview', PERIODS.find((p) => p.value === period).label],
     [],
     ['Revenue', (data.revenue / 100).toFixed(2)],
     ['Orders', data.orders],
@@ -249,7 +249,7 @@ function exportCsv() {
   const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
   const link = document.createElement('a');
   link.href = url;
-  link.download = 'bambe-overview-' + period + '.csv';
+  link.download = 'bambee-overview-' + period + '.csv';
   link.click();
   URL.revokeObjectURL(url);
   toast.success('Saved as CSV');

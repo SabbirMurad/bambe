@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════
-   Bambe Web — admin-orders.js
+   Bambee Web — admin-orders.js
 
    The fulfilment queue. Six tabs, a search, payment and date
    filters, and a drawer per order carrying everything the five
@@ -532,7 +532,7 @@ function exportCsv() {
   const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
   const link = document.createElement('a');
   link.href = url;
-  link.download = 'bambe-orders-page-' + state.page + '.csv';
+  link.download = 'bambee-orders-page-' + state.page + '.csv';
   link.click();
   URL.revokeObjectURL(url);
   toast.success('This page saved as CSV');

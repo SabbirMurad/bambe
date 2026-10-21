@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════
-   Bambe Web — profile.js
+   Bambee Web — profile.js
 
    The account's own page: who you are, the four tallies, your
    password, your notification switches, and the two books the
@@ -86,6 +86,13 @@ function renderStats(stats) {
     const number = card.querySelector('.stat-num');
     if (number) number.textContent = (values[index] || 0).toLocaleString();
   });
+  // The last one is the stamp card's count; it opens the card.
+  const stamps = cards[3];
+  if (stamps) {
+    stamps.style.cursor = 'pointer';
+    stamps.title = 'Open your stamp card';
+    stamps.onclick = () => { location.href = '/account/rewards'; };
+  }
 }
 
 /* ── Personal information ─────────────────────────────────────  */
@@ -600,7 +607,7 @@ async function loadMethods() {
   if (!methods.length) {
     host.innerHTML = '<div style="font-size:13px;color:var(--subtle);padding:14px 0;line-height:1.7;">'
       + 'No saved payment methods. New cards are tokenised by a payment processor, and none is connected to this store yet — '
-      + 'so cards can’t be added here, and no card number is ever stored by Bambe.</div>';
+      + 'so cards can’t be added here, and no card number is ever stored by Bambee.</div>';
     return;
   }
   methods.forEach((method) => host.appendChild(methodRow(method)));

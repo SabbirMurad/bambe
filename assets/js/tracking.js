@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════
-   Bambe Web — tracking.js
+   Bambee Web — tracking.js
 
    Where one order has got to. `GET /v1/order/{id}` carries the four
    lifecycle timestamps, the carrier's `tracking` block and any

@@ -13,6 +13,19 @@ impl std::fmt::Display for ReviewStatus {
     }
 }
 
+/*
+  What the customer was reviewing. A whole-order review is written as one
+  row per product in the order, sharing a `group_id` — so every product's
+  list, rating and helpful votes stay a plain per-product query, and each
+  row keeps the variant that product was actually bought in.
+*/
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
+pub enum ReviewScope {
+    #[default]
+    Product,
+    Order,
+}
+
 //product_review
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct ProductReview {
@@ -27,6 +40,15 @@ pub struct ProductReview {
     pub order_id: Option<String>,
     // The variant they bought, so the review can say "Black · XL".
     pub variant_id: Option<String>,
+    // Snapshot of that variant's label off the order line.
+    #[serde(default)]
+    pub variant_label: Option<String>,
+
+    #[serde(default)]
+    pub scope: ReviewScope,
+    // Shared by the rows of one whole-order review; None for a single one.
+    #[serde(default)]
+    pub group_id: Option<String>,
 
     // 1..=5. Validate on write; the aggregates on the product assume it.
     pub rating: u8,

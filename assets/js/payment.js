@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════
-   Bambe Web — payment.js
+   Bambee Web — payment.js
 
    Step two: how it gets paid for, and where the invoice goes.
 
@@ -135,7 +135,7 @@ function render() {
   notice.innerHTML =
     '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="flex-shrink:0;margin-top:1px;"><circle cx="8" cy="8" r="6.5" stroke="#94908A" stroke-width="1.2"/><path d="M8 7.5v3.5M8 5.2v.6" stroke="#94908A" stroke-width="1.4" stroke-linecap="round"/></svg>'
     + (gatewayAvailable
-      ? '<span><strong style="color:var(--dark);">No card number is typed into Bambe.</strong> '
+      ? '<span><strong style="color:var(--dark);">No card number is typed into Bambee.</strong> '
         + 'You’ll finish paying on SSLCommerz’s own page and come back here. '
         + 'Cards aren’t saved for next time yet.</span>'
       : '<span><strong style="color:var(--dark);">Card payment is unavailable right now.</strong> '

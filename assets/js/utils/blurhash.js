@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════
-   Bambe Web — utils/blurhash.js
+   Bambee Web — utils/blurhash.js
 
    Decodes the blur hash every image document carries (`blur_hash`,
    written by src/utils/blurhash.rs at upload) into a tiny blurred

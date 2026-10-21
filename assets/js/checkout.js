@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════
-   Bambe Web — checkout.js
+   Bambee Web — checkout.js
 
    The three checkout pages are one transaction split across three
    navigations, and the server holds no draft — `place-order` takes

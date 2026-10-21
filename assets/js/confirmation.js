@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════
-   Bambe Web — confirmation.js
+   Bambee Web — confirmation.js
 
    The receipt. Everything here comes from `GET /v1/order/{id}` —
    the order as it was actually written, not as the checkout draft

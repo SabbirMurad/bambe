@@ -1,14 +1,15 @@
 /* ═══════════════════════════════════════════════════════════════
-   Bambe Web — address.js
+   Bambee Web — address.js
 
-   Step one of checkout: where it goes, how it gets there, and what
-   it's wrapped in. The page was drawn with two invented addresses
-   and three invented delivery options, and the selections went
-   nowhere. All three groups are now real:
+   Step one of checkout: where it goes and how it gets there. The
+   page was drawn with two invented addresses and three invented
+   delivery options, and the selections went nowhere. Both groups
+   are now real:
 
      · saved addresses     GET/POST/PATCH/DELETE /v1/address
      · delivery method     GET /v1/checkout/delivery-methods
-     · packaging           GET /v1/checkout/packaging-options
+
+   Packaging is chosen on the cart page and arrives here in the draft.
 
    The delivery list is priced against this cart, so a method waived
    by a "free over $50" rule shows as free here rather than at the
@@ -39,7 +40,6 @@ const FIELDS = ['label', 'name', 'street', 'city', 'state', 'zip', 'country', 'p
 
 let addresses = [];
 let methods = [];
-let packages = [];
 let editing = null;   // the address being edited, or null when adding
 
 function input(field) { return document.getElementById('a-' + field); }
@@ -281,14 +281,12 @@ async function loadAddresses() {
   renderAddresses();
 }
 
-/* ── Delivery and packaging ───────────────────────────────────  */
+/* ── Delivery ─────────────────────────────────────────────────  */
 
 const ICONS = {
   truck: '<path d="M2 5.5h10v7H2v-7ZM12 8h3.2l2.8 2.6v1.9h-6V8Z" stroke="var(--warn)" stroke-width="1.4" stroke-linejoin="round"/><circle cx="5.5" cy="14.5" r="1.6" stroke="var(--warn)" stroke-width="1.4"/><circle cx="14.5" cy="14.5" r="1.6" stroke="var(--warn)" stroke-width="1.4"/>',
   bolt: '<path d="M11 2 4 11h4.5l-1 7 7.5-9.5h-4.6L11 2Z" stroke="var(--warn)" stroke-width="1.4" stroke-linejoin="round"/>',
   clock: '<circle cx="10" cy="10" r="7.5" stroke="var(--warn)" stroke-width="1.4"/><path d="M10 5.5V10l3 2" stroke="var(--warn)" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>',
-  box: '<path d="M2.5 6.2 10 3l7.5 3.2v7.6L10 17l-7.5-3.2V6.2Z" stroke="var(--warn)" stroke-width="1.4" stroke-linejoin="round"/><path d="m2.5 6.2 7.5 3.3 7.5-3.3M10 9.5V17" stroke="var(--warn)" stroke-width="1.4" stroke-linejoin="round"/>',
-  gift: '<path d="M2.5 7.5h15v9h-15v-9ZM2 5h16v2.5H2V5Z" stroke="var(--warn)" stroke-width="1.4" stroke-linejoin="round"/><path d="M10 5v11.5" stroke="var(--warn)" stroke-width="1.4"/><path d="M10 5S8.4 2.5 6.8 2.5A1.6 1.6 0 0 0 6.8 5H10Zm0 0s1.6-2.5 3.2-2.5A1.6 1.6 0 0 1 13.2 5H10Z" stroke="var(--warn)" stroke-width="1.4" stroke-linejoin="round"/>',
 };
 
 /* Fastest first gets the bolt, the timed one the clock — picked from
@@ -374,49 +372,6 @@ async function loadDelivery() {
   });
 }
 
-async function loadPackaging() {
-  const host = $('#packaging-options');
-  const response = await Fetcher.get({ endpoint: '/v1/checkout/packaging-options' });
-  packages = response.ok ? (response.data || []) : [];
-
-  host.innerHTML = '';
-  if (!packages.length) {
-    // Nothing to choose between — hide the section and its heading
-    // rather than leaving an empty numbered step on the page.
-    const heading = host.previousElementSibling;
-    if (heading && heading.classList.contains('ck-section-title')) heading.style.display = 'none';
-    host.style.display = 'none';
-    draft.write({ packaging_option_id: null });
-    return;
-  }
-
-  packages.forEach((option, index) => {
-    const card = optionCard(
-      index === 0 ? ICONS.box : ICONS.gift,
-      option.name,
-      option.description,
-      option.price ? money(option.price) : 'Free',
-      !option.price,
-    );
-    card.dataset.id = option.uuid;
-    host.appendChild(card);
-  });
-
-  const options = Array.prototype.slice.call(host.querySelectorAll('.delivery-option'));
-  const wanted = draft.read().packaging_option_id;
-  const pick = options.find((o) => o.dataset.id === wanted) || options[0];
-  selectIn(options, pick);
-  draft.write({ packaging_option_id: pick.dataset.id });
-
-  host.addEventListener('click', (e) => {
-    const option = e.target.closest('.delivery-option');
-    if (!option) return;
-    selectIn(options, option);
-    draft.write({ packaging_option_id: option.dataset.id });
-    refreshQuote();
-  });
-}
-
 /* ── Summary ──────────────────────────────────────────────────  */
 
 let currentSubtotal = 0;
@@ -465,7 +420,6 @@ function wireContinue() {
 
   await loadAddresses();
   await loadDelivery();
-  await loadPackaging();
   await refreshQuote();
 
   wireContinue();

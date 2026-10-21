@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════
-   Bambe Web — skeleton.js
+   Bambee Web — skeleton.js
 
    Loading placeholders for anything the real product would fetch:
    product grids, admin tables, order and notification lists, the

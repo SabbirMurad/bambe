@@ -104,7 +104,7 @@ pub async fn task(form_data: web::Json<ReqBody>) -> Result<HttpResponse, Error> 
 
         let result = Resend::send_email(
             &account_core.email_address,
-            "Reset your Bambe password",
+            "Reset your Bambee password",
             &message
         ).await;
         if let Err(_) = result {
@@ -156,7 +156,7 @@ pub async fn task(form_data: web::Json<ReqBody>) -> Result<HttpResponse, Error> 
 
     let result = Resend::send_email(
         &account_core.email_address,
-        "Reset your Bambe password",
+        "Reset your Bambee password",
         &message
     ).await;
     if let Err(_) = result {

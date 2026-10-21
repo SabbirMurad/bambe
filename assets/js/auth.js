@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════
-   Bambe Web — auth.js
+   Bambee Web — auth.js
 
    The three auth pages: login, register, forgot-password. One module
    because they share the same three jobs — validate a form, post it,
@@ -342,7 +342,7 @@ function dressAsAdminSignIn() {
   const title = document.querySelector('.auth-form-title');
   const sub = document.querySelector('.auth-form-sub');
   if (title) title.textContent = 'Admin sign-in';
-  if (sub) sub.textContent = 'Staff access to the Bambe console.';
+  if (sub) sub.textContent = 'Staff access to the Bambee console.';
 
   // Social sign-in mints a token for a shopper account; it cannot
   // produce an admin session, so it would fail whatever the outcome.
@@ -366,7 +366,7 @@ function dressAsAdminSignIn() {
   const features = document.querySelector('.auth-feature-list');
   if (features) features.remove();
 
-  document.title = 'Admin sign-in — Bambe';
+  document.title = 'Admin sign-in — Bambee';
 }
 
 /* ── Register ─────────────────────────────────────────────── */
