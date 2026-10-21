@@ -4,7 +4,7 @@ use serde_json::json;
 use mongodb::bson::doc;
 use actix_web::{Error, HttpResponse, HttpRequest};
 use crate::BuiltIns::mongo::MongoDB;
-use crate::utils::response::Response;
+use crate::util::response::Response;
 use crate::Middleware::Auth::{require_access, AccessRequirement};
 use crate::model::Order::{Order, ReturnRequest, ReturnItem};
 
@@ -25,7 +25,14 @@ pub async fn task(req: HttpRequest) -> Result<HttpResponse, Error> {
 
     let mut cursor = result.unwrap();
     let mut returns = Vec::new();
-    while let Some(Ok(r)) = cursor.next().await {
+    while let Some(result) = cursor.next().await {
+        let r = match result {
+            Ok(r) => r,
+            Err(error) => {
+                log::error!("{}: skipping unreadable document: {:?}", module_path!(), error);
+                continue;
+            }
+        };
         returns.push(r);
     }
 
@@ -35,7 +42,14 @@ pub async fn task(req: HttpRequest) -> Result<HttpResponse, Error> {
     } else {
         let mut cursor = db.collection::<Order>("order").find(doc! { "uuid": { "$in": &order_ids } }).await.expect("order lookup");
         let mut map = HashMap::new();
-        while let Some(Ok(o)) = cursor.next().await {
+        while let Some(result) = cursor.next().await {
+            let o = match result {
+                Ok(o) => o,
+                Err(error) => {
+                    log::error!("{}: skipping unreadable document: {:?}", module_path!(), error);
+                    continue;
+                }
+            };
             map.insert(o.uuid.clone(), o);
         }
         map
@@ -49,7 +63,14 @@ pub async fn task(req: HttpRequest) -> Result<HttpResponse, Error> {
             .await
             .expect("return item lookup");
         let mut lines = Vec::new();
-        while let Some(Ok(i)) = item_cursor.next().await {
+        while let Some(result) = item_cursor.next().await {
+            let i = match result {
+                Ok(i) => i,
+                Err(error) => {
+                    log::error!("{}: skipping unreadable document: {:?}", module_path!(), error);
+                    continue;
+                }
+            };
             lines.push(i);
         }
 

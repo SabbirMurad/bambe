@@ -1,0 +1,26 @@
+{#- What search engines and link previews read. The `seo` object comes from
+    markup.rs (see src/seo.rs); pages rendered without one keep a plain
+    title so nothing is ever blank. -#}
+{% if seo %}
+<title>{{ seo.title }}</title>
+{% if seo.description %}<meta name="description" content="{{ seo.description }}">{% endif %}
+<link rel="canonical" href="{{ seo.canonical }}">
+{% if seo.noindex %}<meta name="robots" content="noindex, follow">{% else %}<meta name="robots" content="index, follow, max-image-preview:large">{% endif %}
+<meta property="og:type" content="{{ seo.og_type }}">
+<meta property="og:site_name" content="Bambee">
+<meta property="og:title" content="{{ seo.title }}">
+{% if seo.description %}<meta property="og:description" content="{{ seo.description }}">{% endif %}
+<meta property="og:url" content="{{ seo.canonical }}">
+{% if seo.image %}<meta property="og:image" content="{{ seo.image }}">{% endif %}
+{% if seo.product_price %}<meta property="product:price:amount" content="{{ seo.product_price }}">
+<meta property="product:price:currency" content="{{ seo.product_currency }}">{% endif %}
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="{{ seo.title }}">
+{% if seo.description %}<meta name="twitter:description" content="{{ seo.description }}">{% endif %}
+{% if seo.image %}<meta name="twitter:image" content="{{ seo.image }}">{% endif %}
+{% for block in seo.json_ld %}<script type="application/ld+json">{{ block | safe }}</script>
+{% endfor %}
+{% else %}
+<title>Bambee</title>
+{% endif %}
+{% if google_site_verification %}<meta name="google-site-verification" content="{{ google_site_verification }}">{% endif %}

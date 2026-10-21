@@ -3,10 +3,10 @@ use uuid::Uuid;
 use chrono::Utc;
 use mongodb::bson::doc;
 use crate::Model::Account;
-use crate::Integrations::Smtp;
+use crate::Integrations::Resend;
 use crate::BuiltIns::mongo::MongoDB;
 use serde::{ Serialize, Deserialize };
-use crate::utils::response::Response;
+use crate::util::response::Response;
 use actix_web::{ web, Error, HttpResponse };
 
 //time in minutes
@@ -23,7 +23,7 @@ pub async fn task(form_data: web::Json<ReqBody>) -> Result<HttpResponse, Error> 
 
     /* DATABASE ACID SESSION INIT */
     let (db, mut session) = MongoDB.connect_acid().await;
-    if let Err(error) = session.start_transaction().await {
+    if let Err(error) = MongoDB::begin(&mut session).await {
         log::error!("{:?}", error);
         return Ok(Response::internal_server_error(&error.to_string()));
     }
@@ -40,18 +40,18 @@ pub async fn task(form_data: web::Json<ReqBody>) -> Result<HttpResponse, Error> 
                 { "email_verified": true },
             ]
         },
-    ).await;
+    ).session(&mut session).await;
 
     if let Err(error) = result {
         log::error!("{:?}", error);
-        session.abort_transaction().await.ok().unwrap();
+        MongoDB::abort(&mut session).await;
         return Ok(Response::internal_server_error(&error.to_string()));
     }
 
     let option = result.unwrap();
 
     if let None = option {
-        session.abort_transaction().await.ok().unwrap();
+        MongoDB::abort(&mut session).await;
         return Ok(Response::not_found(
             "No account found with this email or username"
         ));
@@ -64,11 +64,11 @@ pub async fn task(form_data: web::Json<ReqBody>) -> Result<HttpResponse, Error> 
     <Account::PasswordResetRequest>("password_reset_request");
     let result = collection.count_documents(
         doc!{"user_id": &account_core.uuid},
-    ).await;
+    ).session(&mut session).await;
 
     if let Err(error) = result {
         log::error!("{:?}", error);
-        session.abort_transaction().await.ok().unwrap();
+        MongoDB::abort(&mut session).await;
         return Ok(Response::internal_server_error(&error.to_string()));
     }
 
@@ -88,29 +88,33 @@ pub async fn task(form_data: web::Json<ReqBody>) -> Result<HttpResponse, Error> 
             doc!{"$set": {
                 "secret_key": &secret_key,
                 "validation_code": &validation_code.to_string(),
-                "expires_at": &expires_at
+                "expires_at": &expires_at,
+                "attempts": 0,
             }},
-        ).await;
+        ).session(&mut session).await;
 
         if let Err(error) = result {
             log::error!("{:?}", error);
-            session.abort_transaction().await.ok().unwrap();
+            MongoDB::abort(&mut session).await;
             return Ok(Response::internal_server_error(&error.to_string()));
         }
 
-        let message = Smtp::password_reset_verification_code_template(
-            &account_core.email_address,
+        let message = Resend::password_reset_verification_code_template(
             &validation_code.to_string()
         );
-    
-        let result = Smtp::send_email(message);
+
+        let result = Resend::send_email(
+            &account_core.email_address,
+            "Reset your Bambee password",
+            &message
+        ).await;
         if let Err(_) = result {
-            session.abort_transaction().await.ok().unwrap();
+            MongoDB::abort(&mut session).await;
             return Ok(Response::internal_server_error("Failed to send email"));
         }
     
         /* DATABASE ACID COMMIT */
-        if let Err(error) = session.commit_transaction().await {
+        if let Err(error) = MongoDB::commit(&mut session).await {
             log::error!("{:?}", error);
             return Ok(Response::internal_server_error(&error.to_string()));
         }
@@ -138,28 +142,32 @@ pub async fn task(form_data: web::Json<ReqBody>) -> Result<HttpResponse, Error> 
             "validation_code": &validation_code.to_string(),
             "code_validated": false,
             "expires_at": expires_at,
+            "attempts": 0,
         },
-    ).await;
+    ).session(&mut session).await;
 
     if let Err(error) = result {
         log::error!("{:?}", error);
-        session.abort_transaction().await.ok().unwrap();
+        MongoDB::abort(&mut session).await;
         return Ok(Response::internal_server_error(&error.to_string()));
     }
 
-    let message = Smtp::password_reset_verification_code_template(
-        &account_core.email_address,
+    let message = Resend::password_reset_verification_code_template(
         &validation_code.to_string()
     );
 
-    let result = Smtp::send_email(message);
+    let result = Resend::send_email(
+        &account_core.email_address,
+        "Reset your Bambee password",
+        &message
+    ).await;
     if let Err(_) = result {
-        session.abort_transaction().await.ok().unwrap();
+        MongoDB::abort(&mut session).await;
         return Ok(Response::internal_server_error("Failed to send email"));
     }
 
     /* DATABASE ACID COMMIT */
-    if let Err(error) = session.commit_transaction().await {
+    if let Err(error) = MongoDB::commit(&mut session).await {
         log::error!("{:?}", error);
         return Ok(Response::internal_server_error(&error.to_string()));
     }

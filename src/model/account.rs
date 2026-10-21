@@ -62,7 +62,10 @@ pub struct AccountVerificationRequest {
     pub uuid: String,
     pub user_id: String,
     pub code: String,
-    pub expires_at: i64
+    pub expires_at: i64,
+    // Wrong guesses so far; the request is destroyed at MAX_CODE_ATTEMPTS.
+    #[serde(default)]
+    pub attempts: u32,
 }
 
 //account_deletion_request — a user-initiated request to delete their account.
@@ -87,6 +90,9 @@ pub struct PasswordResetRequest {
     pub validation_code: String,
     pub code_validated: bool,
     pub expires_at: i64,
+    // Wrong guesses so far; the request is destroyed at MAX_CODE_ATTEMPTS.
+    #[serde(default)]
+    pub attempts: u32,
 }
 
 //sign_in_verification_request
@@ -96,6 +102,9 @@ pub struct SignInVerificationRequest {
     pub user_id: String,
     pub validation_code: String,
     pub expires_at: i64,
+    // Wrong guesses so far; the request is destroyed at MAX_CODE_ATTEMPTS.
+    #[serde(default)]
+    pub attempts: u32,
 }
 
 //fcm_token

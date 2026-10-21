@@ -1,14 +1,16 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-store-theme="{{ store_theme | default(value='orange') }}">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Shopping Cart — Bambe</title>
+<meta name="robots" content="noindex, nofollow">
+<title>Shopping Cart — Bambee</title>
+{% include "common/favicon.html" %}
 <link rel="stylesheet" href="/assets/css/common.css">
 <link rel="stylesheet" href="/assets/css/checkout.css">
 </head>
 <body>
-<nav class="navbar"><div class="navbar-inner"><a href="/" class="nav-logo"><div class="nav-logo-mark"></div><span class="nav-logo-text">ambe</span></a><div class="nav-search"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="7" cy="7" r="5" stroke="#94908A" stroke-width="1.4"/><path d="M11 11 14.5 14.5" stroke="#94908A" stroke-width="1.4" stroke-linecap="round"/></svg><input type="text" placeholder="Search products, brands…"><div class="nav-search-btn"><svg width="14" height="14" viewBox="0 0 16 16" fill="none"><circle cx="7" cy="7" r="5" stroke="white" stroke-width="1.4"/><path d="M11 11 14.5 14.5" stroke="white" stroke-width="1.4" stroke-linecap="round"/></svg></div></div><div class="nav-actions"><div class="nav-icon-btn"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M10 17S2 12 2 6.5a4 4 0 0 1 8-1 4 4 0 0 1 8 1C18 12 10 17 10 17Z" stroke="#32302C" stroke-width="1.5" stroke-linejoin="round"/></svg><div class="nav-badge">5</div></div><div class="nav-icon-btn" style="background:var(--blue-lt);"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M2 2h2.5l3 10h9l2-7H5.5" stroke="var(--blue)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="9" cy="17" r="1.5" fill="var(--blue)"/><circle cx="15" cy="17" r="1.5" fill="var(--blue)"/></svg><div class="nav-badge">3</div></div><div class="nav-user-btn"><div class="nav-avatar"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="5.5" r="3" stroke="var(--blue)" stroke-width="1.4"/><path d="M2 14c0-3.3 2.7-6 6-6s6 2.7 6 6" stroke="var(--blue)" stroke-width="1.4" stroke-linecap="round"/></svg></div><span class="nav-user-name">John D.</span></div></div></div></nav>
+<nav class="navbar"><div class="navbar-inner"><a href="/" class="nav-logo"><div class="nav-logo-mark"></div><span class="nav-logo-text">ambee</span></a><div class="nav-search"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="7" cy="7" r="5" stroke="#94908A" stroke-width="1.4"/><path d="M11 11 14.5 14.5" stroke="#94908A" stroke-width="1.4" stroke-linecap="round"/></svg><input type="text" placeholder="Search products, brands…"><div class="nav-search-btn"><svg width="14" height="14" viewBox="0 0 16 16" fill="none"><circle cx="7" cy="7" r="5" stroke="white" stroke-width="1.4"/><path d="M11 11 14.5 14.5" stroke="white" stroke-width="1.4" stroke-linecap="round"/></svg></div></div><div class="nav-actions"><div class="nav-icon-btn" data-nav="wishlist"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M10 17S2 12 2 6.5a4 4 0 0 1 8-1 4 4 0 0 1 8 1C18 12 10 17 10 17Z" stroke="#32302C" stroke-width="1.5" stroke-linejoin="round"/></svg><div class="nav-badge"></div></div><div class="nav-icon-btn" data-nav="cart" style="background:var(--blue-lt);"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M2 2h2.5l3 10h9l2-7H5.5" stroke="var(--blue)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="9" cy="17" r="1.5" fill="var(--blue)"/><circle cx="15" cy="17" r="1.5" fill="var(--blue)"/></svg><div class="nav-badge"></div></div><div class="nav-user-btn"><div class="nav-avatar"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="5.5" r="3" stroke="var(--blue)" stroke-width="1.4"/><path d="M2 14c0-3.3 2.7-6 6-6s6 2.7 6 6" stroke="var(--blue)" stroke-width="1.4" stroke-linecap="round"/></svg></div><span class="nav-user-name">John D.</span></div></div></div></nav>
 
 <main>
   <div class="container">
@@ -26,25 +28,28 @@
           <span class="cart-panel-count">3 items</span>
         </h1>
 
-        <!-- Cart table header -->
+        <!-- Cart table header.
+             The select-all box is gone: place-order takes the cart whole,
+             so there is no way to check out a subset and a tick box would
+             promise one. -->
         <div class="cart-table-head">
-          <span class="cart-select-all">
-            <span class="form-check-input checked" id="selectAll"><svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4l3 3 5-6" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-            Select all
-          </span>
+          <span>Item</span>
           <span style="text-align:center;">Unit Price</span>
           <span style="text-align:center;">Subtotal</span>
           <span></span>
         </div>
 
+        <!-- cart.js replaces everything in here with the real lines. The two
+             below are what skeleton.js derives its placeholder from. -->
+        <div class="cart-items" data-skeleton>
+
         <!-- Item 1 -->
-        <div class="cart-item" data-skeleton>
+        <div class="cart-item">
           <div class="cart-item-info">
-            <div class="cart-select form-check-input checked"><svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4l3 3 5-6" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
             <div class="cart-item-img" style="background:linear-gradient(140deg,#D8E4ED,#EDE5D8);"></div>
             <div>
-              <div class="cart-item-name">Essential White Tee — Premium Cotton Blend</div>
-              <div class="cart-item-meta">Brand: TrendCo &nbsp;·&nbsp; Size: M &nbsp;·&nbsp; Color: White</div>
+              <div class="cart-item-name">Silk Repair Conditioner Blend</div>
+              <div class="cart-item-meta">Brand: Maison Lume &nbsp;·&nbsp; Size: M &nbsp;·&nbsp; Color: White</div>
               <div class="cart-item-actions">
                 <div class="qty-ctrl" style="height:32px;">
                   <div class="qty-btn" style="width:30px;height:30px;font-size:16px;">−</div>
@@ -68,9 +73,8 @@
         </div>
 
         <!-- Item 2 -->
-        <div class="cart-item" data-skeleton>
+        <div class="cart-item">
           <div class="cart-item-info">
-            <div class="cart-select form-check-input checked"><svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4l3 3 5-6" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
             <div class="cart-item-img" style="background:linear-gradient(140deg,#E8D5C0,#F5E6D3);"></div>
             <div>
               <div class="cart-item-name">Relaxed Linen Blazer — Sand Beige</div>
@@ -93,31 +97,7 @@
           <div class="cart-remove-col"><button class="cart-remove-btn"><svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M2 2l9 9M11 2 2 11" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg></button></div>
         </div>
 
-        <!-- Item 3 -->
-        <div class="cart-item" data-skeleton>
-          <div class="cart-item-info">
-            <div class="cart-select form-check-input checked"><svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4l3 3 5-6" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-            <div class="cart-item-img" style="background:linear-gradient(140deg,#F0EDE5,#E5EDF0);"></div>
-            <div>
-              <div class="cart-item-name">Slim Fit Chino Trousers — Navy</div>
-              <div class="cart-item-meta">Brand: ClassicLine &nbsp;·&nbsp; Size: 32×32 &nbsp;·&nbsp; Color: Navy</div>
-              <div class="cart-item-actions">
-                <div class="qty-ctrl" style="height:32px;">
-                  <div class="qty-btn" style="width:30px;height:30px;font-size:16px;">−</div>
-                  <div class="qty-val" style="width:36px;height:30px;font-size:13px;">1</div>
-                  <div class="qty-btn" style="width:30px;height:30px;font-size:16px;">+</div>
-                </div>
-                <div class="cart-item-action wishlist">
-                  <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M7 12.2S1.4 8.4 1.4 4.9a2.9 2.9 0 0 1 5.6-1 2.9 2.9 0 0 1 5.6 1c0 3.5-5.6 7.3-5.6 7.3Z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg>
-                  Move to wishlist
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="cart-item-price-col"><span class="cart-unit-price">$64.99</span></div>
-          <div class="cart-total-price">$64.99</div>
-          <div class="cart-remove-col"><button class="cart-remove-btn"><svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M2 2l9 9M11 2 2 11" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg></button></div>
-        </div>
+        </div><!-- /.cart-items -->
 
         <!-- Coupon row -->
         <div class="coupon-row">
@@ -125,14 +105,21 @@
             <div class="coupon-icon">
               <svg width="18" height="18" viewBox="0 0 16 16" fill="none"><rect x="1" y="4" width="14" height="8" rx="2" stroke="currentColor" stroke-width="1.3"/><circle cx="5" cy="8" r="1.5" stroke="currentColor" stroke-width="1.2"/><path d="M8 6h5M8 10h5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
             </div>
-            <input class="coupon-input" placeholder="Enter coupon code" value="SAVE10">
-            <div class="coupon-applied">
-              <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><circle cx="6" cy="6" r="5.5" fill="var(--success)" opacity=".15"/><path d="M3.5 6l2 2 3-3.5" stroke="var(--success)" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              Applied: –$21.40
-            </div>
+            <input class="coupon-input" placeholder="Enter coupon code">
+            <!-- Holds the applied discount, or the reason a code was refused —
+                 cart.js fills it either way. -->
+            <div class="coupon-applied" style="display:none;"></div>
           </div>
-          <button class="btn btn-ghost" style="height:48px;">Change</button>
+          <button class="btn btn-ghost" style="height:48px;">Apply</button>
         </div>
+
+        <!-- Packaging. cart.js builds the cards from
+             GET /v1/checkout/packaging-options and hides the section when
+             there is nothing to choose between. -->
+        <section class="pack-section" id="packaging" hidden>
+          <h2 class="pack-title">Packaging</h2>
+          <div class="pack-options" id="packaging-options" role="radiogroup" aria-label="Packaging"></div>
+        </section>
       </div>
 
       <!-- RIGHT: Order summary -->
@@ -150,7 +137,7 @@
             <a href="/checkout/address" id="checkoutLink">
               <button class="checkout-btn">
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="1" y="3" width="14" height="10" rx="2" stroke="white" stroke-width="1.3"/><path d="M1 6h14" stroke="white" stroke-width="1.3"/><circle cx="4.5" cy="10" r="1.2" fill="white"/></svg>
-                Proceed to Checkout
+                <span class="checkout-label">Proceed to Checkout</span>
               </button>
             </a>
             <div class="checkout-hint" id="checkoutHint" style="display:none;">Select at least one item to continue</div>
@@ -166,8 +153,8 @@
               <div class="pay-icon" style="background:var(--input-bg);color:var(--mid);height:28px;font-size:10px;">VISA</div>
               <div class="pay-icon" style="background:var(--input-bg);color:var(--mid);height:28px;font-size:10px;">MC</div>
               <div class="pay-icon" style="background:var(--input-bg);color:var(--mid);height:28px;font-size:10px;">AMEX</div>
-              <div class="pay-icon" style="background:var(--input-bg);color:var(--mid);height:28px;font-size:10px;">PayPal</div>
-              <div class="pay-icon" style="background:var(--input-bg);color:var(--mid);height:28px;font-size:10px;">Apple Pay</div>
+              <div class="pay-icon" style="background:var(--input-bg);color:var(--mid);height:28px;font-size:10px;">MOBILE BANKING</div>
+              <div class="pay-icon" style="background:var(--input-bg);color:var(--mid);height:28px;font-size:10px;">CASH ON DELIVERY</div>
             </div>
           </div>
         </div>
@@ -181,58 +168,47 @@
     <div class="footer-brand">
       <div class="footer-logo">
         <div class="footer-logo-mark"></div>
-        <span class="footer-logo-text">ambe</span>
+        <span class="footer-logo-text">ambee</span>
       </div>
-      <p class="footer-desc">Your one-stop shop for fashion, electronics, home goods, and more. Premium brands, unbeatable prices.</p>
+      <p class="footer-desc">Cosmetics, skincare, body care, wellness, hair, nails and men's grooming — chosen well, priced fairly.</p>
       <div class="footer-social">
-        <div class="footer-social-btn"><svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M16 8.05C16 3.6 12.4 0 8 0S0 3.6 0 8.05c0 3.9 2.8 7.2 6.5 7.85v-5.5H4.5v-2.4H6.5V6.2c0-2 1.2-3.1 3-3.1.85 0 1.7.15 1.7.15v1.9h-1c-.95 0-1.2.6-1.2 1.2v1.4H11l-.4 2.4H9v5.5C12.7 15.2 16 11.9 16 8.05Z" fill="rgba(255,255,255,0.6)"/></svg></div>
-        <div class="footer-social-btn"><svg width="14" height="14" viewBox="0 0 16 16" fill="none"><rect x="1" y="1" width="14" height="14" rx="3.5" stroke="rgba(255,255,255,0.6)" stroke-width="1.3"/><circle cx="8" cy="8" r="3" stroke="rgba(255,255,255,0.6)" stroke-width="1.3"/><circle cx="12" cy="4" r="1" fill="rgba(255,255,255,0.6)"/></svg></div>
-        <div class="footer-social-btn"><svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M15 2.5s-1.7.9-2.6 1.1A3.5 3.5 0 0 0 1 7.2v.8C4.9 9 7.5 7 9 5c0 0 .7 3 4 4 0 0-2 2-5 2a6.5 6.5 0 0 1-6.5-3C1.5 10 3 14 6 15c-1 .5-2.5.5-3.5 0 1 2.5 3 3.5 5.5 3.5-1 1-3 1.5-5 1.5" stroke="rgba(255,255,255,0.6)" stroke-width="1.3" stroke-linecap="round"/></svg></div>
-        <div class="footer-social-btn"><svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M1 1l6 6-6 8h2l5-6.5L13 15h3L10 8.5 15.5 1H13.5L8 7 3.5 1H1Z" fill="rgba(255,255,255,0.6)"/></svg></div>
+        {% if facebook_url %}<a class="footer-social-btn" href="{{ facebook_url }}" target="_blank" rel="noopener" aria-label="Bambee on Facebook"><svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M16 8.05C16 3.6 12.4 0 8 0S0 3.6 0 8.05c0 3.9 2.8 7.2 6.5 7.85v-5.5H4.5v-2.4H6.5V6.2c0-2 1.2-3.1 3-3.1.85 0 1.7.15 1.7.15v1.9h-1c-.95 0-1.2.6-1.2 1.2v1.4H11l-.4 2.4H9v5.5C12.7 15.2 16 11.9 16 8.05Z" fill="rgba(255,255,255,0.6)"/></svg></a>{% endif %}
+        {% if instagram_url %}<a class="footer-social-btn" href="{{ instagram_url }}" target="_blank" rel="noopener" aria-label="Bambee on Instagram"><svg width="14" height="14" viewBox="0 0 16 16" fill="none"><rect x="1" y="1" width="14" height="14" rx="3.5" stroke="rgba(255,255,255,0.6)" stroke-width="1.3"/><circle cx="8" cy="8" r="3" stroke="rgba(255,255,255,0.6)" stroke-width="1.3"/><circle cx="12" cy="4" r="1" fill="rgba(255,255,255,0.6)"/></svg></a>{% endif %}
+        {% if whatsapp_number %}<a class="footer-social-btn" href="https://wa.me/{{ whatsapp_number }}" target="_blank" rel="noopener" aria-label="Chat with Bambee on WhatsApp"><svg width="15" height="15" viewBox="0 0 24 24" aria-hidden="true"><path fill="rgba(255,255,255,0.6)" d="M17.47 14.38c-.3-.15-1.75-.86-2.02-.96-.27-.1-.47-.15-.67.15-.2.3-.77.96-.94 1.16-.17.2-.35.22-.64.07-.3-.15-1.25-.46-2.38-1.47-.88-.79-1.47-1.76-1.64-2.05-.17-.3-.02-.46.13-.6.13-.13.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.08-.15-.67-1.61-.92-2.2-.24-.58-.49-.5-.67-.5h-.57c-.2 0-.52.07-.79.37-.27.3-1.04 1.02-1.04 2.48s1.07 2.88 1.21 3.08c.15.2 2.1 3.2 5.08 4.49.71.31 1.26.49 1.7.63.71.23 1.36.2 1.87.12.57-.08 1.75-.72 2-1.41.25-.7.25-1.29.17-1.41-.07-.13-.27-.2-.57-.35M12.05 21.5h-.01a9.4 9.4 0 0 1-4.8-1.31l-.34-.2-3.57.94.95-3.48-.22-.36a9.42 9.42 0 0 1-1.44-5.02c0-5.2 4.24-9.43 9.44-9.43 2.52 0 4.89.98 6.67 2.77a9.37 9.37 0 0 1 2.76 6.67c0 5.2-4.23 9.43-9.44 9.43m8.03-17.46A11.27 11.27 0 0 0 12.05.72C5.8.72.7 5.8.7 12.06c0 2 .52 3.95 1.52 5.67L.6 23.28l5.68-1.49a11.32 11.32 0 0 0 5.77 1.56h.01c6.25 0 11.35-5.09 11.35-11.35 0-3.03-1.18-5.88-3.33-8.02"/></svg></a>{% endif %}
       </div>
     </div>
-    <div>
-      <div class="footer-col-title">Shop</div>
-      <a class="footer-link">Men's Fashion</a>
-      <a class="footer-link">Women's Fashion</a>
-      <a class="footer-link">Kids & Baby</a>
-      <a class="footer-link">Electronics</a>
-      <a class="footer-link">Home & Living</a>
-      <a class="footer-link">Sale</a>
-    </div>
+    {% include "common/footer-shop.html" %}
     <div>
       <div class="footer-col-title">Account</div>
       <a class="footer-link" href="/account/profile">My Profile</a>
       <a class="footer-link" href="/account/orders">My Orders</a>
       <a class="footer-link" href="/wishlist">Wishlist</a>
       <a class="footer-link" href="/cart">Cart</a>
-      <a class="footer-link">Loyalty Points</a>
+      <a class="footer-link" href="/account/rewards">Loyalty Card</a>
     </div>
     <div>
       <div class="footer-col-title">Help</div>
-      <a class="footer-link">Help Center</a>
-      <a class="footer-link">Track Order</a>
-      <a class="footer-link">Returns</a>
+      <a class="footer-link" href="/account/support">Help Center</a>
+      <a class="footer-link" href="/account/orders">Track Order</a>
+      <a class="footer-link" href="/account/returns">Returns</a>
       <a class="footer-link">Shipping Info</a>
-      <a class="footer-link">Contact Us</a>
+      <a class="footer-link" href="/account/support">Contact Us</a>
     </div>
     <div>
       <div class="footer-col-title">Company</div>
-      <a class="footer-link">About Us</a>
-      <a class="footer-link">Careers</a>
-      <a class="footer-link">Blog</a>
-      <a class="footer-link">Press</a>
-      <a class="footer-link">Affiliates</a>
+      <a class="footer-link" href="/about">About Us</a>
+      <a class="footer-link" href="/privacy">Privacy Policy</a>
+      <a class="footer-link" href="/terms">Terms of Use</a>
     </div>
   </div>
   <div class="footer-bottom">
-    <span>© 2026 Bambe Inc. · Privacy Policy · Terms of Service</span>
+    <span>© 2026 Bambee Inc. · <a href="/privacy">Privacy Policy</a> · <a href="/terms">Terms of Use</a></span>
     <div class="footer-pay-icons">
       <div class="pay-icon">VISA</div>
       <div class="pay-icon">MC</div>
       <div class="pay-icon">AMEX</div>
-      <div class="pay-icon">PayPal</div>
-      <div class="pay-icon">Apple Pay</div>
+      <div class="pay-icon">MOBILE BANKING</div>
+      <div class="pay-icon">CASH ON DELIVERY</div>
     </div>
   </div>
 </footer>
@@ -245,137 +221,18 @@
   if (userBtn) userBtn.onclick = function() { location.href = '/account/profile'; };
   var searchBtn = document.querySelector('.nav-search-btn');
   if (searchBtn) searchBtn.onclick = function() { location.href = '/search'; };
-  // Cart item images/names → product
-  document.querySelectorAll('.cart-item-img').forEach(function(img) {
-    img.style.cursor = 'pointer';
-    img.onclick = function() { location.href = '/product'; };
-  });
-  document.querySelectorAll('.cart-item-name').forEach(function(n) {
-    n.style.cursor = 'pointer';
-    n.onclick = function() { location.href = '/product'; };
-  });
-  // Move to wishlist
-  document.querySelectorAll('.cart-item-action.wishlist').forEach(function(btn) {
-    btn.onclick = function() { location.href = '/wishlist'; };
-  });
-
-  // ── Quantity steppers ──────────────────────────────────
-  var COUPON_RATE = 0.10, TAX_RATE = 0.08;
-
-  function money(n) { return '$' + n.toFixed(2); }
-  function priceOf(item) {
-    return parseFloat(item.querySelector('.cart-unit-price').textContent.replace(/[^0-9.]/g, '')) || 0;
-  }
-  function qtyOf(item) {
-    return parseInt(item.querySelector('.qty-val').textContent, 10) || 1;
-  }
-
-  function isSelected(item) { return !item.classList.contains('unselected'); }
-
-  function recalc() {
-    var items = document.querySelectorAll('.cart-item');
-    var selected = [].filter.call(items, isSelected);
-    var subtotal = 0, units = 0;
-    selected.forEach(function(item) {
-      var qty = qtyOf(item);
-      subtotal += priceOf(item) * qty;
-      units += qty;
-    });
-    var coupon = subtotal * COUPON_RATE;
-    var tax = (subtotal - coupon) * TAX_RATE;
-    var total = subtotal - coupon + tax;
-
-    var rows = document.querySelectorAll('.order-summary-body .summary-row');
-    if (rows[0]) {
-      rows[0].querySelector('span').textContent = 'Subtotal (' + units + ' item' + (units === 1 ? '' : 's') + ')';
-      rows[0].querySelector('strong').textContent = money(subtotal);
-    }
-    if (rows[1]) rows[1].querySelector('strong').textContent = '–' + money(coupon);
-    if (rows[3]) rows[3].querySelector('strong').textContent = money(tax);
-    if (rows[4]) rows[4].querySelector('strong').textContent = money(total);
-
-    var applied = document.querySelector('.coupon-applied');
-    if (applied) applied.lastChild.textContent = ' Applied: –' + money(coupon);
-
-    var count = document.querySelector('.cart-panel-count');
-    if (count) count.textContent = items.length + ' item' + (items.length === 1 ? '' : 's');
-    var badge = document.querySelectorAll('.nav-badge')[1];
-    if (badge) badge.textContent = items.length;
-
-    // Select-all reflects the items; checkout is blocked when nothing is selected
-    var selectAll = document.getElementById('selectAll');
-    if (selectAll) selectAll.classList.toggle('checked', items.length > 0 && selected.length === items.length);
-
-    var btn = document.querySelector('.checkout-btn');
-    var hint = document.getElementById('checkoutHint');
-    if (btn) btn.classList.toggle('disabled', selected.length === 0);
-    if (hint) hint.style.display = selected.length === 0 ? 'block' : 'none';
-  }
-
-  // ── Item selection ─────────────────────────────────────
-  function setSelected(item, on) {
-    item.classList.toggle('unselected', !on);
-    item.querySelector('.cart-select').classList.toggle('checked', on);
-  }
-
-  document.querySelectorAll('.cart-item').forEach(function(item) {
-    var box = item.querySelector('.cart-select');
-    if (!box) return;
-    box.onclick = function() {
-      setSelected(item, !isSelected(item));
-      recalc();
-    };
-  });
-
-  var selectAllBox = document.getElementById('selectAll');
-  if (selectAllBox) {
-    selectAllBox.parentElement.onclick = function() {
-      var on = !selectAllBox.classList.contains('checked');
-      document.querySelectorAll('.cart-item').forEach(function(item) { setSelected(item, on); });
-      recalc();
-    };
-  }
-
-  // Block checkout navigation while nothing is selected
-  var checkoutLink = document.getElementById('checkoutLink');
-  if (checkoutLink) {
-    checkoutLink.addEventListener('click', function(e) {
-      var anySelected = [].some.call(document.querySelectorAll('.cart-item'), isSelected);
-      if (!anySelected) e.preventDefault();
-    });
-  }
-
-  document.querySelectorAll('.cart-item').forEach(function(item) {
-    var ctrl = item.querySelector('.qty-ctrl');
-    if (!ctrl) return;
-    var btns = ctrl.querySelectorAll('.qty-btn');
-    var val = ctrl.querySelector('.qty-val');
-    var minus = btns[0], plus = btns[1];
-
-    function setQty(q) {
-      q = Math.max(1, Math.min(99, q));
-      val.textContent = q;
-      minus.classList.toggle('disabled', q === 1);
-      plus.classList.toggle('disabled', q === 99);
-      item.querySelector('.cart-total-price').textContent = money(priceOf(item) * q);
-      recalc();
-    }
-
-    minus.onclick = function() { setQty(qtyOf(item) - 1); };
-    plus.onclick = function() { setQty(qtyOf(item) + 1); };
-    setQty(qtyOf(item));
-  });
-
-  // Remove item (single control: the ✕ in the far-right column)
-  document.querySelectorAll('.cart-remove-btn').forEach(function(btn) {
-    btn.onclick = function() {
-      var item = btn.closest('.cart-item');
-      if (item) item.remove();
-      recalc();
-    };
-  });
 })();
+/*
+  The rest of what stood here — the quantity steppers, the selection
+  boxes, the coupon maths and the running totals — was the wireframe
+  doing the server's arithmetic in the browser, against three items
+  that do not exist. cart.js renders the real lines and repaints the
+  panel from what /v1/cart returns, so all of it has gone rather than
+  been left to fight with live data.
+*/
 </script>
 <script src="/assets/js/skeleton.js"></script>
+<script type="module" src="/assets/js/cart.js"></script>
+<script type="module" src="/assets/js/navbar.js"></script>
 </body>
 </html>

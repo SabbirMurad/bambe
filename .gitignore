@@ -1,11 +1,12 @@
 # Build artefacts
 /target
 
-# Secrets — .env holds the SMTP password, JWT signing keys, the session key
-# and the admin sign-up secret. Keep an .env.example in the repo instead.
+# Environment
+# `.env.dev` and `.env.release` are COMMITTED examples — copy one to `.env`.
+# `.env` is the only file that ever holds live values (session key, JWT keys,
+# Resend and payment credentials), so it is the only one ignored.
 .env
-.env.*
-!.env.example
+.env.local
 
 # Local TLS material for https on localhost. localhost.key is a private key.
 /.dev_tls
@@ -24,3 +25,20 @@ status.log
 .DS_Store
 Thumbs.db
 *.swp
+/target
+
+# Per-machine Claude Code permissions (absolute paths inside)
+.claude/settings.local.json
+
+# Local dev test account (generated, machine-specific)
+.dev-account.local.json
+
+# Uploaded media
+/upload
+/uploaded_video
+
+# Credentials
+/firebase_credentials
+
+# Deployed binary, installed here by .github/deploy.sh (not target/release)
+/release

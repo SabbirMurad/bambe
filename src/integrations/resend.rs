@@ -2,941 +2,369 @@ use resend_rs::types::CreateEmailBaseOptions;
 use resend_rs::{Resend, Result};
 use std::env;
 
-const PRIMARY_COL: &str = "#5b35d5";
-const SECONDARY_BG: &str = "#F8F8FC";
-const SECONDARY_TEXT: &str = "#84809f";
-const BG_COL: &str = "#dedcee";
-const PROJECT_NAME: &str = "Hasp";
-const SUPPORT_URL: &str = "https://example.com/support";
+const BRAND: &str = "Bambee";
+const ACCENT: &str = "#FAAA39"; // light orange — matches --primary in common.css
+const ACCENT_DARK: &str = "#E8951F";
+const ON_ACCENT: &str = "#2A1B06"; // dark ink on an orange fill; white is 1.9:1 here
+const PAGE_BG: &str = "#FCFBF9";
+const PANEL_BG: &str = "#F6F5F2";
+const HAIRLINE: &str = "#E8E5E0";
+const INK: &str = "#1A1A18";
+const MUTED: &str = "#6A665F";
+const CODE_EXPIRE_MIN: &str = "15"; // must match CODE_EXPIRE_TIME in the auth handlers
 
-pub fn sign_up_verification_code_template(code: &str) -> String {
+/// Absolute base for links in email. No domain is configured anywhere else in
+/// the project, so it comes from the environment and falls back to the dev
+/// server rather than shipping a guess.
+fn site_url() -> String {
+    env::var("SITE_URL").unwrap_or_else(|_| "http://localhost:8081".to_string())
+}
+
+/// Wrap page-specific `inner` rows in the shared, self-contained (no external
+/// images) email shell: brand header band + footer. Bulletproof table layout
+/// with inline styles so it renders in Gmail, Apple Mail, and Outlook.
+fn shell(title: &str, preheader: &str, inner: &str) -> String {
+    let support_url = format!("{}/account/support", site_url());
+
     format!(
-        r#"
-<!DOCTYPE html PUBLIC '-//W3C//DTD XHTML 1.0 Strict//EN' 'http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd'>
-<html
-  data-editor-version='2'
-  class='sg-campaigns'
-  xmlns='http://www.w3.org/1999/xhtml'
->
-  <head>
-    <meta http-equiv='Content-Type' content='text/html; charset=utf-8' />
-    <meta
-      name='viewport'
-      content='width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1'
-    />
-    <!--[if !mso]>
-      <!-->
-    <meta http-equiv='X-UA-Compatible' content='IE=Edge' />
-    <!--<![endif]-->
-    <!--[if (gte mso 9)|(IE)]>
-      <xml>
-        <o:OfficeDocumentSettings>
-          <o:AllowPNG />
-          <o:PixelsPerInch>96</o:PixelsPerInch>
-        </o:OfficeDocumentSettings>
-      </xml>
-    <![endif]-->
-    <!--[if (gte mso 9)|(IE)]>
-      <style type='text/css'>
-        body {{
-          width: 600px;
-          margin: 0 auto;
-}}
-        table {{
-          border-collapse: collapse;
-}}
-        table,
-        td {{
-          mso-table-lspace: 0pt;
-          mso-table-rspace: 0pt;
-}}
-        img {{
-          -ms-interpolation-mode: bicubic;
-}}
-      </style>
-    <![endif]-->
-    <style type='text/css'>
-      body,
-      p,
-      div {{
-        font-family: arial, helvetica, sans-serif;
-        font-size: 16px;
-}}
-
-      body {{
-        color: white;
-}}
-
-      body a {{
-        color: {PRIMARY_COL};
-        text-decoration: none;
-}}
-
-      p {{
-        margin: 0;
-        padding: 0;
-}}
-
-      table.wrapper {{
-        width: 100% !important;
-        table-layout: fixed;
-        -webkit-font-smoothing: antialiased;
-        -webkit-text-size-adjust: 100%;
-        -moz-text-size-adjust: 100%;
-        -ms-text-size-adjust: 100%;
-}}
-
-      img.max-width {{
-        max-width: 100% !important;
-}}
-
-      .column.of-2 {{
-        width: 50%;
-}}
-
-      .column.of-3 {{
-        width: 33.333%;
-}}
-
-      .column.of-4 {{
-        width: 25%;
-}}
-
-      @media screen and (max-width: 480px) {{
-        .preheader .rightColumnContent,
-        .footer .rightColumnContent {{
-          text-align: left !important;
-}}
-
-        .preheader .rightColumnContent div,
-        .preheader .rightColumnContent span,
-        .footer .rightColumnContent div,
-        .footer .rightColumnContent span {{
-          text-align: left !important;
-}}
-
-        .preheader .rightColumnContent,
-        .preheader .leftColumnContent {{
-          font-size: 80% !important;
-          padding: 5px 0;
-}}
-
-        table.wrapper-mobile {{
-          width: 100% !important;
-          table-layout: fixed;
-}}
-
-        img.max-width {{
-          height: auto !important;
-          max-width: 100% !important;
-}}
-
-        a.bulletproof-button {{
-          display: block !important;
-          width: auto !important;
-          font-size: 80%;
-          padding-left: 0 !important;
-          padding-right: 0 !important;
-}}
-
-        .columns {{
-          width: 100% !important;
-}}
-
-        .column {{
-          display: block !important;
-          width: 100% !important;
-          padding-left: 0 !important;
-          padding-right: 0 !important;
-          margin-left: 0 !important;
-          margin-right: 0 !important;
-}}
-
-        .social-icon-column {{
-          display: inline-block !important;
-}}
-}}
-    </style>
-    <!--user entered Head Start-->
-    <!--End Head user entered-->
-  </head>
-
-  <body>
-    <center
-      class='wrapper'
-      data-link-color='{PRIMARY_COL}'
-      data-body-style='font-size:16px; font-family:arial,helvetica,sans-serif; color:white; background-color:{SECONDARY_BG};'
-    >
-      <div class='webkit'>
-        <table
-          cellpadding='0'
-          cellspacing='0'
-          border='0'
-          width='100%'
-          class='wrapper'
-          background-color='{SECONDARY_BG}'
-        >
+        r#"<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>{title} · {BRAND}</title>
+  <style>
+    .preheader {{ display:none !important; visibility:hidden; opacity:0; color:transparent; height:0; width:0; overflow:hidden; mso-hide:all; }}
+    @media only screen and (max-width:600px) {{
+      .card {{ width:100% !important; border-radius:0 !important; }}
+      .px {{ padding-left:24px !important; padding-right:24px !important; }}
+      .code {{ font-size:34px !important; letter-spacing:8px !important; }}
+    }}
+  </style>
+</head>
+<body style="margin:0; padding:0; background:{PAGE_BG}; -webkit-text-size-adjust:100%; -ms-text-size-adjust:100%;">
+  <span class="preheader">{preheader}</span>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:{PAGE_BG};">
+    <tr>
+      <td align="center" style="padding:32px 12px;">
+        <table role="presentation" class="card" width="600" cellpadding="0" cellspacing="0" border="0" style="width:600px; max-width:600px; background:#ffffff; border-radius:16px; overflow:hidden; box-shadow:0 1px 4px rgba(26,26,24,0.08);">
           <tr>
-            <td valign='top' background-color='{SECONDARY_BG}' width='100%'>
-              <table
-                width='100%'
-                role='content-container'
-                class='outer'
-                align='center'
-                cellpadding='0'
-                cellspacing='0'
-                border='0'
-              >
+            <td align="center" style="background:{ACCENT}; padding:26px 24px;">
+              <span style="font-family:Arial,Helvetica,sans-serif; font-size:26px; font-weight:800; letter-spacing:-0.5px; color:{ON_ACCENT};">{BRAND}</span>
+            </td>
+          </tr>
+          {inner}
+          <tr>
+            <td align="center" style="background:{PAGE_BG}; padding:24px 48px; font-family:Arial,Helvetica,sans-serif; border-top:1px solid {HAIRLINE};">
+              <p style="margin:0 0 6px 0; font-size:13px; color:{MUTED};">Need help? <a href="{support_url}" style="color:{ACCENT_DARK}; text-decoration:none; font-weight:600;">Contact support</a></p>
+              <p style="margin:0; font-size:12px; color:#94908A;">© 2026 {BRAND}. All rights reserved.</p>
+            </td>
+          </tr>
+        </table>
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:600px; max-width:600px;">
+          <tr>
+            <td align="center" style="padding:20px 24px 0; font-family:Arial,Helvetica,sans-serif;">
+              <p style="margin:0; font-size:11px; color:#C4C0B9;">This is an automated message from {BRAND}. Please don't reply to this email.</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>"#
+    )
+}
+
+/// A one-time-code email (sign-up / sign-in / password reset).
+fn code_email(heading: &str, intro: &str, code: &str, note: &str) -> String {
+    let inner = format!(
+        r#"<tr>
+            <td class="px" style="padding:40px 48px 4px 48px; font-family:Arial,Helvetica,sans-serif;">
+              <h1 style="margin:0 0 12px 0; font-size:24px; line-height:1.3; color:{INK}; font-weight:800;">{heading}</h1>
+              <p style="margin:0; font-size:16px; line-height:1.6; color:{MUTED};">{intro}</p>
+            </td>
+          </tr>
+          <tr>
+            <td class="px" style="padding:28px 48px 4px 48px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
                 <tr>
-                  <td width='100%'>
-                    <table
-                      width='100%'
-                      cellpadding='0'
-                      cellspacing='0'
-                      border='0'
-                    >
-                      <tr>
-                        <td>
-                          <!--[if mso]>
-                            <center>
-                              <table>
-                                <tr>
-                                  <td width='600'>
-                                  <![endif]-->
-                          <table
-                            width='100%'
-                            cellpadding='0'
-                            cellspacing='0'
-                            border='0'
-                            style='width: 100%; max-width: 600px'
-                            align='center'
-                          >
-                            <tr>
-                              <td
-                                role='modules-container'
-                                style='
-                                  padding: 0px 0px 0px 0px;
-                                  color: white;
-                                  text-align: left;
-                                '
-                                background-color='white'
-                                width='100%'
-                                align='left'
-                              >
-                                <table
-                                  class='module preheader preheader-hide'
-                                  role='module'
-                                  data-type='preheader'
-                                  border='0'
-                                  cellpadding='0'
-                                  cellspacing='0'
-                                  width='100%'
-                                  style='
-                                    display: none !important;
-                                    mso-hide: all;
-                                    visibility: hidden;
-                                    opacity: 0;
-                                    color: transparent;
-                                    height: 0;
-                                    width: 0;
-                                  '
-                                >
-                                  <tr>
-                                    <td role='module-content'>
-                                      <p>
-                                        Secure your {PROJECT_NAME} account by verifying
-                                        your email address.
-                                      </p>
-                                    </td>
-                                  </tr>
-                                </table>
-                                <table
-                                  border='0'
-                                  cellpadding='0'
-                                  cellspacing='0'
-                                  align='center'
-                                  width='100%'
-                                  role='module'
-                                  data-type='columns'
-                                  style='padding: 0px 0px 0px 0px'
-                                  background-color='{PRIMARY_COL}'
-                                  data-distribution='1,1'
-                                >
-                                  <tbody>
-                                    <tr role='module-content'>
-                                      <td height='100%' valign='top'>
-                                        <table
-                                          width='290'
-                                          style='
-                                            width: 290px;
-                                            border-spacing: 0;
-                                            border-collapse: collapse;
-                                            margin: 0px 10px 0px 0px;
-                                          '
-                                          cellpadding='0'
-                                          cellspacing='0'
-                                          align='left'
-                                          border='0'
-                                          background-color=''
-                                          class='column column-0'
-                                        >
-                                          <tbody>
-                                            <tr>
-                                              <td
-                                                style='
-                                                  padding: 0px;
-                                                  margin: 0px;
-                                                  border-spacing: 0;
-                                                '
-                                              >
-                                                <table
-                                                  class='wrapper'
-                                                  role='module'
-                                                  data-type='image'
-                                                  border='0'
-                                                  cellpadding='0'
-                                                  cellspacing='0'
-                                                  width='100%'
-                                                  style='table-layout: fixed'
-                                                  data-muid='214e5601-35a6-4fe7-911a-62959a775603'
-                                                >
-                                                  <tbody>
-                                                    <tr>
-                                                      <td
-                                                        style='
-                                                          font-size: 6px;
-                                                          line-height: 10px;
-                                                          padding: 64px 0px 64px
-                                                            40px;
-                                                        '
-                                                        valign='top'
-                                                        align='left'
-                                                      >
-                                                        <img
-                                                          class='max-width'
-                                                          border='0'
-                                                          style='
-                                                            display: block;
-                                                            color: #000000;
-                                                            text-decoration: none;
-                                                            font-family:
-                                                              Helvetica, arial,
-                                                              sans-serif;
-                                                            font-size: 16px;
-                                                            max-width: 50% !important;
-                                                            width: 50%;
-                                                            height: auto !important;
-                                                          '
-                                                          width='145'
-                                                          alt=''
-                                                          data-proportionally-constrained='true'
-                                                          data-responsive='true'
-                                                          src='http://cdn.mcauto-images-production.sendgrid.net/a90d076f0ce0a6f1/86dafa7f-db3d-4718-badb-97b455cd2392/450x120.png'
-                                                        />
-                                                      </td>
-                                                    </tr>
-                                                  </tbody>
-                                                </table>
-                                              </td>
-                                            </tr>
-                                          </tbody>
-                                        </table>
-                                        <table
-                                          width='290'
-                                          style='
-                                            width: 290px;
-                                            border-spacing: 0;
-                                            border-collapse: collapse;
-                                            margin: 0px 0px 0px 10px;
-                                          '
-                                          cellpadding='0'
-                                          cellspacing='0'
-                                          align='left'
-                                          border='0'
-                                          background-color=''
-                                          class='column column-1'
-                                        >
-                                          <tbody>
-                                            <tr>
-                                              <td
-                                                style='
-                                                  padding: 0px;
-                                                  margin: 0px;
-                                                  border-spacing: 0;
-                                                '
-                                              ></td>
-                                            </tr>
-                                          </tbody>
-                                        </table>
-                                      </td>
-                                    </tr>
-                                  </tbody>
-                                </table>
-                                <table
-                                  border='0'
-                                  cellpadding='0'
-                                  cellspacing='0'
-                                  align='center'
-                                  width='100%'
-                                  role='module'
-                                  data-type='columns'
-                                  style='padding: 0px 0px 40px 0px'
-                                  background-color='{PRIMARY_COL}'
-                                  data-distribution='1'
-                                >
-                                  <tbody>
-                                    <tr role='module-content'>
-                                      <td height='100%' valign='top'>
-                                        <table
-                                          width='580'
-                                          style='
-                                            width: 580px;
-                                            border-spacing: 0;
-                                            border-collapse: collapse;
-                                            margin: 0px 10px 0px 10px;
-                                          '
-                                          cellpadding='0'
-                                          cellspacing='0'
-                                          align='left'
-                                          border='0'
-                                          background-color=''
-                                          class='column column-0'
-                                        >
-                                          <tbody>
-                                            <tr>
-                                              <td
-                                                style='
-                                                  padding: 0px;
-                                                  margin: 0px;
-                                                  border-spacing: 0;
-                                                '
-                                              >
-                                                <table
-                                                  class='module'
-                                                  role='module'
-                                                  data-type='text'
-                                                  border='0'
-                                                  cellpadding='0'
-                                                  cellspacing='0'
-                                                  width='100%'
-                                                  style='table-layout: fixed'
-                                                  data-muid='d6628df0-8f24-439e-9923-264e845eac3c'
-                                                  data-mc-module-version='2019-10-22'
-                                                >
-                                                  <tbody>
-                                                    <tr>
-                                                      <td
-                                                        style='
-                                                          padding: 16px 80px 0px
-                                                            32px;
-                                                          line-height: 40px;
-                                                          text-align: inherit;
-                                                        '
-                                                        height='100%'
-                                                        valign='top'
-                                                        background-color=''
-                                                        role='module-content'
-                                                      >
-                                                        <div>
-                                                          <div
-                                                            style='
-                                                              font-family: inherit;
-                                                              text-align: inherit;
-                                                            '
-                                                          >
-                                                            <span
-                                                              style='
-                                                                font-size: 48px;
-                                                                color: white;
-                                                              '
-                                                              >Verify your
-                                                              email</span
-                                                            >
-                                                          </div>
-                                                          <div></div>
-                                                        </div>
-                                                      </td>
-                                                    </tr>
-                                                  </tbody>
-                                                </table>
-                                              </td>
-                                            </tr>
-                                          </tbody>
-                                        </table>
-                                      </td>
-                                    </tr>
-                                  </tbody>
-                                </table>
-                                <table
-                                  class='module'
-                                  role='module'
-                                  data-type='text'
-                                  border='0'
-                                  cellpadding='0'
-                                  cellspacing='0'
-                                  width='100%'
-                                  style='table-layout: fixed'
-                                  data-muid='65921ceb-990e-4437-838c-c7b8ba7a420d'
-                                  data-mc-module-version='2019-10-22'
-                                >
-                                  <tbody>
-                                    <tr>
-                                      <td
-                                        style='
-                                          padding: 24px 32px 32px 32px;
-                                          line-height: 22px;
-                                          text-align: inherit;
-                                          background-color: white;
-                                        '
-                                        height='100%'
-                                        valign='top'
-                                        background-color='white'
-                                        role='module-content'
-                                      >
-                                        <div>
-                                          <div
-                                            style='
-                                              font-family: inherit;
-                                              text-align: inherit;
-                                            '
-                                          >
-                                            <br />
-                                          </div>
-                                          <div
-                                            style='
-                                              font-family: inherit;
-                                              text-align: inherit;
-                                            '
-                                          >
-                                            <span
-                                              style='
-                                                font-style: normal;
-                                                font-variant-ligatures: normal;
-                                                font-variant-caps: normal;
-                                                font-weight: 400;
-                                                letter-spacing: normal;
-                                                orphans: 2;
-                                                text-align: justify;
-                                                text-indent: 0px;
-                                                text-transform: none;
-                                                white-space: normal;
-                                                widows: 2;
-                                                word-spacing: 0px;
-                                                -webkit-text-stroke-width: 0px;
-                                                background-color: rgb(
-                                                  255,
-                                                  255,
-                                                  255
-                                                );
-                                                text-decoration-style: initial;
-                                                text-decoration-color: initial;
-                                                float: none;
-                                                display: inline;
-                                                color: #322b5f;
-                                                font-family:
-                                                  arial, helvetica, sans-serif;
-                                                font-size: 18px;
-                                              '
-                                              >To complete and secure your
-                                              {PROJECT_NAME} account, we need to verify
-                                              your email address.</span
-                                            >
-                                          </div>
-                                          <div></div>
-                                        </div>
-                                      </td>
-                                    </tr>
-                                  </tbody>
-                                </table>
-                                <table
-                                  border='0'
-                                  cellpadding='0'
-                                  cellspacing='0'
-                                  class='module'
-                                  data-role='module-button'
-                                  data-type='button'
-                                  role='module'
-                                  style='table-layout: fixed'
-                                  width='100%'
-                                  data-muid='d99c9a07-0c86-4635-be8a-d4ed4b9271a3'
-                                >
-                                  <tbody>
-                                    <tr>
-                                      <td
-                                        align='left'
-                                        background-color='{PRIMARY_COL}'
-                                        class='outer-td'
-                                        style='padding: 0px 0px 40px 32px'
-                                      >
-                                        <table
-                                          border='0'
-                                          cellpadding='0'
-                                          cellspacing='0'
-                                          class='wrapper-mobile'
-                                          style='text-align: center'
-                                        >
-                                          <tbody>
-                                            <tr>
-                                              <td
-                                                align='center'
-                                                background-color='{PRIMARY_COL}'
-                                                class='inner-td'
-                                                style='
-                                                  border-radius: 6px;
-                                                  font-size: 16px;
-                                                  text-align: left;
-                                                  background-color: inherit;
-                                                '
-                                              >
-                                                <div
-                                                  style='
-                                                    background-color: {PRIMARY_COL};
-                                                    border: 0px solid #333333;
-                                                    border-color: #333333;
-                                                    border-radius: 4px;
-                                                    border-width: 0px;
-                                                    color: white;
-                                                    display: inline-block;
-                                                    font-size: 18px;
-                                                    font-weight: 700;
-                                                    letter-spacing: 0px;
-                                                    line-height: 40px;
-                                                    padding: 8px 16px 8px 16px;
-                                                    text-align: center;
-                                                    text-decoration: none;
-                                                    border-style: solid;
-                                                    font-family:
-                                                      arial, helvetica,
-                                                      sans-serif;
-                                                  '
-                                                  target='_blank'
-                                                  >{code}</div
-                                                >
-                                              </td>
-                                            </tr>
-                                          </tbody>
-                                        </table>
-                                      </td>
-                                    </tr>
-                                  </tbody>
-                                </table>
-                                <table
-                                  class='module'
-                                  role='module'
-                                  data-type='divider'
-                                  border='0'
-                                  cellpadding='0'
-                                  cellspacing='0'
-                                  width='100%'
-                                  style='table-layout: fixed'
-                                  data-muid='0c64d472-087e-451d-a879-1fe43c7a5fb2'
-                                >
-                                  <tbody>
-                                    <tr>
-                                      <td
-                                        style='padding: 0px 32px 0px 32px'
-                                        role='module-content'
-                                        height='100%'
-                                        valign='top'
-                                        background-color=''
-                                      >
-                                        <table
-                                          border='0'
-                                          cellpadding='0'
-                                          cellspacing='0'
-                                          align='center'
-                                          width='100%'
-                                          height='1px'
-                                          style='
-                                            line-height: 1px;
-                                            font-size: 1px;
-                                          '
-                                        >
-                                          <tbody>
-                                            <tr>
-                                              <td
-                                                style='padding: 0px 0px 1px 0px'
-                                                background-color='{BG_COL}'
-                                              ></td>
-                                            </tr>
-                                          </tbody>
-                                        </table>
-                                      </td>
-                                    </tr>
-                                  </tbody>
-                                </table>
-                                <table
-                                  class='module'
-                                  role='module'
-                                  data-type='text'
-                                  border='0'
-                                  cellpadding='0'
-                                  cellspacing='0'
-                                  width='100%'
-                                  style='table-layout: fixed'
-                                  data-muid='b851a91d-7518-40df-a4eb-cb5a8d797584'
-                                  data-mc-module-version='2019-10-22'
-                                >
-                                  <tbody>
-                                    <tr>
-                                      <td
-                                        style='
-                                          padding: 32px 32px 18px 32px;
-                                          line-height: 22px;
-                                          text-align: inherit;
-                                          background-color: white;
-                                        '
-                                        height='100%'
-                                        valign='top'
-                                        background-color='white'
-                                        role='module-content'
-                                      >
-                                        <div>
-                                          <div
-                                            style='
-                                              font-family: inherit;
-                                              text-align: inherit;
-                                            '
-                                          >
-                                            <span
-                                              style='
-                                                color: {SECONDARY_TEXT};
-                                                font-size: 14px;
-                                              '
-                                              >Have a question? Visit our
-                                            </span>
-                                            <a
-                                              href='https://sendgrid.com/invalidlink'
-                                              ><span
-                                                style='
-                                                  font-size: 14px;
-                                                  color: {PRIMARY_COL};
-                                                '
-                                                ><u>Help Center</u></span
-                                              > </a
-                                            ><span
-                                              style='
-                                                color: {SECONDARY_TEXT};
-                                                font-size: 14px;
-                                              '
-                                              >.</span
-                                            >
-                                          </div>
-                                          <div
-                                            style='
-                                              font-family: inherit;
-                                              text-align: inherit;
-                                            '
-                                          >
-                                            <span
-                                              style='
-                                                color: {SECONDARY_TEXT};
-                                                font-size: 14px;
-                                              '
-                                              >802E Whiting St, Tampa, FL 33602
-                                              &nbsp;| &nbsp;(954) 859-1302
-                                              &nbsp;|
-                                              &nbsp;{SUPPORT_URL}</span
-                                            >
-                                          </div>
-                                          <div
-                                            style='
-                                              font-family: inherit;
-                                              text-align: inherit;
-                                            '
-                                          >
-                                            <span
-                                              style='
-                                                color: {SECONDARY_TEXT};
-                                                font-size: 14px;
-                                              '
-                                              >© {PROJECT_NAME}, Inc. All rights
-                                              reserved.</span
-                                            >
-                                          </div>
-                                          <div></div>
-                                        </div>
-                                      </td>
-                                    </tr>
-                                  </tbody>
-                                </table>
-                                <table
-                                  class='module'
-                                  role='module'
-                                  data-type='social'
-                                  align='center'
-                                  border='0'
-                                  cellpadding='0'
-                                  cellspacing='0'
-                                  width='100%'
-                                  style='table-layout: fixed'
-                                  data-muid='b45c9e63-dc4b-419f-88cc-7a0a6aa7c592'
-                                >
-                                  <tbody>
-                                    <tr>
-                                      <td
-                                        valign='top'
-                                        style='
-                                          padding: 0px 0px 32px 30px;
-                                          font-size: 6px;
-                                          line-height: 10px;
-                                          background-color: white;
-                                        '
-                                        align='left'
-                                      >
-                                        <table
-                                          align='left'
-                                          style='
-                                            -webkit-margin-start: auto;
-                                            -webkit-margin-end: auto;
-                                          '
-                                        >
-                                          <tbody>
-                                            <tr align='left'>
-                                              <td
-                                                style='padding: 0px 5px'
-                                                class='social-icon-column'
-                                              >
-                                                <a
-                                                  role='social-icon-link'
-                                                  href='https://twitter.com/withpanther'
-                                                  target='_blank'
-                                                  alt='Twitter'
-                                                  title='Twitter'
-                                                  style='
-                                                    display: inline-block;
-                                                    background-color: {BG_COL};
-                                                    height: 32px;
-                                                    width: 32px;
-                                                    border-radius: 4px;
-                                                    -webkit-border-radius: 4px;
-                                                    -moz-border-radius: 4px;
-                                                  '
-                                                >
-                                                  <img
-                                                    role='social-icon'
-                                                    alt='Twitter'
-                                                    title='Twitter'
-                                                    src='https://mc.sendgrid.com/assets/social/white/twitter.png'
-                                                    style='
-                                                      height: 32px;
-                                                      width: 32px;
-                                                    '
-                                                    height='32'
-                                                    width='32'
-                                                  />
-                                                </a>
-                                              </td>
-                                              <td
-                                                style='padding: 0px 5px'
-                                                class='social-icon-column'
-                                              >
-                                                <a
-                                                  role='social-icon-link'
-                                                  href='https://www.instagram.com/accounts/login/'
-                                                  target='_blank'
-                                                  alt='Instagram'
-                                                  title='Instagram'
-                                                  style='
-                                                    display: inline-block;
-                                                    background-color: {BG_COL};
-                                                    height: 32px;
-                                                    width: 32px;
-                                                    border-radius: 4px;
-                                                    -webkit-border-radius: 4px;
-                                                    -moz-border-radius: 4px;
-                                                  '
-                                                >
-                                                  <img
-                                                    role='social-icon'
-                                                    alt='Instagram'
-                                                    title='Instagram'
-                                                    src='https://mc.sendgrid.com/assets/social/white/instagram.png'
-                                                    style='
-                                                      height: 32px;
-                                                      width: 32px;
-                                                    '
-                                                    height='32'
-                                                    width='32'
-                                                  />
-                                                </a>
-                                              </td>
-                                              <td
-                                                style='padding: 0px 5px'
-                                                class='social-icon-column'
-                                              >
-                                                <a
-                                                  role='social-icon-link'
-                                                  href='https://www.linkedin.com/company/withpanther/'
-                                                  target='_blank'
-                                                  alt='LinkedIn'
-                                                  title='LinkedIn'
-                                                  style='
-                                                    display: inline-block;
-                                                    background-color: {BG_COL};
-                                                    height: 32px;
-                                                    width: 32px;
-                                                    border-radius: 4px;
-                                                    -webkit-border-radius: 4px;
-                                                    -moz-border-radius: 4px;
-                                                  '
-                                                >
-                                                  <img
-                                                    role='social-icon'
-                                                    alt='LinkedIn'
-                                                    title='LinkedIn'
-                                                    src='https://mc.sendgrid.com/assets/social/white/linkedin.png'
-                                                    style='
-                                                      height: 32px;
-                                                      width: 32px;
-                                                    '
-                                                    height='32'
-                                                    width='32'
-                                                  />
-                                                </a>
-                                              </td>
-                                            </tr>
-                                          </tbody>
-                                        </table>
-                                      </td>
-                                    </tr>
-                                  </tbody>
-                                </table>
-                              </td>
-                            </tr>
-                          </table>
-                          <!--[if mso]>
-                                  </td>
-                                </tr>
-                              </table>
-                            </center>
-                          <![endif]-->
-                        </td>
-                      </tr>
-                    </table>
+                  <td align="center" style="background:{PANEL_BG}; border:1px solid {HAIRLINE}; border-radius:12px; padding:22px 16px;">
+                    <div class="code" style="font-family:'Courier New',Courier,monospace; font-size:40px; font-weight:700; letter-spacing:12px; color:{INK}; padding-left:12px;">{code}</div>
                   </td>
                 </tr>
               </table>
             </td>
           </tr>
-        </table>
-      </div>
-    </center>
-  </body>
-</html>
-    "#
+          <tr>
+            <td class="px" align="center" style="padding:16px 48px 0 48px; font-family:Arial,Helvetica,sans-serif;">
+              <p style="margin:0; font-size:14px; color:{MUTED};">This code expires in <strong style="color:{INK};">{CODE_EXPIRE_MIN} minutes</strong>. Please don't share it with anyone.</p>
+            </td>
+          </tr>
+          <tr>
+            <td class="px" style="padding:32px 48px 40px 48px; font-family:Arial,Helvetica,sans-serif;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr><td style="border-top:1px solid {HAIRLINE}; padding-top:24px;">
+                  <p style="margin:0; font-size:13px; line-height:1.6; color:{MUTED};">{note}</p>
+                </td></tr>
+              </table>
+            </td>
+          </tr>"#
+    );
+    shell(
+        heading,
+        &format!("Your {BRAND} code is {code} — expires in {CODE_EXPIRE_MIN} minutes."),
+        &inner,
+    )
+}
+
+/// Sign-up email-verification code (new account).
+pub fn sign_up_verification_code_template(code: &str) -> String {
+    code_email(
+        "Verify your email",
+        "Enter the code below to confirm your email and finish setting up your Bambee account.",
+        code,
+        "Didn't sign up for Bambee? You can safely ignore this email — no account is created without this code.",
+    )
+}
+
+/// Sign-in verification code (2-step login).
+pub fn sign_in_verification_code_template(code: &str) -> String {
+    code_email(
+        "Confirm it's you",
+        "Use the code below to finish signing in to your Bambee account.",
+        code,
+        "Didn't try to sign in? Someone may have your password — we recommend changing it right away.",
+    )
+}
+
+/// Password-reset verification code.
+pub fn password_reset_verification_code_template(code: &str) -> String {
+    code_email(
+        "Reset your password",
+        "Use the code below to reset the password on your Bambee account.",
+        code,
+        "Didn't request a password reset? You can safely ignore this email — your password won't change.",
+    )
+}
+
+/// Format minor units for display in an email. The rest of the project keeps
+/// money as `Cents` and formats only at the edge; this is one such edge.
+fn money(cents: i64, currency: &str) -> String {
+    let sign = if cents < 0 { "-" } else { "" };
+    let abs = cents.abs();
+    let symbol = match currency {
+        "USD" => "$",
+        "EUR" => "€",
+        "GBP" => "£",
+        "BDT" => "৳",
+        _ => "",
+    };
+    if symbol.is_empty() {
+        format!("{}{} {}.{:02}", sign, currency, abs / 100, abs % 100)
+    } else {
+        format!("{}{}{}.{:02}", sign, symbol, abs / 100, abs % 100)
+    }
+}
+
+/// An order-lifecycle email: heading, a sentence, a labelled detail block, and
+/// an optional button back into the account area.
+fn order_email(
+    heading: &str,
+    intro: &str,
+    rows: &[(&str, String)],
+    cta: Option<(&str, String)>,
+    note: &str,
+) -> String {
+    let detail_rows: String = rows
+        .iter()
+        .map(|(label, value)| {
+            format!(
+                r#"<tr>
+                    <td style="padding:10px 0; font-size:14px; color:{MUTED}; border-bottom:1px solid {HAIRLINE};">{label}</td>
+                    <td align="right" style="padding:10px 0; font-size:14px; font-weight:700; color:{INK}; border-bottom:1px solid {HAIRLINE};">{value}</td>
+                  </tr>"#
+            )
+        })
+        .collect();
+
+    let cta_row = match cta {
+        Some((label, url)) => format!(
+            r#"<tr>
+            <td class="px" align="center" style="padding:28px 48px 0 48px; font-family:Arial,Helvetica,sans-serif;">
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                <tr><td align="center" style="background:{ACCENT}; border-radius:10px;">
+                  <a href="{url}" style="display:inline-block; padding:14px 30px; font-size:15px; font-weight:700; color:{ON_ACCENT}; text-decoration:none;">{label}</a>
+                </td></tr>
+              </table>
+            </td>
+          </tr>"#
+        ),
+        None => String::new(),
+    };
+
+    let inner = format!(
+        r#"<tr>
+            <td class="px" style="padding:40px 48px 4px 48px; font-family:Arial,Helvetica,sans-serif;">
+              <h1 style="margin:0 0 12px 0; font-size:24px; line-height:1.3; color:{INK}; font-weight:800;">{heading}</h1>
+              <p style="margin:0; font-size:16px; line-height:1.6; color:{MUTED};">{intro}</p>
+            </td>
+          </tr>
+          <tr>
+            <td class="px" style="padding:24px 48px 0 48px; font-family:Arial,Helvetica,sans-serif;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:{PANEL_BG}; border:1px solid {HAIRLINE}; border-radius:12px; padding:6px 20px;">
+                {detail_rows}
+              </table>
+            </td>
+          </tr>
+          {cta_row}
+          <tr>
+            <td class="px" style="padding:32px 48px 40px 48px; font-family:Arial,Helvetica,sans-serif;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr><td style="border-top:1px solid {HAIRLINE}; padding-top:24px;">
+                  <p style="margin:0; font-size:13px; line-height:1.6; color:{MUTED};">{note}</p>
+                </td></tr>
+              </table>
+            </td>
+          </tr>"#
+    );
+
+    shell(heading, intro, &inner)
+}
+
+fn orders_url() -> String {
+    format!("{}/account/orders", site_url())
+}
+
+/// Order received. Sent the moment checkout succeeds.
+pub fn order_placed_template(
+    number: &str,
+    item_count: u32,
+    total: i64,
+    currency: &str,
+    payment_summary: &str,
+    delivery: &str,
+) -> String {
+    order_email(
+        "Thanks for your order",
+        "We've got it. You'll hear from us again as soon as it's on its way.",
+        &[
+            ("Order", number.to_string()),
+            ("Items", item_count.to_string()),
+            ("Delivery", delivery.to_string()),
+            ("Payment", payment_summary.to_string()),
+            ("Total", money(total, currency)),
+        ],
+        Some(("View your order", orders_url())),
+        "Need to change something? Reply to this order from your account within the hour and we'll do our best.",
+    )
+}
+
+/// Dispatched. `tracking` is shown only when there is one.
+pub fn order_shipped_template(number: &str, tracking: Option<&str>, delivery: &str) -> String {
+    let mut rows = vec![
+        ("Order", number.to_string()),
+        ("Delivery", delivery.to_string()),
+    ];
+    if let Some(tracking) = tracking {
+        rows.push(("Tracking", tracking.to_string()));
+    }
+
+    order_email(
+        "Your order is on its way",
+        "It's left us and is with the courier now.",
+        &rows,
+        Some(("Track your order", format!("{}/account/tracking", site_url()))),
+        "Delivery estimates are the courier's, not ours — most parcels arrive inside the window, a few take a day longer.",
+    )
+}
+
+/// Delivered, per the courier or staff marking it so.
+pub fn order_delivered_template(number: &str) -> String {
+    order_email(
+        "Your order has arrived",
+        "The courier has marked it delivered. We hope it's everything you wanted.",
+        &[("Order", number.to_string())],
+        Some(("Leave a review", orders_url())),
+        "Something not right? You can start a return from your account for 30 days after delivery.",
+    )
+}
+
+/// Cancelled, by the customer or by staff.
+pub fn order_cancelled_template(number: &str, refund: Option<(i64, &str)>) -> String {
+    let mut rows = vec![("Order", number.to_string())];
+    if let Some((amount, currency)) = refund {
+        rows.push(("Refunded", money(amount, currency)));
+    }
+
+    order_email(
+        "Your order was cancelled",
+        match refund {
+            Some(_) => "It won't be shipped, and the payment has been returned.",
+            None => "It won't be shipped. Nothing was charged.",
+        },
+        &rows,
+        Some(("Browse the shop", site_url())),
+        "Card refunds usually land in 3–5 working days, depending on your bank.",
+    )
+}
+
+/// Money returned — from a manual refund or a resolved return.
+pub fn refund_issued_template(number: &str, amount: i64, currency: &str) -> String {
+    order_email(
+        "Your refund is on its way",
+        "We've issued the refund against your original payment method.",
+        &[
+            ("Order", number.to_string()),
+            ("Refunded", money(amount, currency)),
+        ],
+        Some(("View your order", orders_url())),
+        "Card refunds usually land in 3–5 working days, depending on your bank.",
+    )
+}
+
+/// A return moved on — approved, rejected, or received.
+pub fn return_update_template(number: &str, status: &str, staff_note: Option<&str>) -> String {
+    let mut rows = vec![
+        ("Order", number.to_string()),
+        ("Return status", status.to_string()),
+    ];
+    if let Some(note) = staff_note {
+        if !note.trim().is_empty() {
+            rows.push(("Note from us", note.to_string()));
+        }
+    }
+
+    order_email(
+        "An update on your return",
+        "Your return request has moved on.",
+        &rows,
+        Some(("View your returns", format!("{}/account/returns", site_url()))),
+        "Questions about a return? Reply through support from your account and we'll pick it up.",
     )
 }
 
 pub async fn send_email(email: &str, sub: &str, body: &str) -> Result<(), resend_rs::Error> {
-    let resend_api = env::var("RESEND_API_KEY").expect("RESEND_API_KEY must be set on .env file");
+    // Without a key there is no mail to send — say so and carry on, rather
+    // than panicking the worker mid-request (which took down "mark
+    // delivered" and everything after it on a machine with no key).
+    let resend_api = match env::var("RESEND_API_KEY") {
+        Ok(key) if !key.trim().is_empty() => key,
+        _ => {
+            log::warn!("RESEND_API_KEY is not set; not sending \"{}\" to {}", sub, email);
+            return Ok(());
+        }
+    };
 
     let resend = Resend::new(&resend_api);
 
-    let from = "Hasp <no-reply@sabbirhassan.com>";
+    // "APP_NAME <MAIL_FROM>", from src/constant.rs. The address has to be on a
+    // domain verified in Resend.
+    let from = crate::Constant::mail_from().to_string();
     let to = [email];
 
-    let email = CreateEmailBaseOptions::new(from, to, sub).with_html(body);
+    let email = CreateEmailBaseOptions::new(&from, to, sub).with_html(body);
 
     let result = resend.emails.send(email).await;
 

@@ -3,7 +3,7 @@ use serde_json::{json, Value};
 use mongodb::bson::{doc, Document};
 use serde::Deserialize;
 use crate::BuiltIns::mongo::MongoDB;
-use crate::utils::response::Response;
+use crate::util::response::Response;
 use actix_web::{web, Error, HttpResponse, HttpRequest};
 use crate::Middleware::Auth::{require_access, AccessRequirement};
 use crate::Model::Account::{AccountRole, AccountDeletionRequest};
@@ -36,7 +36,14 @@ pub async fn list(req: HttpRequest, query: web::Query<ListQuery>) -> Result<Http
 
     let mut out: Vec<Value> = Vec::new();
     if let Ok(mut cursor) = cursor {
-        while let Some(Ok(r)) = cursor.next().await {
+        while let Some(result) = cursor.next().await {
+            let r = match result {
+                Ok(r) => r,
+                Err(error) => {
+                    log::error!("{}: skipping unreadable document: {:?}", module_path!(), error);
+                    continue;
+                }
+            };
             let who = super::display_name(&db, &r.user_id).await;
             out.push(json!({
                 "user_id": r.user_id,

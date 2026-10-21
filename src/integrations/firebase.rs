@@ -7,7 +7,7 @@ use actix_web::HttpResponse;
 use google_api_auth::AuthenticationHandler;
 use reqwest::StatusCode;
 use serde_json::{json, Value};
-use crate::utils::response::Response;
+use crate::util::response::Response;
 
 /// Path to the Firebase service-account JSON (Admin SDK key). Defaults to
 /// `firebase_credentials/service_account.json` under the server working dir;

@@ -2,7 +2,7 @@ use serde::Deserialize;
 use mongodb::bson::doc;
 use actix_web::{web, Error, HttpResponse, HttpRequest};
 use crate::BuiltIns::mongo::MongoDB;
-use crate::utils::response::Response;
+use crate::util::response::Response;
 use crate::model::Cart::{Cart, CartItem};
 use super::{resolve_owner, build_response};
 

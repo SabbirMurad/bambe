@@ -4,7 +4,7 @@ use serde_json::json;
 use mongodb::bson::doc;
 use actix_web::{web, Error, HttpResponse, HttpRequest};
 use crate::BuiltIns::mongo::MongoDB;
-use crate::utils::response::Response;
+use crate::util::response::Response;
 use crate::Middleware::Auth::{require_access, AccessRequirement};
 use crate::model::Order::{Order, OrderItem, ShipmentEvent};
 use crate::model::ImageStruct;
@@ -31,7 +31,14 @@ pub async fn task(req: HttpRequest, path: web::Path<String>) -> Result<HttpRespo
         .await
         .expect("order item lookup");
     let mut items = Vec::new();
-    while let Some(Ok(i)) = item_cursor.next().await {
+    while let Some(result) = item_cursor.next().await {
+        let i = match result {
+            Ok(i) => i,
+            Err(error) => {
+                log::error!("{}: skipping unreadable document: {:?}", module_path!(), error);
+                continue;
+            }
+        };
         items.push(i);
     }
 
@@ -41,7 +48,14 @@ pub async fn task(req: HttpRequest, path: web::Path<String>) -> Result<HttpRespo
     } else {
         let mut cursor = db.collection::<ImageStruct>("image").find(doc! { "uuid": { "$in": &image_ids } }).await.expect("image lookup");
         let mut map = HashMap::new();
-        while let Some(Ok(i)) = cursor.next().await {
+        while let Some(result) = cursor.next().await {
+            let i = match result {
+                Ok(i) => i,
+                Err(error) => {
+                    log::error!("{}: skipping unreadable document: {:?}", module_path!(), error);
+                    continue;
+                }
+            };
             map.insert(i.uuid.clone(), i);
         }
         map
@@ -75,7 +89,14 @@ pub async fn task(req: HttpRequest, path: web::Path<String>) -> Result<HttpRespo
         .await
         .expect("shipment event lookup");
     let mut events = Vec::new();
-    while let Some(Ok(e)) = events_cursor.next().await {
+    while let Some(result) = events_cursor.next().await {
+        let e = match result {
+            Ok(e) => e,
+            Err(error) => {
+                log::error!("{}: skipping unreadable document: {:?}", module_path!(), error);
+                continue;
+            }
+        };
         events.push(e);
     }
 

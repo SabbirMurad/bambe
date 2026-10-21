@@ -3,7 +3,7 @@ use serde_json::json;
 use mongodb::bson::doc;
 use actix_web::{web, Error, HttpResponse, HttpRequest};
 use crate::BuiltIns::mongo::MongoDB;
-use crate::utils::response::Response;
+use crate::util::response::Response;
 use crate::Middleware::Auth::{require_access, AccessRequirement};
 use crate::model::Account::AccountRole;
 use crate::model::Support::{SupportTicket, TicketMessage};
@@ -35,7 +35,14 @@ pub async fn task(req: HttpRequest, path: web::Path<String>) -> Result<HttpRespo
 
     let mut cursor = result.unwrap();
     let mut messages = Vec::new();
-    while let Some(Ok(m)) = cursor.next().await {
+    while let Some(result) = cursor.next().await {
+        let m = match result {
+            Ok(m) => m,
+            Err(error) => {
+                log::error!("{}: skipping unreadable document: {:?}", module_path!(), error);
+                continue;
+            }
+        };
         messages.push(m);
     }
 

@@ -19,7 +19,14 @@ pub async fn list(req: HttpRequest) -> Result<HttpResponse, Error> {
 
     let mut admins: Vec<Value> = Vec::new();
     if let Ok(mut cursor) = cursor {
-        while let Some(Ok(a)) = cursor.next().await {
+        while let Some(result) = cursor.next().await {
+            let a = match result {
+                Ok(a) => a,
+                Err(error) => {
+                    log::error!("{}: skipping unreadable document: {:?}", module_path!(), error);
+                    continue;
+                }
+            };
             admins.push(json!({
                 "user_id": a.uuid.clone(),
                 "name": if a.name.is_empty() { "Admin".to_string() } else { a.name.clone() },

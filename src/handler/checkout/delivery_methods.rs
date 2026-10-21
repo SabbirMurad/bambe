@@ -4,7 +4,7 @@ use serde_json::json;
 use mongodb::bson::doc;
 use actix_web::{web, Error, HttpResponse};
 use crate::BuiltIns::mongo::MongoDB;
-use crate::utils::response::Response;
+use crate::util::response::Response;
 use crate::model::Order::DeliveryMethod;
 
 #[derive(Debug, Deserialize)]
@@ -30,7 +30,14 @@ pub async fn task(query: web::Query<ReqQuery>) -> Result<HttpResponse, Error> {
 
     let mut cursor = result.unwrap();
     let mut methods = Vec::new();
-    while let Some(Ok(m)) = cursor.next().await {
+    while let Some(result) = cursor.next().await {
+        let m = match result {
+            Ok(m) => m,
+            Err(error) => {
+                log::error!("{}: skipping unreadable document: {:?}", module_path!(), error);
+                continue;
+            }
+        };
         let waived = match (m.free_above, query.subtotal) {
             (Some(threshold), Some(subtotal)) => subtotal >= threshold,
             _ => false,

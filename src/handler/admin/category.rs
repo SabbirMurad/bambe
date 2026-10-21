@@ -27,7 +27,14 @@ pub use remove as Remove;
 pub async fn recompute_counts(db: &Database) {
     let mut cat_cursor = db.collection::<Category>("category").find(doc! {}).await.expect("category lookup");
     let mut categories = Vec::new();
-    while let Some(Ok(c)) = cat_cursor.next().await {
+    while let Some(result) = cat_cursor.next().await {
+        let c = match result {
+            Ok(c) => c,
+            Err(error) => {
+                log::error!("{}: skipping unreadable document: {:?}", module_path!(), error);
+                continue;
+            }
+        };
         categories.push(c);
     }
 
@@ -37,7 +44,14 @@ pub async fn recompute_counts(db: &Database) {
     ];
     let mut direct_counts: HashMap<String, u32> = HashMap::new();
     if let Ok(mut cursor) = db.collection::<Document>("product").aggregate(pipeline).await {
-        while let Some(Ok(d)) = cursor.next().await {
+        while let Some(result) = cursor.next().await {
+            let d = match result {
+                Ok(d) => d,
+                Err(error) => {
+                    log::error!("{}: skipping unreadable document: {:?}", module_path!(), error);
+                    continue;
+                }
+            };
             if let (Some(id), Some(count)) = (d.get_str("_id").ok(), d.get_i32("count").ok()) {
                 direct_counts.insert(id.to_string(), count as u32);
             }

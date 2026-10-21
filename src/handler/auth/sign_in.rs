@@ -4,10 +4,12 @@ use chrono::Utc;
 use mongodb::bson::doc;
 use actix_session::Session;
 use crate::{builtins::jwt, Model::Account};
-use crate::Integrations::Smtp;
+use crate::Integrations::Resend;
 use crate::BuiltIns::mongo::MongoDB;
-use crate::utils::response::Response;
+use crate::util::response::Response;
+use crate::util::password::{self, Verified};
 use serde::{ Serialize, Deserialize };
+use serde_json::json;
 use mongodb::{ClientSession, Database};
 use actix_web::{ web, Error, HttpResponse};
 
@@ -57,7 +59,7 @@ async fn perform(
 
     /* DATABASE ACID SESSION INIT */
     let (db, mut session) = MongoDB.connect_acid().await;
-    if let Err(error) = session.start_transaction().await {
+    if let Err(error) = MongoDB::begin(&mut session).await {
         log::error!("{:?}", error);
         return Ok(Response::internal_server_error(&error.to_string()));
     }
@@ -90,40 +92,65 @@ async fn perform(
             uuid:request_id.clone(),
             expires_at: now + CODE_EXPIRE_TIME * 60 * 1000,
             validation_code: validation_code.to_string(),
+            attempts: 0,
         };
 
         let result = collection.insert_one(
             request,
-        ).await;
+        ).session(&mut session).await;
 
         if let Err(error) = result {
             log::error!("{:?}", error);
-            session.abort_transaction().await.ok().unwrap();
+            MongoDB::abort(&mut session).await;
             return Ok(Response::internal_server_error(&error.to_string()));
         }
 
-        let message = Smtp::sign_in_verification_code_template(
-            &account_core.email_address,
+        let message = Resend::sign_in_verification_code_template(
             &validation_code.to_string()
         );
 
-        let result = Smtp::send_email(message);
+        let result = Resend::send_email(
+            &account_core.email_address,
+            "Your Bambee sign-in code",
+            &message
+        ).await;
         if let Err(_) = result {
-            session.abort_transaction().await.ok().unwrap();
+            MongoDB::abort(&mut session).await;
             return Ok(Response::internal_server_error("Failed to send email"));
         }
+
+        /*
+          Stop here. This branch used to write the request, send the code and
+          then fall straight through to minting a token — so enabling
+          two-factor bought a spare email and no second factor at all. It went
+          unnoticed because nothing could set the flag; the account settings
+          can now, so it matters.
+
+          The caller gets the request id and no token, and exchanges the two
+          for one at `POST /v1/auth/verify-sign-in-code`.
+        */
+        if let Err(error) = MongoDB::commit(&mut session).await {
+            log::error!("{:?}", error);
+            return Ok(Response::internal_server_error(&error.to_string()));
+        }
+
+        return Ok(HttpResponse::Ok().content_type("application/json").json(json!({
+            "two_afa_enabled": true,
+            "auth_payload": serde_json::Value::Null,
+            "request_id": request_id,
+        })));
     }
 
     // getting access token
-    let (access_token, valid_time) = jwt::access_token::generate_default(
-        &account_core.uuid,
-        account_core.role.clone(),
-    );
+    let (access_token, valid_time) = match jwt::access_token::generate_default(&account_core.uuid, account_core.role.clone(),) {
+        Ok(pair) => pair,
+        Err(error) => return Ok(Response::internal_server_error(&format!("could not mint an access token: {:?}", error))),
+    };
 
     // getting refresh token
     let result = jwt::refresh_token::new(&account_core.uuid);
     if let Err(error) = result {
-        session.abort_transaction().await.ok().unwrap();
+        MongoDB::abort(&mut session).await;
         log::error!("{:?}", error);
         return Ok(Response::internal_server_error(&error));
     }
@@ -132,7 +159,7 @@ async fn perform(
 
 
     /* DATABASE ACID COMMIT */
-    if let Err(error) = session.commit_transaction().await {
+    if let Err(error) = MongoDB::commit(&mut session).await {
         log::error!("{:?}", error);
         return Ok(Response::internal_server_error(&error.to_string()));
     }
@@ -178,18 +205,18 @@ async fn validate_login(
                 {"email_address": email_or_username},
             ],
         },
-    ).await;
+    ).session(&mut *session).await;
 
     if let Err(error) = result {
         log::error!("{:?}", error);
-        session.abort_transaction().await.ok().unwrap();
+        MongoDB::abort(session).await;
         return Err(Response::internal_server_error(&error.to_string()));
     }
 
     let option = result.unwrap();
 
     if let None = option {
-        session.abort_transaction().await.ok().unwrap();
+        MongoDB::abort(session).await;
         return Err(Response::not_found("Username or email not found"));
     }
 
@@ -197,17 +224,38 @@ async fn validate_login(
 
     // Accounts suspended from the admin dashboard cannot sign in.
     if account_core.suspended_at.is_some() {
-        session.abort_transaction().await.ok().unwrap();
+        MongoDB::abort(session).await;
         return Err(Response::forbidden("This account has been suspended"));
     }
 
     if account_core.email_verified {
-        if account_core.password != password {
-            session.abort_transaction().await.ok().unwrap();
-            return Err(Response::forbidden("Incorrect password"));
-        }
-        else {
-            Ok(account_core)
+        match password::verify(password, &account_core.password) {
+            Verified::Failed => {
+                MongoDB::abort(session).await;
+                Err(Response::forbidden("Incorrect password"))
+            }
+            /*
+              Right password, but the row predates hashing. Upgrade it now
+              that the plaintext is in hand and correct. A failure here is
+              logged and ignored: the credentials were valid, so refusing
+              the sign-in would punish the caller for our migration.
+            */
+            Verified::NeedsRehash => {
+                match password::hash(password) {
+                    Ok(hashed) => {
+                        let update = collection.update_one(
+                            doc!{ "uuid": &account_core.uuid },
+                            doc!{ "$set": { "password": &hashed } },
+                        ).session(&mut *session).await;
+                        if let Err(error) = update {
+                            log::error!("could not upgrade stored password: {:?}", error);
+                        }
+                    }
+                    Err(error) => log::error!("{error}"),
+                }
+                Ok(account_core)
+            }
+            Verified::Ok => Ok(account_core),
         }
     }
     else {
@@ -219,7 +267,7 @@ async fn validate_login(
             Err(error)
         }
         else {
-            session.abort_transaction().await.ok().unwrap();
+            MongoDB::abort(session).await;
             return Err(Response::not_found("Username or email not found"));
         }
     }

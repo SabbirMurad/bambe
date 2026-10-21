@@ -5,7 +5,7 @@ use serde::Deserialize;
 use mongodb::bson::doc;
 use actix_web::{web, Error, HttpResponse, HttpRequest};
 use crate::BuiltIns::mongo::MongoDB;
-use crate::utils::response::Response;
+use crate::util::response::Response;
 use crate::Middleware::Auth::optional_access;
 use crate::model::Support::{SupportTicket, TicketMessage, TicketTopic, TicketStatus, TicketPriority};
 use crate::model::Store::StoreSettings;
@@ -36,12 +36,8 @@ pub async fn task(req: HttpRequest, body: web::Json<ReqBody>) -> Result<HttpResp
     let user = optional_access(&req);
     let now = Utc::now().timestamp_millis();
 
-    let prefix = db
-        .collection::<StoreSettings>("store_settings")
-        .find_one(doc! {})
+    let prefix = crate::Handler::Admin::Settings::load(&db)
         .await
-        .ok()
-        .flatten()
         .map(|s| s.ticket_number_prefix)
         .unwrap_or_else(|| "TK".to_string());
     let number = format!("{}-{}", prefix, rand::rng().random_range(1000..9999));

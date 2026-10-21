@@ -1,0 +1,11 @@
+{#
+  The footer's Shop column, shared by every page with a footer. Its links
+  are the shop's visible top-level categories, from the database, passed
+  in as `nav_categories` by render_with_nav() in src/markup.rs. A page
+  rendered without them shows only Sale rather than failing.
+#}
+<div>
+      <div class="footer-col-title">Shop</div>
+{% for c in nav_categories | default(value=[]) %}      <a class="footer-link" href="/listing?category={{ c.slug | urlencode }}">{{ c.name }}</a>
+{% endfor %}      <a class="footer-link" href="/listing?sale=true">Sale</a>
+    </div>

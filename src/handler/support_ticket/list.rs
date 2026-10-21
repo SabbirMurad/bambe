@@ -2,7 +2,7 @@ use futures::StreamExt;
 use mongodb::bson::doc;
 use actix_web::{Error, HttpResponse, HttpRequest};
 use crate::BuiltIns::mongo::MongoDB;
-use crate::utils::response::Response;
+use crate::util::response::Response;
 use crate::Middleware::Auth::{require_access, AccessRequirement};
 use crate::model::Support::SupportTicket;
 
@@ -23,7 +23,14 @@ pub async fn task(req: HttpRequest) -> Result<HttpResponse, Error> {
 
     let mut cursor = result.unwrap();
     let mut tickets = Vec::new();
-    while let Some(Ok(t)) = cursor.next().await {
+    while let Some(result) = cursor.next().await {
+        let t = match result {
+            Ok(t) => t,
+            Err(error) => {
+                log::error!("{}: skipping unreadable document: {:?}", module_path!(), error);
+                continue;
+            }
+        };
         tickets.push(t);
     }
 

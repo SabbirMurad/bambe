@@ -13,11 +13,17 @@ actix-multipart = "0.7.2"
 actix-web-actors = "4.3.1"
 
 # Provide TLS functionality
-rustls = "0.20"
-rustls-pemfile = "1"
+rustls = "0.23"
+rustls-pemfile = "2"
 
 # Random bytes generator
 rand = "0.9.0"
+
+# Password hashing. Argon2id is the current OWASP default, and the
+# PHC string it produces carries its own salt and parameters, so a
+# stored hash stays verifiable if those parameters are ever raised.
+argon2 = "0.5.3"
+password-hash = { version = "0.5.0", features = ["rand_core"] }
 
 # Regular expression
 regex = "1.11.1"
@@ -41,10 +47,10 @@ zip = "0.6"
 chrono = "0.4.40"
 
 # Email library
-lettre = "0.11.15"
 
-# Environment variables
-dotenv = "0.15.0"
+# Environment variables (dotenvy: maintained fork, same API - dotenv itself is
+# RUSTSEC-2021-0141 unmaintained)
+dotenvy = "0.15"
 
 # Filesystem operations
 tera = "1.20.0"
@@ -73,8 +79,15 @@ listenfd = "0.5"
 resend = "0.1.4"
 resend-rs = "0.21.1"
 
+# Per-IP rate limiting (baseline flood protection for every route)
+actix-governor = "0.8"
+
+# Connection pooling for the SQLite stores
+r2d2 = "0.8"
+r2d2_sqlite = "0.22"
+
 [dependencies.jsonwebtoken]
-version = "8"
+version = "9"
 default-features = false
 
 [dependencies.rusqlite]
@@ -83,7 +96,7 @@ features = ["bundled", "limits"]
 
 [dependencies.actix-web]
 version = "4"
-features = ["rustls"]
+features = ["rustls-0_23"]
 
 [dependencies.actix-session]
 version = "0.7"

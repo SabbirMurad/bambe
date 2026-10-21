@@ -4,7 +4,7 @@ use serde_json::json;
 use mongodb::bson::doc;
 use actix_web::{Error, HttpResponse, HttpRequest};
 use crate::BuiltIns::mongo::MongoDB;
-use crate::utils::response::Response;
+use crate::util::response::Response;
 use crate::Middleware::Auth::{require_access, AccessRequirement};
 use crate::model::Cart::WishlistItem;
 use crate::model::Product::Product;
@@ -27,7 +27,14 @@ pub async fn task(req: HttpRequest) -> Result<HttpResponse, Error> {
 
     let mut cursor = result.unwrap();
     let mut wishlist_items = Vec::new();
-    while let Some(Ok(w)) = cursor.next().await {
+    while let Some(result) = cursor.next().await {
+        let w = match result {
+            Ok(w) => w,
+            Err(error) => {
+                log::error!("{}: skipping unreadable document: {:?}", module_path!(), error);
+                continue;
+            }
+        };
         wishlist_items.push(w);
     }
 
@@ -41,7 +48,14 @@ pub async fn task(req: HttpRequest) -> Result<HttpResponse, Error> {
             .await
             .expect("product lookup");
         let mut map = HashMap::new();
-        while let Some(Ok(p)) = cursor.next().await {
+        while let Some(result) = cursor.next().await {
+            let p = match result {
+                Ok(p) => p,
+                Err(error) => {
+                    log::error!("{}: skipping unreadable document: {:?}", module_path!(), error);
+                    continue;
+                }
+            };
             map.insert(p.uuid.clone(), p);
         }
         map
@@ -49,7 +63,7 @@ pub async fn task(req: HttpRequest) -> Result<HttpResponse, Error> {
 
     let cover_image_ids: Vec<String> = products
         .values()
-        .filter_map(|p| p.images.iter().min_by_key(|i| i.position).map(|i| i.image_id.clone()))
+        .filter_map(|p| p.cover_image_id.clone())
         .collect();
     let images: HashMap<String, ImageStruct> = if cover_image_ids.is_empty() {
         HashMap::new()
@@ -60,7 +74,14 @@ pub async fn task(req: HttpRequest) -> Result<HttpResponse, Error> {
             .await
             .expect("image lookup");
         let mut map = HashMap::new();
-        while let Some(Ok(i)) = cursor.next().await {
+        while let Some(result) = cursor.next().await {
+            let i = match result {
+                Ok(i) => i,
+                Err(error) => {
+                    log::error!("{}: skipping unreadable document: {:?}", module_path!(), error);
+                    continue;
+                }
+            };
             map.insert(i.uuid.clone(), i);
         }
         map
@@ -70,7 +91,7 @@ pub async fn task(req: HttpRequest) -> Result<HttpResponse, Error> {
         .iter()
         .map(|w| {
             let product = products.get(&w.product_id);
-            let cover = product.and_then(|p| p.images.iter().min_by_key(|i| i.position)).and_then(|i| images.get(&i.image_id));
+            let cover = product.and_then(|p| p.cover_image_id.as_ref()).and_then(|id| images.get(id));
 
             json!({
                 "uuid": w.uuid,

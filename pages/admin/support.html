@@ -1,14 +1,16 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-store-theme="{{ store_theme | default(value='orange') }}">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Support — Bambe Admin</title>
+<meta name="robots" content="noindex, nofollow">
+<title>Support — Bambee Admin</title>
+{% include "common/favicon.html" %}
 <link rel="stylesheet" href="/assets/css/common.css">
 <link rel="stylesheet" href="/assets/css/admin.css">
 </head>
 <body class="admin">
-<nav class="navbar"><div class="navbar-inner"><a href="/" class="nav-logo"><div class="nav-logo-mark"></div><span class="nav-logo-text">ambe</span></a><div class="nav-search"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="7" cy="7" r="5" stroke="#94908A" stroke-width="1.4"/><path d="M11 11 14.5 14.5" stroke="#94908A" stroke-width="1.4" stroke-linecap="round"/></svg><input type="text" placeholder="Search orders, products, customers…" aria-label="Search the admin console"><div class="nav-search-btn"><svg width="14" height="14" viewBox="0 0 16 16" fill="none"><circle cx="7" cy="7" r="5" stroke="white" stroke-width="1.4"/><path d="M11 11 14.5 14.5" stroke="white" stroke-width="1.4" stroke-linecap="round"/></svg></div></div><div class="nav-actions"><div class="nav-icon-btn" title="Notifications"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M10 2a6 6 0 0 1 6 6c0 3 .9 5 1.9 6.5H2.1C3 14 4 12 4 8a6 6 0 0 1 6-6ZM8 17h4a2 2 0 0 1-4 0Z" stroke="#32302C" stroke-width="1.5" stroke-linejoin="round"/></svg><div class="nav-badge" style="background:#E5645C;">7</div></div><div class="nav-user-btn" style="background:var(--blue-lt);"><div class="nav-avatar"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="5.5" r="3" stroke="var(--blue)" stroke-width="1.4"/><path d="M2 14c0-3.3 2.7-6 6-6s6 2.7 6 6" stroke="var(--blue)" stroke-width="1.4" stroke-linecap="round"/></svg></div><span class="nav-user-name">S. Hassan</span></div></div></div></nav>
+<nav class="navbar"><div class="navbar-inner"><a href="/" class="nav-logo"><div class="nav-logo-mark"></div><span class="nav-logo-text">ambee</span></a><div class="nav-search"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="7" cy="7" r="5" stroke="#94908A" stroke-width="1.4"/><path d="M11 11 14.5 14.5" stroke="#94908A" stroke-width="1.4" stroke-linecap="round"/></svg><input type="text" placeholder="Search orders, products, customers…" aria-label="Search the admin console"><div class="nav-search-btn"><svg width="14" height="14" viewBox="0 0 16 16" fill="none"><circle cx="7" cy="7" r="5" stroke="white" stroke-width="1.4"/><path d="M11 11 14.5 14.5" stroke="white" stroke-width="1.4" stroke-linecap="round"/></svg></div></div><div class="nav-actions"><div class="nav-user-btn" style="background:var(--blue-lt);"><div class="nav-avatar"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="5.5" r="3" stroke="var(--blue)" stroke-width="1.4"/><path d="M2 14c0-3.3 2.7-6 6-6s6 2.7 6 6" stroke="var(--blue)" stroke-width="1.4" stroke-linecap="round"/></svg></div><span class="nav-user-name"></span></div></div></div></nav>
 
 <main>
   <div class="container">
@@ -21,20 +23,22 @@
           </div>
           <div>
             <div class="admin-brand-title">Admin Console</div>
-            <div class="admin-brand-sub">Bambe Store</div>
+            <div class="admin-brand-sub">Bambee Store</div>
           </div>
         </div>
         <nav class="admin-nav" aria-label="Admin sections">
           <div class="admin-nav-group-label">Workspace</div>
           <a href="/admin"><div class="admin-nav-item"><svg class="admin-nav-icon" viewBox="0 0 18 18" fill="none"><rect x="2" y="2" width="6" height="6" rx="1.5" stroke="currentColor" stroke-width="1.4"/><rect x="10" y="2" width="6" height="6" rx="1.5" stroke="currentColor" stroke-width="1.4"/><rect x="2" y="10" width="6" height="6" rx="1.5" stroke="currentColor" stroke-width="1.4"/><rect x="10" y="10" width="6" height="6" rx="1.5" stroke="currentColor" stroke-width="1.4"/></svg>Overview</div></a>
-          <a href="/admin/orders"><div class="admin-nav-item"><svg class="admin-nav-icon" viewBox="0 0 18 18" fill="none"><path d="M2.5 5.5 9 2l6.5 3.5v7L9 16l-6.5-3.5v-7Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path d="M2.5 5.5 9 9m0 0 6.5-3.5M9 9v7" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>Orders<span class="admin-nav-count">24</span></div></a>
-          <a href="/admin/products"><div class="admin-nav-item"><svg class="admin-nav-icon" viewBox="0 0 18 18" fill="none"><path d="M2.5 8.2V3.5a1 1 0 0 1 1-1h4.7a1 1 0 0 1 .7.3l6.3 6.3a1 1 0 0 1 0 1.4l-4.7 4.7a1 1 0 0 1-1.4 0L2.8 8.9a1 1 0 0 1-.3-.7Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><circle cx="6" cy="6" r="1.2" fill="currentColor"/></svg>Products<span class="admin-nav-count">318</span></div></a>
-          <a href="/admin/categories"><div class="admin-nav-item"><svg class="admin-nav-icon" viewBox="0 0 18 18" fill="none"><path d="M2.5 5a1.5 1.5 0 0 1 1.5-1.5h3a1 1 0 0 1 .8.4l.9 1.2h5.3A1.5 1.5 0 0 1 15.5 6.6V13a1.5 1.5 0 0 1-1.5 1.5H4A1.5 1.5 0 0 1 2.5 13V5Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>Categories<span class="admin-nav-count">17</span></div></a>
-          <a href="/admin/customers"><div class="admin-nav-item"><svg class="admin-nav-icon" viewBox="0 0 18 18" fill="none"><circle cx="7" cy="6" r="3" stroke="currentColor" stroke-width="1.4"/><path d="M1.5 15.5c0-3 2.5-5.5 5.5-5.5s5.5 2.5 5.5 5.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><path d="M12.5 3.5a3 3 0 0 1 0 5.5M14 15.5c0-2-.6-3.6-1.6-4.8" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>Customers<span class="admin-nav-count">1,204</span></div></a>
+          <a href="/admin/orders"><div class="admin-nav-item"><svg class="admin-nav-icon" viewBox="0 0 18 18" fill="none"><path d="M2.5 5.5 9 2l6.5 3.5v7L9 16l-6.5-3.5v-7Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path d="M2.5 5.5 9 9m0 0 6.5-3.5M9 9v7" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>Orders<span class="admin-nav-count"></span></div></a>
+          <a href="/admin/returns"><div class="admin-nav-item"><svg class="admin-nav-icon" viewBox="0 0 18 18" fill="none"><path d="M6 4.5 2.5 8 6 11.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.5 8h8a4 4 0 0 1 0 8H7" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Returns<span class="admin-nav-count"></span></div></a>
+          <a href="/admin/products"><div class="admin-nav-item"><svg class="admin-nav-icon" viewBox="0 0 18 18" fill="none"><path d="M2.5 8.2V3.5a1 1 0 0 1 1-1h4.7a1 1 0 0 1 .7.3l6.3 6.3a1 1 0 0 1 0 1.4l-4.7 4.7a1 1 0 0 1-1.4 0L2.8 8.9a1 1 0 0 1-.3-.7Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><circle cx="6" cy="6" r="1.2" fill="currentColor"/></svg>Products<span class="admin-nav-count"></span></div></a>
+          <a href="/admin/categories"><div class="admin-nav-item"><svg class="admin-nav-icon" viewBox="0 0 18 18" fill="none"><path d="M2.5 5a1.5 1.5 0 0 1 1.5-1.5h3a1 1 0 0 1 .8.4l.9 1.2h5.3A1.5 1.5 0 0 1 15.5 6.6V13a1.5 1.5 0 0 1-1.5 1.5H4A1.5 1.5 0 0 1 2.5 13V5Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>Categories<span class="admin-nav-count"></span></div></a>
+          <a href="/admin/customers"><div class="admin-nav-item"><svg class="admin-nav-icon" viewBox="0 0 18 18" fill="none"><circle cx="7" cy="6" r="3" stroke="currentColor" stroke-width="1.4"/><path d="M1.5 15.5c0-3 2.5-5.5 5.5-5.5s5.5 2.5 5.5 5.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><path d="M12.5 3.5a3 3 0 0 1 0 5.5M14 15.5c0-2-.6-3.6-1.6-4.8" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>Customers<span class="admin-nav-count"></span></div></a>
+          <a href="/admin/reviews"><div class="admin-nav-item"><svg class="admin-nav-icon" viewBox="0 0 18 18" fill="none"><path d="m9 2.2 2 4.2 4.6.6-3.4 3.2.9 4.5L9 12.5l-4.1 2.2.9-4.5-3.4-3.2 4.6-.6L9 2.2Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>Reviews<span class="admin-nav-count"></span></div></a>
 
-          <a href="/admin/coupons"><div class="admin-nav-item"><svg class="admin-nav-icon" viewBox="0 0 18 18" fill="none"><path d="M2.5 5.5a1 1 0 0 1 1-1h11a1 1 0 0 1 1 1v1.9a1.6 1.6 0 0 0 0 3.2v1.9a1 1 0 0 1-1 1h-11a1 1 0 0 1-1-1v-1.9a1.6 1.6 0 0 0 0-3.2V5.5Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path d="M11 6.5v1M11 8.5v1M11 10.5v1" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>Coupons<span class="admin-nav-count">10</span></div></a>
+          <a href="/admin/coupons"><div class="admin-nav-item"><svg class="admin-nav-icon" viewBox="0 0 18 18" fill="none"><path d="M2.5 5.5a1 1 0 0 1 1-1h11a1 1 0 0 1 1 1v1.9a1.6 1.6 0 0 0 0 3.2v1.9a1 1 0 0 1-1 1h-11a1 1 0 0 1-1-1v-1.9a1.6 1.6 0 0 0 0-3.2V5.5Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path d="M11 6.5v1M11 8.5v1M11 10.5v1" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>Coupons<span class="admin-nav-count"></span></div></a>
           <div class="admin-nav-group-label">Service</div>
-          <a href="/admin/support"><div class="admin-nav-item active"><svg class="admin-nav-icon" viewBox="0 0 18 18" fill="none"><path d="M2.5 4.5a1.5 1.5 0 0 1 1.5-1.5h10a1.5 1.5 0 0 1 1.5 1.5v6a1.5 1.5 0 0 1-1.5 1.5H7l-3.5 3v-3a1 1 0 0 1-1-1v-6Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>Support<span class="admin-nav-count alert">7</span></div></a>
+          <a href="/admin/support"><div class="admin-nav-item active"><svg class="admin-nav-icon" viewBox="0 0 18 18" fill="none"><path d="M2.5 4.5a1.5 1.5 0 0 1 1.5-1.5h10a1.5 1.5 0 0 1 1.5 1.5v6a1.5 1.5 0 0 1-1.5 1.5H7l-3.5 3v-3a1 1 0 0 1-1-1v-6Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>Support<span class="admin-nav-count alert"></span></div></a>
 
           <div class="admin-nav-group-label">Configure</div>
           <a href="/admin/settings"><div class="admin-nav-item"><svg class="admin-nav-icon" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="9" r="2.5" stroke="currentColor" stroke-width="1.4"/><path d="M9 1.5v2M9 14.5v2M1.5 9h2M14.5 9h2M3.7 3.7l1.4 1.4M12.9 12.9l1.4 1.4M14.3 3.7l-1.4 1.4M5.1 12.9l-1.4 1.4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>Settings</div></a>
@@ -47,7 +51,7 @@
         <div class="admin-head">
           <div>
             <h1 class="admin-title">Support</h1>
-            <div class="admin-subtitle">7 open tickets · median first reply 1h 12m</div>
+            <div class="admin-subtitle"></div>
           </div>
           <div class="admin-head-actions">
             <select class="admin-filter" aria-label="Filter tickets by assignee">
@@ -62,18 +66,18 @@
         <div class="stat-grid cols-3">
           <div class="stat-tile">
             <div class="stat-tile-top"><span class="stat-tile-label">Open</span></div>
-            <div class="stat-tile-value">7</div>
-            <div class="stat-tile-foot">2 breaching SLA</div>
+            <div class="stat-tile-value"></div>
+            <div class="stat-tile-foot"></div>
           </div>
           <div class="stat-tile">
-            <div class="stat-tile-top"><span class="stat-tile-label">Median first reply</span></div>
-            <div class="stat-tile-value">1h 12m</div>
-            <div class="stat-tile-foot"><span class="stat-delta up">↓ 22m</span> vs last week</div>
+            <div class="stat-tile-top"><span class="stat-tile-label">Awaiting the customer</span></div>
+            <div class="stat-tile-value"></div>
+            <div class="stat-tile-foot"></div>
           </div>
           <div class="stat-tile">
-            <div class="stat-tile-top"><span class="stat-tile-label">Satisfaction</span></div>
-            <div class="stat-tile-value">94%</div>
-            <div class="stat-tile-foot">Based on 212 ratings</div>
+            <div class="stat-tile-top"><span class="stat-tile-label">Unanswered</span></div>
+            <div class="stat-tile-value"></div>
+            <div class="stat-tile-foot"></div>
           </div>
         </div>
 
@@ -81,8 +85,8 @@
           <!-- Ticket queue -->
           <div class="admin-panel">
             <div class="admin-tabs" role="tablist">
-              <div class="admin-tab active" role="tab" tabindex="0">Open<span class="admin-tab-count">7</span></div>
-              <div class="admin-tab" role="tab" tabindex="0">Pending<span class="admin-tab-count">3</span></div>
+              <div class="admin-tab active" role="tab" tabindex="0">Open<span class="admin-tab-count"></span></div>
+              <div class="admin-tab" role="tab" tabindex="0">Pending<span class="admin-tab-count"></span></div>
               <div class="admin-tab" role="tab" tabindex="0">Closed</div>
             </div>
             <div class="ticket-list" data-skeleton>
@@ -139,8 +143,8 @@
                   <span class="ticket-id">#TK-2037</span>
                   <span class="ticket-time">6h</span>
                 </div>
-                <div class="ticket-subject">Kettle arrived with a dent</div>
-                <div class="ticket-preview">Packaging was fine but the kettle has a dent on the base. Photos attached.</div>
+                <div class="ticket-subject">Dryer arrived with a cracked nozzle</div>
+                <div class="ticket-preview">Packaging was fine but the dryer nozzle is cracked. Photos attached.</div>
                 <div class="ticket-meta">
                   <span class="prio prio-med">Medium</span>
                   <span class="tag tag-gray">Damage</span>
@@ -152,7 +156,7 @@
                   <span class="ticket-time">1d</span>
                 </div>
                 <div class="ticket-subject">When will the boots be restocked?</div>
-                <div class="ticket-preview">The suede Chelsea boot in 42 has been out of stock for a while — any ETA?</div>
+                <div class="ticket-preview">The ceramic curling wand has been out of stock for a while — any ETA?</div>
                 <div class="ticket-meta">
                   <span class="prio prio-low">Low</span>
                   <span class="tag tag-gray">Stock</span>
@@ -177,12 +181,9 @@
           <div class="admin-panel">
             <div class="thread-head">
               <div>
-                <div class="admin-panel-title">Wrong size delivered</div>
-                <div class="admin-subtitle">#TK-2041 · Sofia Ricci · order <span class="cell-id">#BM-4819</span></div>
+                <div class="admin-panel-title"></div>
+                <div class="admin-subtitle"></div>
                 <div style="display:flex;gap:6px;margin-top:8px;">
-                  <span class="prio prio-high">High</span>
-                  <span class="tag tag-gray">Returns</span>
-                  <span class="tag tag-blue">Assigned to you</span>
                 </div>
               </div>
               <div class="admin-head-actions">
@@ -192,45 +193,10 @@
             </div>
 
             <div class="thread-body">
-              <div class="msg">
-                <div class="msg-avatar">SR</div>
-                <div>
-                  <div class="msg-name">Sofia Ricci <span class="msg-time">Today, 09:04</span></div>
-                  <div class="msg-bubble">Hi — I ordered the Linen Oversized Shirt in medium but received a small. The packing slip says medium, so I think it was picked wrong. Order #BM-4819.</div>
-                </div>
-              </div>
-              <div class="msg staff">
-                <div class="msg-avatar">SH</div>
-                <div>
-                  <div class="msg-name">You <span class="msg-time">Today, 09:21</span></div>
-                  <div class="msg-bubble">Sorry about that, Sofia — you're right, the pick was wrong on our side. I've reserved a medium for you and I can send it out today.</div>
-                </div>
-              </div>
-              <div class="msg">
-                <div class="msg-avatar">SR</div>
-                <div>
-                  <div class="msg-name">Sofia Ricci <span class="msg-time">Today, 09:33</span></div>
-                  <div class="msg-bubble">That would be great, thank you. Do I need to send the small back first, or can I return it once the replacement arrives?</div>
-                </div>
-              </div>
-              <div class="msg staff">
-                <div class="msg-avatar">SH</div>
-                <div>
-                  <div class="msg-name">You <span class="msg-time">Today, 09:36</span></div>
-                  <div class="msg-bubble">No need to wait — I'll include a prepaid return label with the replacement. Just drop the small off whenever it suits you.</div>
-                </div>
-              </div>
-              <div class="msg">
-                <div class="msg-avatar">SR</div>
-                <div>
-                  <div class="msg-name">Sofia Ricci <span class="msg-time">Today, 09:52</span></div>
-                  <div class="msg-bubble">Perfect. One more thing — will the replacement arrive before the weekend?</div>
-                </div>
-              </div>
             </div>
 
             <div class="reply-box">
-              <label class="form-label" for="reply">Reply to Sofia</label>
+              <label class="form-label" for="reply">Reply</label>
               <textarea class="form-textarea" id="reply" rows="3" placeholder="Write a reply…"></textarea>
               <div class="reply-actions">
                 <button class="btn btn-primary btn-sm">Send reply</button>
@@ -254,5 +220,6 @@
 <script src="/assets/js/admin.js"></script>
 <script src="/assets/js/select.js"></script>
 <script src="/assets/js/skeleton.js"></script>
+<script type="module" src="/assets/js/admin-support.js"></script>
 </body>
 </html>

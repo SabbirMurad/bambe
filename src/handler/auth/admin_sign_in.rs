@@ -3,7 +3,8 @@ use mongodb::bson::doc;
 use actix_session::Session;
 use crate::{builtins::jwt, Model::Account};
 use crate::BuiltIns::mongo::MongoDB;
-use crate::utils::response::Response;
+use crate::util::response::Response;
+use crate::util::password::{self, Verified};
 use serde::{ Serialize, Deserialize };
 use actix_web::{ web, Error, HttpResponse };
 
@@ -41,8 +42,8 @@ pub async fn task(form_data: web::Json<ReqBody>, actix_session: Session) -> Resu
     }
 
     let db = MongoDB.connect();
-    let admin = match db
-        .collection::<Account::AdminAccount>("admin_account")
+    let collection = db.collection::<Account::AdminAccount>("admin_account");
+    let admin = match collection
         .find_one(doc!{ "email_address": &email })
         .await
     {
@@ -54,12 +55,30 @@ pub async fn task(form_data: web::Json<ReqBody>, actix_session: Session) -> Resu
         }
     };
 
-    if admin.password != password {
-        return Ok(Response::forbidden("Incorrect password"));
+    match password::verify(&password, &admin.password) {
+        Verified::Failed => return Ok(Response::forbidden("Incorrect password")),
+        // Legacy row, correct password — upgrade it in place. See sign_in.rs.
+        Verified::NeedsRehash => {
+            match password::hash(&password) {
+                Ok(hashed) => {
+                    let update = collection.update_one(
+                        doc!{ "uuid": &admin.uuid },
+                        doc!{ "$set": { "password": &hashed } },
+                    ).await;
+                    if let Err(error) = update {
+                        log::error!("could not upgrade stored password: {:?}", error);
+                    }
+                }
+                Err(error) => log::error!("{error}"),
+            }
+        }
+        Verified::Ok => {}
     }
 
-    let (access_token, valid_time) =
-        jwt::access_token::generate_default(&admin.uuid, Account::AccountRole::Administrator);
+    let (access_token, valid_time) = match jwt::access_token::generate_default(&admin.uuid, Account::AccountRole::Administrator) {
+        Ok(pair) => pair,
+        Err(error) => return Ok(Response::internal_server_error(&format!("could not mint an access token: {:?}", error))),
+    };
 
     let refresh_token = match jwt::refresh_token::new(&admin.uuid) {
         Ok(token) => token,

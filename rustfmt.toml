@@ -1,0 +1,8 @@
+# Deliberately close to rustfmt's defaults.
+#
+# This codebase currently mixes 2-space and 4-space indentation - `builtins/`
+# uses 2, most handlers use 4 - so `cargo fmt` will produce a large diff the
+# first time it runs. Do that as its own commit, on a clean tree, or it will bury
+# whatever change it is mixed into.
+edition = "2024"
+max_width = 100

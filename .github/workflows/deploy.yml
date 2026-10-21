@@ -1,0 +1,270 @@
+# Build on a runner, ship the binary to the server, restart the socket unit.
+#
+# The binary is only rebuilt and shipped when something that goes INTO it has
+# changed. Nothing under `pages/` or `assets/` is compiled in - there is no
+# build.rs and no include_str! anywhere in src/ - so a template or asset change
+# reaches the server through `git pull` alone. See "Deployment" in README.md.
+#
+# The server never compiles anything and never needs a GitHub credential for the
+# binary: the runner that built it copies it over SSH.
+#
+# Required secrets (Settings -> Secrets and variables -> Actions -> Secrets):
+#   APP_NAME         systemd unit name, and the filename under release/  e.g. my_api
+#   PROJECT_PATH     absolute path of the checkout on the server         e.g. /srv/my_api
+#   SSH_HOST         server hostname or IP
+#   SSH_USER         deploy user
+#   SSH_PRIVATE_KEY  private half of a key in that user's authorized_keys
+#   SSH_KNOWN_HOSTS  output of `ssh-keyscan -H <host>` - pins the server's host key
+#
+# Optional repository variables (same page, Variables tab):
+#   SSH_PORT         default 22
+#   BUILD_RUNNER     default ubuntu-22.04 - see the glibc note in README
+#   HEALTH_URL       default http://127.0.0.1/ - hit after start to wake the socket
+#   DEPLOY_BRANCH    default main
+
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      force_build:
+        description: "Rebuild and ship the binary even if only pages/assets changed"
+        type: boolean
+        default: false
+
+# Nothing here writes to the repository.
+permissions:
+  contents: read
+
+# Two deploys at once would race over the same binary. Queue them instead, and
+# never cancel one mid-flight - a cancelled run can leave the service stopped.
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  # Decides whether this repository is configured to deploy at all, before
+  # anything expensive happens.
+  #
+  # A fresh clone of this template has no secrets, and without this job the
+  # first push would spend ten minutes on a full cargo build before failing at
+  # the upload - an empty SSH_HOST makes the "which commit is deployed" query
+  # come back empty, which reads as a server with no binary on it.
+  #
+  # It has to be a separate job: the `secrets` context is not available in
+  # `jobs.<id>.if`, but `needs` is, so the answer is computed here and gates the
+  # job below.
+  check:
+    runs-on: ${{ vars.BUILD_RUNNER || 'ubuntu-22.04' }}
+    timeout-minutes: 5
+    outputs:
+      configured: ${{ steps.secrets.outputs.configured }}
+    steps:
+      - id: secrets
+        env:
+          APP_NAME: ${{ secrets.APP_NAME }}
+          PROJECT_PATH: ${{ secrets.PROJECT_PATH }}
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SSH_KNOWN_HOSTS: ${{ secrets.SSH_KNOWN_HOSTS }}
+        run: |
+          set -euo pipefail
+          required="APP_NAME PROJECT_PATH SSH_HOST SSH_USER SSH_PRIVATE_KEY SSH_KNOWN_HOSTS"
+
+          set_count=0
+          missing=""
+          for name in $required; do
+            # Only ever tests for emptiness - no secret is printed or logged.
+            if [ -n "${!name:-}" ]; then
+              set_count=$((set_count + 1))
+            else
+              missing="$missing $name"
+            fi
+          done
+
+          if [ -z "$missing" ]; then
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # Some set but not all is a mistake someone made, not a repository
+          # that was never configured. Say so loudly rather than skipping and
+          # leaving them to wonder why nothing deployed.
+          if [ "$set_count" -gt 0 ]; then
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "::error::Deploy is partly configured. Missing:$missing"
+            {
+              echo "### Deploy is partly configured"
+              echo
+              echo "Missing:$missing"
+              echo
+              echo "Set them under Settings -> Secrets and variables -> Actions."
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+
+          # Nothing set at all: this repository has never been pointed at a
+          # server. Skip quietly and stay green - a fresh clone of the template
+          # should not greet anyone with a red X.
+          echo "configured=false" >> "$GITHUB_OUTPUT"
+          echo "::notice::No deploy secrets set - skipping deploy. See 'Before the first run' in README.md."
+          {
+            echo "### Deploy skipped"
+            echo
+            echo "No deploy secrets are set, so this repository is not pointed at a"
+            echo "server yet. Nothing was built and nothing was deployed."
+            echo
+            echo "To enable it, set these under"
+            echo "Settings -> Secrets and variables -> Actions:"
+            echo
+            for name in $required; do echo "- \`$name\`"; done
+            echo
+            echo "See **Before the first run** in README.md. If this project does not"
+            echo "deploy this way at all, delete \`.github/workflows/deploy.yml\`."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  deploy:
+    needs: check
+    if: needs.check.outputs.configured == 'true'
+    runs-on: ${{ vars.BUILD_RUNNER || 'ubuntu-22.04' }}
+    timeout-minutes: 45
+
+    env:
+      APP_NAME: ${{ secrets.APP_NAME }}
+      PROJECT_PATH: ${{ secrets.PROJECT_PATH }}
+      SSH_HOST: ${{ secrets.SSH_HOST }}
+      SSH_USER: ${{ secrets.SSH_USER }}
+      SSH_PORT: ${{ vars.SSH_PORT || '22' }}
+
+    steps:
+      # Full history: the rebuild decision diffs against whichever commit the
+      # server's current binary was built from, which can be many pushes back.
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configure SSH
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SSH_KNOWN_HOSTS: ${{ secrets.SSH_KNOWN_HOSTS }}
+        run: |
+          set -euo pipefail
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          printf '%s\n' "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+
+      # Asks the server which commit its binary came from, rather than using
+      # github.event.before. The two differ whenever a run was skipped, failed,
+      # rolled back or re-run by hand, and the server's answer is the only one
+      # that describes what is actually installed.
+      - name: Decide whether to rebuild
+        id: decide
+        env:
+          FORCE: ${{ inputs.force_build }}
+        run: |
+          set -euo pipefail
+          SSH="ssh -i $HOME/.ssh/deploy_key -p $SSH_PORT -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes"
+
+          # Prints the stamped commit, or nothing if either the stamp or the
+          # binary is absent. `|| true` so a fresh server is not a hard failure.
+          deployed=$($SSH "$SSH_USER@$SSH_HOST" \
+            "test -x '$PROJECT_PATH/release/$APP_NAME' && cat '$PROJECT_PATH/release/$APP_NAME.sha' 2>/dev/null" \
+            || true)
+          deployed=$(printf '%s' "$deployed" | tr -d '[:space:]')
+
+          build=true
+          if [ "$FORCE" = "true" ]; then
+            reason="force_build requested"
+          elif [ -z "$deployed" ]; then
+            reason="no binary on the server, or no commit stamp beside it"
+          elif ! git cat-file -e "${deployed}^{commit}" 2>/dev/null; then
+            reason="stamped commit $deployed is not in this history (rebased or force-pushed)"
+          else
+            # Everything the compiler reads. Anything not listed here cannot
+            # change the binary, so it ships by git pull alone.
+            changed=$(git diff --name-only "$deployed" "$GITHUB_SHA" -- \
+                        src Cargo.toml Cargo.lock rust-toolchain.toml .cargo build.rs)
+            if [ -n "$changed" ]; then
+              reason="build inputs changed since $deployed"
+              printf '%s\n' "$changed" | sed 's/^/    /'
+            else
+              build=false
+              reason="no build inputs changed since $deployed - pull and restart only"
+            fi
+          fi
+
+          echo "build=$build" >> "$GITHUB_OUTPUT"
+          echo "rebuild: \`$build\` - $reason" >> "$GITHUB_STEP_SUMMARY"
+          echo "==> rebuild: $build - $reason"
+
+      # openssl-sys (reqwest, lettre) needs libssl-dev + pkg-config; libsqlite3-sys
+      # with `bundled` compiles C, so it needs a working cc. Present on the hosted
+      # images already - this is what makes the job work on a self-hosted one too.
+      - name: Install build dependencies
+        if: steps.decide.outputs.build == 'true'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends pkg-config libssl-dev jq
+
+      # rust-toolchain.toml pins the compiler, so rustup installs 1.97.1 on its own
+      # the first time cargo runs. Nothing to select here.
+      - name: Cache cargo registry and target
+        if: steps.decide.outputs.build == 'true'
+        uses: Swatinem/rust-cache@v2
+
+      - name: Build
+        id: build
+        if: steps.decide.outputs.build == 'true'
+        run: |
+          set -euo pipefail
+          cargo build --release --locked
+          # The Cargo binary name and APP_NAME are allowed to differ, so read the
+          # real one rather than assuming.
+          BIN=$(cargo metadata --no-deps --format-version 1 \
+                | jq -r '.packages[0].targets[] | select(.kind[] == "bin") | .name' \
+                | head -1)
+          test -x "target/release/$BIN"
+          echo "bin=target/release/$BIN" >> "$GITHUB_OUTPUT"
+          ls -lh "target/release/$BIN"
+
+      # Uploaded while the old binary is still serving traffic, so the downtime
+      # below is a file rename and a restart rather than a whole file transfer.
+      - name: Upload binary
+        if: steps.decide.outputs.build == 'true'
+        env:
+          BIN: ${{ steps.build.outputs.bin }}
+        run: |
+          set -euo pipefail
+          ssh -i "$HOME/.ssh/deploy_key" -p "$SSH_PORT" \
+              -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes \
+              "$SSH_USER@$SSH_HOST" "mkdir -p '$PROJECT_PATH/release'"
+          scp -i "$HOME/.ssh/deploy_key" -P "$SSH_PORT" \
+              -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes \
+              "$BIN" "$SSH_USER@$SSH_HOST:$PROJECT_PATH/release/$APP_NAME.new"
+
+      # Runs either way. With no staged binary it is a pull and a restart, which
+      # is all a pages/ or assets/ change needs.
+      - name: Deploy
+        env:
+          HEALTH_URL: ${{ vars.HEALTH_URL || 'http://127.0.0.1/' }}
+          DEPLOY_BRANCH: ${{ vars.DEPLOY_BRANCH || 'main' }}
+          # Told, not inferred - so a truncated upload from an earlier failed run
+          # is discarded rather than installed.
+          STAGED: ${{ steps.decide.outputs.build }}
+        run: |
+          set -euo pipefail
+          ssh -i "$HOME/.ssh/deploy_key" -p "$SSH_PORT" \
+              -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes \
+              "$SSH_USER@$SSH_HOST" \
+              "APP='$APP_NAME' PROJ='$PROJECT_PATH' HEALTH_URL='$HEALTH_URL' BRANCH='$DEPLOY_BRANCH' SHA='$GITHUB_SHA' STAGED='$STAGED' bash -s" \
+              < .github/deploy.sh
+
+      - name: Remove SSH key
+        if: always()
+        run: rm -f ~/.ssh/deploy_key

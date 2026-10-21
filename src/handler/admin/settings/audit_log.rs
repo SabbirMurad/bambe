@@ -6,7 +6,7 @@ use mongodb::bson::doc;
 use mongodb::Database;
 use actix_web::{web, Error, HttpResponse, HttpRequest};
 use crate::BuiltIns::mongo::MongoDB;
-use crate::utils::response::Response;
+use crate::util::response::Response;
 use crate::Middleware::Auth::{require_access, AccessRequirement};
 use crate::model::Account::AccountRole;
 use crate::model::Store::AdminAuditLog;
@@ -69,7 +69,14 @@ pub async fn task(req: HttpRequest, query: web::Query<ReqQuery>) -> Result<HttpR
 
     let mut cursor = result.unwrap();
     let mut entries = Vec::new();
-    while let Some(Ok(e)) = cursor.next().await {
+    while let Some(result) = cursor.next().await {
+        let e = match result {
+            Ok(e) => e,
+            Err(error) => {
+                log::error!("{}: skipping unreadable document: {:?}", module_path!(), error);
+                continue;
+            }
+        };
         entries.push(e);
     }
 

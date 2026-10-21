@@ -5,7 +5,7 @@ use serde_json::json;
 use mongodb::bson::doc;
 use actix_web::{web, Error, HttpResponse, HttpRequest};
 use crate::BuiltIns::mongo::MongoDB;
-use crate::utils::response::Response;
+use crate::util::response::Response;
 use crate::Middleware::Auth::{require_access, AccessRequirement};
 use crate::model::Order::{Order, OrderItem};
 use crate::model::Product::ProductVariant;
@@ -33,7 +33,14 @@ pub async fn task(req: HttpRequest, path: web::Path<String>) -> Result<HttpRespo
         .await
         .expect("order item lookup");
     let mut items = Vec::new();
-    while let Some(Ok(i)) = item_cursor.next().await {
+    while let Some(result) = item_cursor.next().await {
+        let i = match result {
+            Ok(i) => i,
+            Err(error) => {
+                log::error!("{}: skipping unreadable document: {:?}", module_path!(), error);
+                continue;
+            }
+        };
         items.push(i);
     }
 

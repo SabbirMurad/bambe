@@ -4,7 +4,7 @@ use serde_json::json;
 use mongodb::bson::{doc, Document};
 use actix_web::{web, Error, HttpResponse, HttpRequest};
 use crate::BuiltIns::mongo::MongoDB;
-use crate::utils::response::Response;
+use crate::util::response::Response;
 use crate::Middleware::Auth::{require_access, AccessRequirement};
 use crate::model::Account::AccountRole;
 
@@ -97,7 +97,14 @@ pub async fn task(req: HttpRequest, query: web::Query<ReqQuery>) -> Result<HttpR
 
     let mut cursor = result.unwrap();
     let mut customers = Vec::new();
-    while let Some(Ok(d)) = cursor.next().await {
+    while let Some(result) = cursor.next().await {
+        let d = match result {
+            Ok(d) => d,
+            Err(error) => {
+                log::error!("{}: skipping unreadable document: {:?}", module_path!(), error);
+                continue;
+            }
+        };
         customers.push(d);
     }
 

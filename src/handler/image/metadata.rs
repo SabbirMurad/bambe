@@ -1,7 +1,7 @@
 use mongodb::bson::doc;
+use crate::util::response::Response;
 use crate::model::ImageStruct;
 use crate::builtins::mongo::MongoDB;
-use crate::utils::response::Response;
 use actix_web::{web, Error, HttpResponse};
 
 pub async fn task(image_id: web::Path<String>) -> Result<HttpResponse, Error> {
@@ -15,7 +15,6 @@ pub async fn task(image_id: web::Path<String>) -> Result<HttpResponse, Error> {
     }).await;
 
     if let Err(error) = result {
-        log::error!("{:?}", error);
         return Ok(Response::internal_server_error(&error.to_string()));
     }
 

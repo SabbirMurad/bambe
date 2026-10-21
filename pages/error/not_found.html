@@ -1,9 +1,11 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-store-theme="{{ store_theme | default(value='orange') }}">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Page not found — Bambe</title>
+<meta name="robots" content="noindex, nofollow">
+<title>Page not found — Bambee</title>
+{% include "common/favicon.html" %}
 <link rel="stylesheet" href="/assets/css/common.css">
 <style>
   .nf-wrap {
@@ -35,7 +37,7 @@
   <div class="navbar-inner">
     <a href="/" class="nav-logo">
       <div class="nav-logo-mark"></div>
-      <span class="nav-logo-text">ambe</span>
+      <span class="nav-logo-text">ambee</span>
     </a>
   </div>
 </nav>

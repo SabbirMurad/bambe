@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════
-   Bambe Web — admin.js
+   Bambee Web — admin.js
 
    The storefront pages each carry a small inline <script>, but the
    six admin pages share the same table / tab / toggle behaviour, so
@@ -11,8 +11,9 @@
   var searchBtn = document.querySelector('.nav-search-btn');
   if (searchBtn) searchBtn.onclick = function() { location.href = '/search'; };
 
-  var logout = document.querySelector('.admin-nav-logout');
-  if (logout) logout.onclick = function() { location.href = '/login'; };
+  /* Log Out is admin-core.js's — it signs the session out against
+     the API rather than just navigating away with the tokens still
+     in localStorage. Two owners here would fight over onclick. */
 
   /* ── Filter tabs ────────────────────────────────────────── */
   document.querySelectorAll('.admin-tabs').forEach(function(group) {

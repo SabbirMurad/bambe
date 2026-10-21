@@ -1,0 +1,19 @@
+# Normalise line endings in the repository regardless of who commits.
+* text=auto
+
+# These are executed on a Linux server after being read straight out of the
+# repository, so a CRLF would reach `bash` as a literal \r and break every line.
+# Pinned here rather than relying on each contributor's core.autocrlf.
+*.sh   text eol=lf
+*.yml  text eol=lf
+*.yaml text eol=lf
+.env*  text eol=lf
+
+# Not text.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.ico binary
+*.woff binary
+*.woff2 binary

@@ -21,6 +21,18 @@ pub use category as Category;
 pub mod order;
 pub use order as Order;
 
+pub mod return_request;
+pub use return_request as ReturnRequest;
+
+pub mod review;
+pub use review as Review;
+
+pub mod loyalty;
+pub use loyalty as Loyalty;
+
+pub mod notification;
+pub use notification as Notification;
+
 pub mod coupon;
 pub use coupon as Coupon;
 

@@ -1,6 +1,6 @@
 use mongodb::bson::doc;
 use crate::model::AudioStruct;
-use crate::utils::response::Response;
+use crate::util::response::Response;
 use crate::builtins::{mongo::MongoDB, sqlite};
 use actix_web::{web, Error, HttpResponse};
 

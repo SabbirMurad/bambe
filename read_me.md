@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/brand/bambe-banner.png" alt="Bambee — style that defines you" width="880">
+</p>
+
 If you already know about the project run the code below to run it
 
 ```bash

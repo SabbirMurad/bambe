@@ -2,7 +2,7 @@ use futures::StreamExt;
 use serde_json::{json, Value};
 use mongodb::bson::doc;
 use crate::BuiltIns::mongo::MongoDB;
-use crate::utils::response::Response;
+use crate::util::response::Response;
 use actix_web::{Error, HttpResponse};
 use crate::model::Category::Category;
 
@@ -43,7 +43,14 @@ pub async fn task() -> Result<HttpResponse, Error> {
 
     let mut cursor = result.unwrap();
     let mut categories = Vec::new();
-    while let Some(Ok(c)) = cursor.next().await {
+    while let Some(result) = cursor.next().await {
+        let c = match result {
+            Ok(c) => c,
+            Err(error) => {
+                log::error!("{}: skipping unreadable document: {:?}", module_path!(), error);
+                continue;
+            }
+        };
         categories.push(c);
     }
 

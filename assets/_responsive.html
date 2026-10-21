@@ -1,0 +1,33 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Responsive check</title>
+<style>
+  body { margin:0; background:#111; color:#ddd; font:13px/1.4 system-ui; padding:14px; }
+  h2 { font-size:13px; margin:0 0 6px; color:#fff; font-weight:600; }
+  .row { display:flex; gap:14px; flex-wrap:wrap; }
+  .cell { background:#000; border-radius:8px; overflow:hidden; }
+  .cell p { margin:0; padding:5px 8px; font-size:11px; color:#9aa; background:#1b1b1b; }
+  iframe { display:block; border:0; background:#fff; }
+</style>
+<div id="out"></div>
+<script>
+  // Pages are framed at their real widths so their own media queries
+  // fire — the only honest way to see the mobile layout short of a phone.
+  const PAGES = new URLSearchParams(location.search).get('p').split(',');
+  const W = +(new URLSearchParams(location.search).get('w') || 390);
+  const H = +(new URLSearchParams(location.search).get('h') || 780);
+  const out = document.getElementById('out');
+  const row = document.createElement('div');
+  row.className = 'row';
+  out.appendChild(row);
+  for (const path of PAGES) {
+    const cell = document.createElement('div');
+    cell.className = 'cell';
+    const f = document.createElement('iframe');
+    f.src = path; f.width = W; f.height = H;
+    const label = document.createElement('p');
+    label.textContent = path;
+    cell.appendChild(f); cell.appendChild(label);
+    row.appendChild(cell);
+  }
+</script>

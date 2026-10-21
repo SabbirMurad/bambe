@@ -4,7 +4,7 @@ use actix_web::HttpResponse;
 use mongodb::{ClientSession, Database, IndexModel};
 use mongodb::options::IndexOptions;
 use crate::BuiltIns::mongo::MongoDB;
-use crate::utils::response::Response;
+use crate::util::response::Response;
 
 pub mod refresh;
 pub use refresh as Refresh;
@@ -33,6 +33,9 @@ pub use sign_out as SignOut;
 pub mod forgot_password;
 pub use forgot_password as ForgotPassword;
 
+pub mod verify_sign_in_code;
+pub use verify_sign_in_code as VerifySignInCode;
+
 pub mod verify_reset_code;
 pub use verify_reset_code as VerifyResetCode;
 
@@ -42,8 +45,6 @@ pub use reset_password as ResetPassword;
 pub mod change_password;
 pub use change_password as ChangePassword;
 
-pub mod get;
-pub use get as Get;
 
 pub mod social_login;
 pub use social_login as SocialLogin;
@@ -81,6 +82,96 @@ pub async fn ensure_indexes() {
 
 }
 
+/*
+  Replaces every plaintext password left by the old storage scheme with an
+  Argon2 hash.
+
+  It can do this without anyone signing in, because a plaintext row *is* the
+  password — so it can be hashed directly. That matters: the fallback in
+  `util::password::verify` would otherwise keep reading plaintext for as long
+  as an account went untouched, which for an abandoned account is forever.
+
+  Idempotent. A row already stored as a PHC string is skipped, so this is safe
+  to run on every startup and safe to interrupt — anything it has not reached
+  yet still authenticates through the legacy path.
+*/
+pub async fn migrate_plaintext_passwords() {
+    use crate::util::password;
+
+    let db = MongoDB.connect();
+    let mut migrated = 0_u64;
+    let mut failed = 0_u64;
+
+    // account_core and admin_account hold passwords in the same shape, but
+    // they are different types, so each is walked on its own.
+    let users = db.collection::<Account::AccountCore>("account_core");
+    match users.find(doc!{}).await {
+        Ok(mut cursor) => {
+            use futures::StreamExt;
+            while let Some(row) = cursor.next().await {
+                let Ok(account) = row else { continue };
+                // An empty password is a social-login account with none to migrate.
+                if account.password.is_empty() || password::is_hashed(&account.password) {
+                    continue;
+                }
+                match password::hash(&account.password) {
+                    Ok(hashed) => {
+                        if let Err(error) = users.update_one(
+                            doc!{ "uuid": &account.uuid },
+                            doc!{ "$set": { "password": &hashed } },
+                        ).await {
+                            log::error!("password migration (user {}): {:?}", account.uuid, error);
+                            failed += 1;
+                        } else {
+                            migrated += 1;
+                        }
+                    }
+                    Err(error) => {
+                        log::error!("password migration (user {}): {error}", account.uuid);
+                        failed += 1;
+                    }
+                }
+            }
+        }
+        Err(error) => log::error!("password migration: could not read account_core: {:?}", error),
+    }
+
+    let admins = db.collection::<Account::AdminAccount>("admin_account");
+    match admins.find(doc!{}).await {
+        Ok(mut cursor) => {
+            use futures::StreamExt;
+            while let Some(row) = cursor.next().await {
+                let Ok(admin) = row else { continue };
+                if admin.password.is_empty() || password::is_hashed(&admin.password) {
+                    continue;
+                }
+                match password::hash(&admin.password) {
+                    Ok(hashed) => {
+                        if let Err(error) = admins.update_one(
+                            doc!{ "uuid": &admin.uuid },
+                            doc!{ "$set": { "password": &hashed } },
+                        ).await {
+                            log::error!("password migration (admin {}): {:?}", admin.uuid, error);
+                            failed += 1;
+                        } else {
+                            migrated += 1;
+                        }
+                    }
+                    Err(error) => {
+                        log::error!("password migration (admin {}): {error}", admin.uuid);
+                        failed += 1;
+                    }
+                }
+            }
+        }
+        Err(error) => log::error!("password migration: could not read admin_account: {:?}", error),
+    }
+
+    if migrated > 0 || failed > 0 {
+        log::info!("Password migration: {migrated} hashed, {failed} failed");
+    }
+}
+
 
 pub async fn delete_account(
     db: &Database,
@@ -90,11 +181,11 @@ pub async fn delete_account(
     let collection = db.collection::<Account::AccountCore>("account_core");
     let result = collection.delete_one(
         doc!{"uuid": user_id},
-    ).await;
+    ).session(&mut *session).await;
 
     if let Err(error) = result {
         log::error!("{:?}", error);
-        session.abort_transaction().await.ok().unwrap();
+        MongoDB::abort(session).await;
         return Err(Response::internal_server_error(&error.to_string()));
     }
 
@@ -102,11 +193,11 @@ pub async fn delete_account(
     <Account::AccountProfile>("account_profile");
     let result = collection.delete_one(
         doc!{"uuid": user_id},
-    ).await;
+    ).session(&mut *session).await;
 
     if let Err(error) = result {
         log::error!("{:?}", error);
-        session.abort_transaction().await.ok().unwrap();
+        MongoDB::abort(session).await;
         return Err(Response::internal_server_error(&error.to_string()));
     }
 
@@ -114,13 +205,46 @@ pub async fn delete_account(
     <Account::AccountVerificationRequest>("account_verification_request");
     let result = collection.delete_one(
         doc!{"uuid": user_id},
-    ).await;
+    ).session(&mut *session).await;
 
     if let Err(error) = result {
         log::error!("{:?}", error);
-        session.abort_transaction().await.ok().unwrap();
+        MongoDB::abort(session).await;
         return Err(Response::internal_server_error(&error.to_string()));
     }
 
     Ok(())
+}
+
+/// Wrong guesses a 6-digit code may take before it is destroyed. A code with no
+/// limit is brute-forceable inside its 15-minute life at the rate limiter's pace.
+pub const MAX_CODE_ATTEMPTS: u32 = 5;
+
+/// Records a wrong guess against a verification request and reports whether it
+/// has now used up its guesses (in which case it has been deleted, and the user
+/// must ask for a new code).
+///
+/// Deliberately NOT part of the caller's transaction: the wrong-guess path
+/// aborts, and a counter incremented inside the transaction would be rolled
+/// back with it - so the limit would never fire. This write has to survive the
+/// rejection it is recording.
+pub async fn record_wrong_code(db: &Database, collection: &str, request_uuid: &str) -> bool {
+    let col = db.collection::<mongodb::bson::Document>(collection);
+    let updated = col
+        .find_one_and_update(doc! { "uuid": request_uuid }, doc! { "$inc": { "attempts": 1 } })
+        .return_document(mongodb::options::ReturnDocument::After)
+        .await
+        .ok()
+        .flatten();
+
+    let attempts = updated
+        .as_ref()
+        .and_then(|d| d.get_i32("attempts").ok().map(|n| n as i64).or_else(|| d.get_i64("attempts").ok()))
+        .unwrap_or(0);
+
+    if attempts >= MAX_CODE_ATTEMPTS as i64 {
+        col.delete_one(doc! { "uuid": request_uuid }).await.ok();
+        return true;
+    }
+    false
 }

@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════
-   Bambe Web — account.css
+   Bambee Web — account.css
    Styles for: Profile, My Orders, Order Tracking, Notifications
 ═══════════════════════════════════════════════════════════════ */
 
@@ -108,6 +108,15 @@
   justify-content: center;
 }
 .account-nav-item.active .account-nav-badge { background: var(--blue); }
+/* Badges ship empty and stay hidden until account.js has a real count. */
+.account-nav-badge:empty { display: none; }
+/* The name and email ship empty too; hold their line so the card
+   doesn't jump when account.js fills them in. */
+.account-user-name:empty::before,
+.account-user-email:empty::before,
+.profile-name:empty::before,
+.profile-email:empty::before,
+.profile-member-since:empty::before { content: "\00a0"; }
 
 .account-nav-logout {
   display: flex;
@@ -128,7 +137,7 @@
    PROFILE PAGE
 ══════════════════════════════════════════════════════ ── */
 .profile-hero {
-  background: linear-gradient(135deg, #2A2620 0%, var(--ink) 100%);
+  background: linear-gradient(135deg, #1B3A2F 0%, var(--ink) 100%);
   border-radius: var(--radius-lg);
   padding: 32px 28px;
   display: flex;
@@ -141,7 +150,7 @@
   width: 80px;
   height: 80px;
   border-radius: 50%;
-  background: var(--blue);
+  background: var(--primary-grad);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -368,7 +377,7 @@
   border-radius: 20px;
   font-size: 13px;
   font-weight: 700;
-  background: var(--blue);
+  background: var(--primary-grad);
   color: var(--on-primary);
 }
 
@@ -511,7 +520,7 @@
   position: relative;
 }
 .notif-item:last-child { border-bottom: none; }
-.notif-item.unread { background: rgba(250,170,57,0.03); }
+.notif-item.unread { background: color-mix(in srgb, var(--primary) 3%, transparent); }
 .notif-icon-wrap {
   width: 44px;
   height: 44px;
@@ -539,4 +548,253 @@
   height: 8px;
   border-radius: 50%;
   background: var(--blue);
+}
+
+/* ── ══════════════════════════════════════════════════════
+   RESPONSIVE — ACCOUNT
+
+   Same breakpoints as common.css.
+══════════════════════════════════════════════════════ ── */
+
+@media (max-width: 1024px) {
+  /*
+    The account sidebar carries the section nav, so it goes above the
+    content rather than below it — it is how you move around these
+    pages, not an aside.
+
+    `min-width: 0` on the children is not optional: a grid item
+    defaults to `min-width: auto` and will not shrink below its
+    content. Without it the single column sat at 1638px, held open by
+    the order rows inside, and the page scrolled sideways by 1100px
+    even though the track said `1fr`.
+  */
+  .account-layout { grid-template-columns: 1fr; gap: 20px; }
+  .account-layout > * { min-width: 0; }
+  .tracking-layout { grid-template-columns: 1fr; }
+  .tracking-layout > * { min-width: 0; }
+  .stats-row { grid-template-columns: repeat(2, 1fr); }
+  .form-grid-3 { grid-template-columns: 1fr 1fr; }
+}
+
+@media (max-width: 640px) {
+  .stats-row { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .form-grid-2,
+  .form-grid-3 { grid-template-columns: 1fr; gap: 14px; }
+
+  /*
+    The card header is order / date / status side by side. At 390px the
+    three columns squeeze the reference until it breaks mid-token
+    ("#SE-2026-" / "78432"), which reads like two different orders. Let
+    the header wrap instead and keep the reference itself intact.
+  */
+  .order-card-header { flex-wrap: wrap; gap: 8px 12px; padding: 14px 16px; }
+  .order-id { white-space: nowrap; }
+
+  /*
+    An order row is a thumbnail strip beside its details; both are flex
+    rows that will not wrap, so on a phone they run off the side. The
+    thumbnails scroll, the meta line wraps.
+  */
+  .order-items-row {
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .order-items-row::-webkit-scrollbar { display: none; }
+  .order-meta { flex-wrap: wrap; gap: 6px 14px; }
+  .order-card-footer { flex-wrap: wrap; gap: 10px; }
+
+  /*
+    The profile header is avatar + identity + an edit button held apart
+    by `margin-left: auto`. On a phone the button has nowhere to go, so
+    it wraps onto its own line at full width and the identity column is
+    allowed to shrink (it is an unclassed div, hence the :not()).
+  */
+  .profile-hero { padding: 22px 18px; gap: 16px; flex-wrap: wrap; }
+  .profile-hero > div:not(.profile-avatar-wrap) { min-width: 0; flex: 1 1 140px; }
+  .profile-name { overflow-wrap: anywhere; }
+  .profile-edit-btn { margin-left: 0; width: 100%; justify-content: center; }
+
+  /* Status chips: one scrolling row, same strip pattern as the nav
+     below, rather than a wrapped block that pushes the list down. */
+  .orders-filter-bar {
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .orders-filter-bar::-webkit-scrollbar { display: none; }
+  .order-filter-tab { flex: 0 0 auto; }
+
+  /* The section nav becomes a scrolling strip instead of a tall list
+     the visitor has to scroll past to reach the page itself. */
+  .account-nav {
+    display: flex;
+    overflow-x: auto;
+    gap: 6px;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .account-nav::-webkit-scrollbar { display: none; }
+  .account-nav-item { flex: 0 0 auto; white-space: nowrap; }
+}
+
+/* ── Stamp card (rewards.html) ──────────────────────────────── */
+.rewards { display: flex; flex-direction: column; gap: 28px; max-width: 560px; }
+.rewards-section-title {
+  font-family: var(--font-head);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--black);
+  margin-bottom: 12px;
+}
+.stamp-card {
+  position: relative;
+  overflow: hidden;
+  border-radius: 20px;
+  padding: 22px 24px 18px;
+  color: #fff;
+  background:
+    radial-gradient(circle at 92% 8%, rgba(255,255,255,.16) 0 70px, transparent 71px),
+    radial-gradient(circle at 104% 92%, rgba(255,255,255,.10) 0 120px, transparent 121px),
+    radial-gradient(circle at -6% 110%, rgba(0,0,0,.10) 0 90px, transparent 91px),
+    var(--primary);
+  box-shadow: 0 14px 34px -18px color-mix(in srgb, var(--primary) 70%, #000);
+}
+.stamp-card.is-placeholder { aspect-ratio: 1.75; opacity: .35; }
+.stamp-card-head { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+.stamp-card-mark {
+  width: 30px;
+  height: 32px;
+  flex-shrink: 0;
+  background-color: #fff;
+  -webkit-mask: url('/assets/icons/bambe_logo.svg') center / contain no-repeat;
+  mask: url('/assets/icons/bambe_logo.svg') center / contain no-repeat;
+}
+.stamp-card-titles { flex: 1; min-width: 0; }
+.stamp-card-brand { font-family: var(--font-head); font-size: 17px; font-weight: 700; letter-spacing: .2px; }
+.stamp-card-no { font-size: 11.5px; letter-spacing: 1.6px; text-transform: uppercase; opacity: .78; margin-top: 2px; }
+.stamp-card-count { font-family: var(--font-head); font-size: 22px; font-weight: 700; }
+.stamp-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px 14px; }
+.stamp-slot {
+  position: relative;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  border: 2px dashed rgba(255,255,255,.55);
+  display: grid;
+  place-items: center;
+}
+.stamp-slot.is-goal { border-style: solid; border-color: rgba(255,255,255,.85); background: rgba(255,255,255,.10); }
+.stamp-num { font-family: var(--font-head); font-size: 15px; font-weight: 600; opacity: .7; }
+.stamp-gift { display: grid; width: 46%; opacity: .95; }
+.stamp-gift svg { width: 100%; height: auto; }
+.stamp-slot.is-stamped .stamp-num { opacity: 0; }
+.stamp-ink {
+  position: absolute;
+  inset: -3px;
+  border-radius: 50%;
+  background: #fff;
+  transform: rotate(var(--tilt, 0deg));
+  box-shadow: inset 0 0 0 3px color-mix(in srgb, var(--primary) 30%, #fff);
+}
+.stamp-ink::before {
+  content: '';
+  position: absolute;
+  inset: 22%;
+  background-color: var(--primary);
+  -webkit-mask: url('/assets/icons/bambe_logo.svg') center / contain no-repeat;
+  mask: url('/assets/icons/bambe_logo.svg') center / contain no-repeat;
+}
+.stamp-card-foot { font-size: 11.5px; opacity: .75; margin-top: 16px; letter-spacing: .3px; }
+
+/* Waiting to land: hidden until playStamps() presses it on. */
+.stamp-slot.is-new .stamp-ink { opacity: 0; }
+.stamp-slot.is-new .stamp-num { opacity: .7; }
+.stamp-slot.is-landing .stamp-ink { animation: stamp-press .5s cubic-bezier(.2,.9,.3,1.2) both; }
+.stamp-slot.is-landing::after {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  animation: stamp-ring .6s ease-out .18s both;
+  pointer-events: none;
+}
+.stamp-card.is-thump { animation: stamp-thump .32s ease-out .2s; }
+.stamp-card.is-celebrating { animation: stamp-glow 1.6s ease-out; }
+@keyframes stamp-press {
+  0%   { opacity: 0; transform: scale(2.3) rotate(calc(var(--tilt, 0deg) - 25deg)); }
+  55%  { opacity: 1; transform: scale(.86) rotate(var(--tilt, 0deg)); }
+  78%  { transform: scale(1.05) rotate(var(--tilt, 0deg)); }
+  100% { opacity: 1; transform: scale(1) rotate(var(--tilt, 0deg)); }
+}
+@keyframes stamp-ring {
+  from { opacity: .9; transform: scale(1); }
+  to   { opacity: 0; transform: scale(1.55); }
+}
+@keyframes stamp-thump {
+  0%, 100% { transform: translateY(0); }
+  40% { transform: translateY(2px) scale(.995); }
+}
+@keyframes stamp-glow {
+  0%   { box-shadow: 0 0 0 0 color-mix(in srgb, var(--primary) 55%, transparent); }
+  60%  { box-shadow: 0 0 0 18px color-mix(in srgb, var(--primary) 0%, transparent); }
+  100% { box-shadow: 0 14px 34px -18px color-mix(in srgb, var(--primary) 70%, #000); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .stamp-slot.is-landing .stamp-ink,
+  .stamp-slot.is-landing::after,
+  .stamp-card.is-thump,
+  .stamp-card.is-celebrating { animation: none; }
+}
+
+.stamp-progress { font-size: 13px; color: var(--mid); margin-top: 12px; }
+.reward-panel {
+  margin-top: 14px;
+  padding: 18px 20px;
+  border: 1.5px solid var(--primary-text);
+  border-radius: var(--radius-md);
+  background: var(--primary-lt);
+}
+.reward-panel.is-waiting { border-style: dashed; }
+.reward-panel-eyebrow {
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  color: var(--primary-text);
+  margin-bottom: 4px;
+}
+.reward-panel-title { font-family: var(--font-head); font-size: 18px; font-weight: 700; color: var(--black); }
+.reward-panel-text { font-size: 13px; color: var(--mid); line-height: 1.6; margin-top: 6px; }
+.reward-panel .btn { margin-top: 14px; }
+.reward-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  flex-wrap: wrap;
+}
+.reward-row + .reward-row { margin-top: 10px; }
+.reward-row.is-new-reward { border-color: var(--primary-text); background: var(--primary-lt); }
+.reward-row-title { font-size: 14px; font-weight: 700; color: var(--dark); }
+.reward-row-sub { font-size: 12px; color: var(--subtle); margin-top: 2px; }
+.reward-code { display: flex; align-items: center; gap: 8px; }
+.reward-code code {
+  font-family: ui-monospace, Menlo, Consolas, monospace;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  padding: 7px 12px;
+  border: 1.5px dashed var(--primary-text);
+  border-radius: var(--radius-sm);
+  color: var(--primary-text);
+  background: var(--white);
+}
+@media (max-width: 480px) {
+  .stamp-card { padding: 18px 16px 14px; border-radius: 16px; }
+  .stamp-grid { gap: 9px 10px; }
+  .stamp-num { font-size: 13px; }
 }

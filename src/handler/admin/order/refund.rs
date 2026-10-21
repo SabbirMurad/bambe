@@ -5,7 +5,7 @@ use serde::Deserialize;
 use mongodb::bson::doc;
 use actix_web::{web, Error, HttpResponse, HttpRequest};
 use crate::BuiltIns::mongo::MongoDB;
-use crate::utils::response::Response;
+use crate::util::response::Response;
 use crate::Middleware::Auth::{require_access, AccessRequirement};
 use crate::model::Account::AccountRole;
 use crate::model::Cents;
@@ -41,7 +41,14 @@ pub async fn task(req: HttpRequest, path: web::Path<String>, body: web::Json<Req
         .await
         .expect("payment transaction lookup");
     let mut transactions = Vec::new();
-    while let Some(Ok(t)) = tx_cursor.next().await {
+    while let Some(result) = tx_cursor.next().await {
+        let t = match result {
+            Ok(t) => t,
+            Err(error) => {
+                log::error!("{}: skipping unreadable document: {:?}", module_path!(), error);
+                continue;
+            }
+        };
         transactions.push(t);
     }
 
@@ -105,6 +112,23 @@ pub async fn task(req: HttpRequest, path: web::Path<String>, body: web::Json<Req
 
     let name = crate::Handler::Admin::Settings::AuditLog::admin_name(&db, &admin.user_id).await;
     crate::Handler::Admin::Settings::AuditLog::log(&db, &admin.user_id, &name, "order.refunded", "order", &order_id, Some(format!("{} {}", amount, order.currency))).await;
+
+    crate::util::notify::send(
+        &db,
+        &order.user_id,
+        crate::util::notify::Notice {
+            kind: crate::model::Notification::NotifType::RefundIssued,
+            title: format!("Refund issued for order {}", order.number),
+            body: "The money is on its way back to your original payment method.".to_string(),
+            image_id: None,
+            related_id: Some(order_id.clone()),
+            link: Some("/account/orders".to_string()),
+            email: Some(crate::util::notify::Email {
+                subject: format!("Your Bambee refund for order {}", order.number),
+                html: crate::Integrations::Resend::refund_issued_template(&order.number, amount, &order.currency),
+            }),
+        },
+    ).await;
 
     Ok(HttpResponse::Ok().content_type("application/json").json(refund))
 }

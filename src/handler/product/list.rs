@@ -5,7 +5,7 @@ use serde_json::json;
 use mongodb::bson::{doc, Document};
 use actix_web::{web, Error, HttpResponse};
 use crate::BuiltIns::mongo::MongoDB;
-use crate::utils::response::Response;
+use crate::util::response::Response;
 use crate::model::Product::{Product, ProductVariant, Brand};
 use crate::model::Category::Category;
 use crate::model::ImageStruct;
@@ -20,6 +20,8 @@ pub struct ReqQuery {
     pub price_max: Option<i64>,
     // Minimum rating_average, e.g. 4 for the "4 stars & up" radio.
     pub rating: Option<f32>,
+    // true → only products whose compare_at_price is above price_min.
+    pub sale: Option<bool>,
     pub size: Option<String>,
     pub color: Option<String>,
     pub tag: Option<String>,
@@ -38,7 +40,14 @@ async fn resolve_category_ids(db: &mongodb::Database, key: &str) -> Vec<String> 
     let all: Vec<Category> = match db.collection::<Category>("category").find(doc! {}).await {
         Ok(mut cursor) => {
             let mut out = Vec::new();
-            while let Some(Ok(c)) = cursor.next().await {
+            while let Some(result) = cursor.next().await {
+                let c = match result {
+                    Ok(c) => c,
+                    Err(error) => {
+                        log::error!("{}: skipping unreadable document: {:?}", module_path!(), error);
+                        continue;
+                    }
+                };
                 out.push(c);
             }
             out
@@ -72,6 +81,20 @@ async fn resolve_category_ids(db: &mongodb::Database, key: &str) -> Vec<String> 
     ids
 }
 
+/*
+  Brand, size and colour are ticklists in the sidebar, so they arrive as
+  "a,b,c" and mean "any of these". Split here rather than taking one value
+  and dropping the rest, which would let the page show three brands ticked
+  while filtering by one.
+*/
+fn csv(raw: &str) -> Vec<String> {
+    raw.split(',')
+        .map(|part| part.trim())
+        .filter(|part| !part.is_empty())
+        .map(|part| part.to_string())
+        .collect()
+}
+
 pub async fn task(query: web::Query<ReqQuery>) -> Result<HttpResponse, Error> {
     let db = MongoDB.connect();
     let mut filter = doc! { "status": "Active", "deleted_at": null };
@@ -82,7 +105,7 @@ pub async fn task(query: web::Query<ReqQuery>) -> Result<HttpResponse, Error> {
     }
 
     if let Some(brand) = &query.brand {
-        filter.insert("brand_id", brand);
+        filter.insert("brand_id", doc! { "$in": csv(brand) });
     }
 
     if query.price_min.is_some() || query.price_max.is_some() {
@@ -98,6 +121,12 @@ pub async fn task(query: web::Query<ReqQuery>) -> Result<HttpResponse, Error> {
 
     if let Some(rating) = query.rating {
         filter.insert("rating_average", doc! { "$gte": rating });
+    }
+
+    // On sale: the cheapest variant is priced under the compare-at price,
+    // the same test the storefront uses to draw a discount badge.
+    if query.sale == Some(true) {
+        filter.insert("$expr", doc! { "$gt": ["$compare_at_price", "$price_min"] });
     }
 
     if let Some(tag) = &query.tag {
@@ -118,10 +147,10 @@ pub async fn task(query: web::Query<ReqQuery>) -> Result<HttpResponse, Error> {
     if query.size.is_some() || query.color.is_some() {
         let mut variant_filter = Document::new();
         if let Some(size) = &query.size {
-            variant_filter.insert("size", size);
+            variant_filter.insert("size", doc! { "$in": csv(size) });
         }
         if let Some(color) = &query.color {
-            variant_filter.insert("color", color);
+            variant_filter.insert("color", doc! { "$in": csv(color) });
         }
 
         let product_ids: HashSet<String> = match db
@@ -131,7 +160,14 @@ pub async fn task(query: web::Query<ReqQuery>) -> Result<HttpResponse, Error> {
         {
             Ok(mut cursor) => {
                 let mut ids = HashSet::new();
-                while let Some(Ok(v)) = cursor.next().await {
+                while let Some(result) = cursor.next().await {
+                    let v = match result {
+                        Ok(v) => v,
+                        Err(error) => {
+                            log::error!("{}: skipping unreadable document: {:?}", module_path!(), error);
+                            continue;
+                        }
+                    };
                     ids.insert(v.product_id);
                 }
                 ids
@@ -177,7 +213,14 @@ pub async fn task(query: web::Query<ReqQuery>) -> Result<HttpResponse, Error> {
 
     let mut cursor = result.unwrap();
     let mut products = Vec::new();
-    while let Some(Ok(p)) = cursor.next().await {
+    while let Some(result) = cursor.next().await {
+        let p = match result {
+            Ok(p) => p,
+            Err(error) => {
+                log::error!("{}: skipping unreadable document: {:?}", module_path!(), error);
+                continue;
+            }
+        };
         products.push(p);
     }
 
@@ -192,16 +235,20 @@ pub async fn task(query: web::Query<ReqQuery>) -> Result<HttpResponse, Error> {
             .await
             .expect("brand lookup");
         let mut map = HashMap::new();
-        while let Some(Ok(b)) = cursor.next().await {
+        while let Some(result) = cursor.next().await {
+            let b = match result {
+                Ok(b) => b,
+                Err(error) => {
+                    log::error!("{}: skipping unreadable document: {:?}", module_path!(), error);
+                    continue;
+                }
+            };
             map.insert(b.uuid.clone(), b);
         }
         map
     };
 
-    let cover_image_ids: Vec<String> = products
-        .iter()
-        .filter_map(|p| p.images.iter().min_by_key(|i| i.position).map(|i| i.image_id.clone()))
-        .collect();
+    let cover_image_ids: Vec<String> = products.iter().filter_map(|p| p.cover_image_id.clone()).collect();
     let images: HashMap<String, ImageStruct> = if cover_image_ids.is_empty() {
         HashMap::new()
     } else {
@@ -211,7 +258,14 @@ pub async fn task(query: web::Query<ReqQuery>) -> Result<HttpResponse, Error> {
             .await
             .expect("image lookup");
         let mut map = HashMap::new();
-        while let Some(Ok(i)) = cursor.next().await {
+        while let Some(result) = cursor.next().await {
+            let i = match result {
+                Ok(i) => i,
+                Err(error) => {
+                    log::error!("{}: skipping unreadable document: {:?}", module_path!(), error);
+                    continue;
+                }
+            };
             map.insert(i.uuid.clone(), i);
         }
         map
@@ -220,11 +274,7 @@ pub async fn task(query: web::Query<ReqQuery>) -> Result<HttpResponse, Error> {
     let items: Vec<_> = products
         .iter()
         .map(|p| {
-            let cover = p
-                .images
-                .iter()
-                .min_by_key(|i| i.position)
-                .and_then(|i| images.get(&i.image_id));
+            let cover = p.cover_image_id.as_ref().and_then(|id| images.get(id));
 
             json!({
                 "uuid": p.uuid,

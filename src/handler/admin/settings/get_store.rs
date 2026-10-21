@@ -2,7 +2,7 @@ use chrono::Utc;
 use mongodb::bson::doc;
 use actix_web::{Error, HttpResponse, HttpRequest};
 use crate::BuiltIns::mongo::MongoDB;
-use crate::utils::response::Response;
+use crate::util::response::Response;
 use crate::Middleware::Auth::{require_access, AccessRequirement};
 use crate::model::Account::AccountRole;
 use crate::model::Store::StoreSettings;
@@ -13,8 +13,10 @@ pub async fn task(req: HttpRequest) -> Result<HttpResponse, Error> {
     let db = MongoDB.connect();
     let col = db.collection::<StoreSettings>("store_settings");
 
-    let existing = col.find_one(doc! { "uuid": STORE_SETTINGS_ID }).await.ok().flatten();
-    if let Some(settings) = existing {
+    // `super::load` also adopts a row stored under some other uuid, so the
+    // console cannot end up editing a second document beside the one
+    // checkout reads.
+    if let Some(settings) = super::load(&db).await {
         return Ok(HttpResponse::Ok().content_type("application/json").json(settings));
     }
 
@@ -23,6 +25,8 @@ pub async fn task(req: HttpRequest) -> Result<HttpResponse, Error> {
         store_name: "My Store".to_string(),
         support_email: String::new(),
         support_phone: None,
+        facebook_url: None,
+        instagram_url: None,
         business_address: String::new(),
         default_currency: "USD".to_string(),
         timezone: "UTC".to_string(),
@@ -32,6 +36,7 @@ pub async fn task(req: HttpRequest) -> Result<HttpResponse, Error> {
         tax_rate_bps: 0,
         prices_include_tax: false,
         maintenance_mode: false,
+        theme: None,
         modified_at: Utc::now().timestamp_millis(),
         modified_by: None,
     };

@@ -1,6 +1,7 @@
 use tokio::fs;
 use serde::{Deserialize, Serialize};
-use crate::utils::response::Response;
+use crate::util::response::Response;
+use crate::util::validation::{is_hls_file_name, is_media_id};
 use actix_web::{http::header, Error, web, HttpResponse};
 
 
@@ -9,7 +10,16 @@ pub struct PathParams { video_id: String, segment_name: String }
 
 pub async fn task(params: web::Path<PathParams>) -> Result<HttpResponse, Error> {
     let PathParams { video_id, segment_name } = params.into_inner();
-    println!(" segment {}", segment_name);
+
+    /*
+      BOTH halves are attacker-controlled and both were interpolated raw. The
+      segment name is the more dangerous of the two, because it sits at the end
+      of the path: `%2e%2e%2f%2e%2e%2fCargo.toml` walked straight out of the
+      upload directory and returned the file.
+    */
+    if !is_media_id(&video_id) || !is_hls_file_name(&segment_name) {
+        return Ok(Response::not_found("File not found"));
+    }
 
     let file_path = format!("./upload/video/{video_id}/{segment_name}");
 

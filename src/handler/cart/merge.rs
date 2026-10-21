@@ -3,7 +3,7 @@ use futures::StreamExt;
 use mongodb::bson::doc;
 use actix_web::{web, Error, HttpResponse, HttpRequest};
 use crate::BuiltIns::mongo::MongoDB;
-use crate::utils::response::Response;
+use crate::util::response::Response;
 use crate::Middleware::Auth::{require_access, AccessRequirement};
 use crate::model::Cart::{Cart, CartItem};
 use super::{find_or_create_cart, build_response, Owner, GUEST_HEADER};
@@ -56,7 +56,14 @@ pub async fn task(req: HttpRequest, body: web::Json<ReqBody>) -> Result<HttpResp
             .await
             .expect("guest cart item lookup");
         let mut guest_items = Vec::new();
-        while let Some(Ok(i)) = cursor.next().await {
+        while let Some(result) = cursor.next().await {
+            let i = match result {
+                Ok(i) => i,
+                Err(error) => {
+                    log::error!("{}: skipping unreadable document: {:?}", module_path!(), error);
+                    continue;
+                }
+            };
             guest_items.push(i);
         }
 

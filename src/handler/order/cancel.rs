@@ -3,9 +3,10 @@ use uuid::Uuid;
 use futures::StreamExt;
 use serde::Deserialize;
 use mongodb::bson::doc;
+use mongodb::options::ReturnDocument;
 use actix_web::{web, Error, HttpResponse, HttpRequest};
 use crate::BuiltIns::mongo::MongoDB;
-use crate::utils::response::Response;
+use crate::util::response::Response;
 use crate::Middleware::Auth::{require_access, AccessRequirement};
 use crate::model::Order::{Order, OrderItem, FulfilmentStatus, PaymentStatus};
 use crate::model::Product::{Product, ProductVariant, StockMovement, StockReason};
@@ -45,30 +46,39 @@ pub async fn task(req: HttpRequest, path: web::Path<String>, body: web::Json<Req
         .await
         .expect("order item lookup");
     let mut items = Vec::new();
-    while let Some(Ok(i)) = item_cursor.next().await {
+    while let Some(result) = item_cursor.next().await {
+        let i = match result {
+            Ok(i) => i,
+            Err(error) => {
+                log::error!("{}: skipping unreadable document: {:?}", module_path!(), error);
+                continue;
+            }
+        };
         items.push(i);
     }
 
     for item in &items {
-        let variant = db
+        // One atomic `$inc` rather than read-then-`$set`: a concurrent checkout
+        // or admin adjustment between the two would otherwise be overwritten
+        // with a total computed before it happened. The returned document is
+        // the post-increment one, so the movement logs the true balance.
+        let restored = db
             .collection::<ProductVariant>("product_variant")
-            .find_one(doc! { "uuid": &item.variant_id })
+            .find_one_and_update(
+                doc! { "uuid": &item.variant_id },
+                doc! { "$inc": { "stock": item.quantity as i32 }, "$set": { "modified_at": now } },
+            )
+            .return_document(ReturnDocument::After)
             .await
             .ok()
             .flatten();
 
-        if let Some(variant) = variant {
-            let new_stock = variant.stock + item.quantity as i32;
-            db.collection::<ProductVariant>("product_variant")
-                .update_one(doc! { "uuid": &item.variant_id }, doc! { "$set": { "stock": new_stock, "modified_at": now } })
-                .await
-                .ok();
-
+        if let Some(variant) = restored {
             let movement = StockMovement {
                 uuid: Uuid::now_v7().to_string(),
                 variant_id: item.variant_id.clone(),
                 delta: item.quantity as i32,
-                balance_after: new_stock,
+                balance_after: variant.stock,
                 reason: StockReason::Cancellation,
                 order_id: Some(order_id.clone()),
                 note: None,
@@ -138,6 +148,35 @@ pub async fn task(req: HttpRequest, path: web::Path<String>, body: web::Json<Req
         log::error!("{:?}", error);
         return Ok(Response::internal_server_error(&error.to_string()));
     }
+
+    crate::util::order::release_coupon(&db, &order_id).await;
+
+    // A confirmation of what they just did, and the record of the refund. The
+    // customer triggered this, so it's a receipt rather than news.
+    let refunded = if payment_status == PaymentStatus::Refunded {
+        Some((order.totals.grand_total, order.currency.as_str()))
+    } else {
+        None
+    };
+    crate::util::notify::send(
+        &db,
+        &user.user_id,
+        crate::util::notify::Notice {
+            kind: crate::model::Notification::NotifType::OrderCancelled,
+            title: format!("Order {} cancelled", order.number),
+            body: match refunded {
+                Some(_) => "Your refund is on its way.".to_string(),
+                None => "Nothing was charged.".to_string(),
+            },
+            image_id: None,
+            related_id: Some(order_id.clone()),
+            link: Some("/account/orders".to_string()),
+            email: Some(crate::util::notify::Email {
+                subject: format!("Your Bambee order {} was cancelled", order.number),
+                html: crate::Integrations::Resend::order_cancelled_template(&order.number, refunded),
+            }),
+        },
+    ).await;
 
     Ok(Response::ok_message("Order cancelled"))
 }
