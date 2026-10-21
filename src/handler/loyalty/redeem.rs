@@ -2,7 +2,7 @@ use chrono::Utc;
 use mongodb::bson::{doc, Bson};
 use actix_web::{web, Error, HttpResponse, HttpRequest};
 use crate::BuiltIns::mongo::MongoDB;
-use crate::utils::response::Response;
+use crate::util::response::Response;
 use crate::Middleware::Auth::{require_access, AccessRequirement};
 use crate::model::Coupon::Coupon;
 use crate::model::Loyalty::LoyaltyCard;
@@ -57,7 +57,7 @@ pub async fn task(req: HttpRequest, path: web::Path<String>) -> Result<HttpRespo
         .await
         .ok();
 
-    crate::utils::loyalty::record_redemption(&db, &user.user_id, &card).await;
+    crate::util::loyalty::record_redemption(&db, &user.user_id, &card).await;
 
     let card = col.find_one(doc! { "uuid": &id }).await.ok().flatten().unwrap_or(card);
     let view = super::card_view(&db, &card, false).await;

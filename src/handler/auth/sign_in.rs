@@ -6,8 +6,8 @@ use actix_session::Session;
 use crate::{builtins::jwt, Model::Account};
 use crate::Integrations::Resend;
 use crate::BuiltIns::mongo::MongoDB;
-use crate::utils::response::Response;
-use crate::utils::password::{self, Verified};
+use crate::util::response::Response;
+use crate::util::password::{self, Verified};
 use serde::{ Serialize, Deserialize };
 use serde_json::json;
 use mongodb::{ClientSession, Database};
@@ -59,7 +59,7 @@ async fn perform(
 
     /* DATABASE ACID SESSION INIT */
     let (db, mut session) = MongoDB.connect_acid().await;
-    if let Err(error) = session.start_transaction().await {
+    if let Err(error) = MongoDB::begin(&mut session).await {
         log::error!("{:?}", error);
         return Ok(Response::internal_server_error(&error.to_string()));
     }
@@ -92,6 +92,7 @@ async fn perform(
             uuid:request_id.clone(),
             expires_at: now + CODE_EXPIRE_TIME * 60 * 1000,
             validation_code: validation_code.to_string(),
+            attempts: 0,
         };
 
         let result = collection.insert_one(
@@ -100,7 +101,7 @@ async fn perform(
 
         if let Err(error) = result {
             log::error!("{:?}", error);
-            session.abort_transaction().await.ok().unwrap();
+            MongoDB::abort(&mut session).await;
             return Ok(Response::internal_server_error(&error.to_string()));
         }
 
@@ -114,7 +115,7 @@ async fn perform(
             &message
         ).await;
         if let Err(_) = result {
-            session.abort_transaction().await.ok().unwrap();
+            MongoDB::abort(&mut session).await;
             return Ok(Response::internal_server_error("Failed to send email"));
         }
 
@@ -128,7 +129,7 @@ async fn perform(
           The caller gets the request id and no token, and exchanges the two
           for one at `POST /v1/auth/verify-sign-in-code`.
         */
-        if let Err(error) = session.commit_transaction().await {
+        if let Err(error) = MongoDB::commit(&mut session).await {
             log::error!("{:?}", error);
             return Ok(Response::internal_server_error(&error.to_string()));
         }
@@ -141,15 +142,15 @@ async fn perform(
     }
 
     // getting access token
-    let (access_token, valid_time) = jwt::access_token::generate_default(
-        &account_core.uuid,
-        account_core.role.clone(),
-    );
+    let (access_token, valid_time) = match jwt::access_token::generate_default(&account_core.uuid, account_core.role.clone(),) {
+        Ok(pair) => pair,
+        Err(error) => return Ok(Response::internal_server_error(&format!("could not mint an access token: {:?}", error))),
+    };
 
     // getting refresh token
     let result = jwt::refresh_token::new(&account_core.uuid);
     if let Err(error) = result {
-        session.abort_transaction().await.ok().unwrap();
+        MongoDB::abort(&mut session).await;
         log::error!("{:?}", error);
         return Ok(Response::internal_server_error(&error));
     }
@@ -158,7 +159,7 @@ async fn perform(
 
 
     /* DATABASE ACID COMMIT */
-    if let Err(error) = session.commit_transaction().await {
+    if let Err(error) = MongoDB::commit(&mut session).await {
         log::error!("{:?}", error);
         return Ok(Response::internal_server_error(&error.to_string()));
     }
@@ -208,14 +209,14 @@ async fn validate_login(
 
     if let Err(error) = result {
         log::error!("{:?}", error);
-        session.abort_transaction().await.ok().unwrap();
+        MongoDB::abort(session).await;
         return Err(Response::internal_server_error(&error.to_string()));
     }
 
     let option = result.unwrap();
 
     if let None = option {
-        session.abort_transaction().await.ok().unwrap();
+        MongoDB::abort(session).await;
         return Err(Response::not_found("Username or email not found"));
     }
 
@@ -223,14 +224,14 @@ async fn validate_login(
 
     // Accounts suspended from the admin dashboard cannot sign in.
     if account_core.suspended_at.is_some() {
-        session.abort_transaction().await.ok().unwrap();
+        MongoDB::abort(session).await;
         return Err(Response::forbidden("This account has been suspended"));
     }
 
     if account_core.email_verified {
         match password::verify(password, &account_core.password) {
             Verified::Failed => {
-                session.abort_transaction().await.ok().unwrap();
+                MongoDB::abort(session).await;
                 Err(Response::forbidden("Incorrect password"))
             }
             /*
@@ -266,7 +267,7 @@ async fn validate_login(
             Err(error)
         }
         else {
-            session.abort_transaction().await.ok().unwrap();
+            MongoDB::abort(session).await;
             return Err(Response::not_found("Username or email not found"));
         }
     }

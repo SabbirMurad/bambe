@@ -3,8 +3,8 @@ use mongodb::bson::doc;
 use actix_session::Session;
 use crate::{builtins::jwt, Model::Account};
 use crate::BuiltIns::mongo::MongoDB;
-use crate::utils::response::Response;
-use crate::utils::password::{self, Verified};
+use crate::util::response::Response;
+use crate::util::password::{self, Verified};
 use serde::{ Serialize, Deserialize };
 use actix_web::{ web, Error, HttpResponse };
 
@@ -75,8 +75,10 @@ pub async fn task(form_data: web::Json<ReqBody>, actix_session: Session) -> Resu
         Verified::Ok => {}
     }
 
-    let (access_token, valid_time) =
-        jwt::access_token::generate_default(&admin.uuid, Account::AccountRole::Administrator);
+    let (access_token, valid_time) = match jwt::access_token::generate_default(&admin.uuid, Account::AccountRole::Administrator) {
+        Ok(pair) => pair,
+        Err(error) => return Ok(Response::internal_server_error(&format!("could not mint an access token: {:?}", error))),
+    };
 
     let refresh_token = match jwt::refresh_token::new(&admin.uuid) {
         Ok(token) => token,

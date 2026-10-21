@@ -6,9 +6,9 @@ use crate::Model::Account;
 use crate::BuiltIns::mongo::MongoDB;
 use serde::{ Serialize, Deserialize };
 use actix_web::{ web, Error, HttpResponse };
-use crate::utils::response::Response;
-use crate::utils::validation::{validate_email, validate_password};
-use crate::utils::password;
+use crate::util::response::Response;
+use crate::util::validation::{validate_email, validate_password};
+use crate::util::password;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ReqBody {

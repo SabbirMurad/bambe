@@ -89,7 +89,7 @@ function wireNav() {
   if (logout) {
     logout.style.cursor = 'pointer';
     logout.onclick = async () => {
-      await Fetcher.post({ endpoint: '/v1/auth/sign-out', body: {}, showError: false });
+      await Fetcher.post({ endpoint: '/v1/auth/sign-out', body: { refresh_token: session.refreshToken() }, showError: false });
       session.clear();
       location.href = '/login';
     };

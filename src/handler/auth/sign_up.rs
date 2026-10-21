@@ -8,9 +8,9 @@ use crate::BuiltIns::mongo::MongoDB;
 use serde::{ Serialize, Deserialize };
 use mongodb::{ClientSession, Database};
 use actix_web::{ web, Error, HttpResponse };
-use crate::utils::response::Response;
-use crate::utils::validation::{validate_email, validate_password, validate_username};
-use crate::utils::password;
+use crate::util::response::Response;
+use crate::util::validation::{validate_email, validate_password, validate_username};
+use crate::util::password;
 
 
 //in minutes
@@ -74,7 +74,7 @@ pub async fn task(form_data: web::Json<ReqBody>) -> Result<HttpResponse, Error> 
     /* DATABASE ACID SESSION INIT */
 
     let (db, mut session) = MongoDB.connect_acid().await;
-    if let Err(error) = session.start_transaction().await {
+    if let Err(error) = MongoDB::begin(&mut session).await {
         log::error!("{:?}", error);
         return Ok(Response::internal_server_error(&error.to_string()));
     }
@@ -114,7 +114,7 @@ pub async fn task(form_data: web::Json<ReqBody>) -> Result<HttpResponse, Error> 
 
     if let Err(error) = result {
       log::error!("{:?}", error);
-      session.abort_transaction().await.ok().unwrap();
+      MongoDB::abort(&mut session).await;
       return Ok(Response::internal_server_error(&error.to_string()));
     }
 
@@ -137,7 +137,7 @@ pub async fn task(form_data: web::Json<ReqBody>) -> Result<HttpResponse, Error> 
 
     if let Err(error) = result {
         log::error!("{:?}", error);
-        session.abort_transaction().await.ok().unwrap();
+        MongoDB::abort(&mut session).await;
         return Ok(Response::internal_server_error(&error.to_string()));
     }
   
@@ -151,6 +151,7 @@ pub async fn task(form_data: web::Json<ReqBody>) -> Result<HttpResponse, Error> 
         user_id: user_id.clone(),
         code: validation_code.to_string(),
         expires_at: now + CODE_EXPIRE_TIME * 60 * 1000,
+        attempts: 0,
     };
     
     let collection = db.collection::
@@ -161,7 +162,7 @@ pub async fn task(form_data: web::Json<ReqBody>) -> Result<HttpResponse, Error> 
 
     if let Err(error) = result {
         log::error!("{:?}", error);
-        session.abort_transaction().await.ok().unwrap();
+        MongoDB::abort(&mut session).await;
         return Ok(Response::internal_server_error(&error.to_string()));
     }
 
@@ -176,12 +177,12 @@ pub async fn task(form_data: web::Json<ReqBody>) -> Result<HttpResponse, Error> 
     ).await;
 
     if let Err(_) = result {
-        session.abort_transaction().await.ok().unwrap();
+        MongoDB::abort(&mut session).await;
         return Ok(Response::internal_server_error("Failed to send email"));
     }
 
     /* DATABASE ACID COMMIT */
-    if let Err(error) = session.commit_transaction().await {
+    if let Err(error) = MongoDB::commit(&mut session).await {
         log::error!("{:?}", error);
         return Ok(Response::internal_server_error(&error.to_string()));
     }
@@ -205,7 +206,7 @@ async fn account_already_exist(
 
     if let Err(error) = result {
       log::error!("{:?}", error);
-      session.abort_transaction().await.ok().unwrap();
+      MongoDB::abort(session).await;
       return Err(Response::internal_server_error(&error.to_string()));
     }
 
@@ -213,7 +214,7 @@ async fn account_already_exist(
 
     if let Some(account_core) = option {
         if account_core.email_verified {
-            session.abort_transaction().await.ok().unwrap();
+            MongoDB::abort(session).await;
             return Err(Response::bad_request(
                 "An account with this email already exist"
             ));
@@ -239,7 +240,7 @@ async fn account_already_exist(
 
     if let Err(error) = result {
       log::error!("{:?}", error);
-      session.abort_transaction().await.ok().unwrap();
+      MongoDB::abort(session).await;
       return Err(Response::internal_server_error(&error.to_string()));
     }
 
@@ -253,7 +254,7 @@ async fn account_already_exist(
     
         if let Err(error) = result {
           log::error!("{:?}", error);
-          session.abort_transaction().await.ok().unwrap();
+          MongoDB::abort(session).await;
           return Err(Response::internal_server_error(&error.to_string()));
         }
     
@@ -261,7 +262,7 @@ async fn account_already_exist(
         let account_core = option.unwrap();
 
         if account_core.email_verified {
-            session.abort_transaction().await.ok().unwrap();
+            MongoDB::abort(session).await;
             return Err(Response::bad_request(
                 "An account with this email already exist"
             ));
@@ -294,7 +295,7 @@ async fn delete_account(
 
     if let Err(error) = result {
         log::error!("{:?}", error);
-        session.abort_transaction().await.ok().unwrap();
+        MongoDB::abort(session).await;
         return Err(Response::internal_server_error(&error.to_string()));
     }
 
@@ -306,7 +307,7 @@ async fn delete_account(
 
     if let Err(error) = result {
         log::error!("{:?}", error);
-        session.abort_transaction().await.ok().unwrap();
+        MongoDB::abort(session).await;
         return Err(Response::internal_server_error(&error.to_string()));
     }
 
@@ -318,7 +319,7 @@ async fn delete_account(
 
     if let Err(error) = result {
         log::error!("{:?}", error);
-        session.abort_transaction().await.ok().unwrap();
+        MongoDB::abort(session).await;
         return Err(Response::internal_server_error(&error.to_string()));
     }
 

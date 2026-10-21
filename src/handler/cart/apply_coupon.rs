@@ -2,7 +2,7 @@ use serde::Deserialize;
 use mongodb::bson::doc;
 use actix_web::{web, Error, HttpResponse, HttpRequest};
 use crate::BuiltIns::mongo::MongoDB;
-use crate::utils::response::Response;
+use crate::util::response::Response;
 use crate::model::Cart::Cart;
 use super::{resolve_owner, find_cart, compute_subtotal, build_response};
 
@@ -29,7 +29,7 @@ pub async fn task(req: HttpRequest, body: web::Json<ReqBody>) -> Result<HttpResp
         super::Owner::Guest(_) => None,
     };
 
-    if let Err(err) = crate::utils::coupon::evaluate(&db, &body.code, user_id, subtotal, &product_ids).await {
+    if let Err(err) = crate::util::coupon::evaluate(&db, &body.code, user_id, subtotal, &product_ids).await {
         return Ok(Response::bad_request(&err));
     }
 

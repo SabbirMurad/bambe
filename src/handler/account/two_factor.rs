@@ -16,8 +16,8 @@ use serde_json::json;
 use mongodb::bson::doc;
 use actix_web::{web, Error, HttpResponse, HttpRequest};
 use crate::BuiltIns::mongo::MongoDB;
-use crate::utils::response::Response;
-use crate::utils::password::{self, Verified};
+use crate::util::response::Response;
+use crate::util::password::{self, Verified};
 use crate::Middleware::Auth::{require_access, AccessRequirement};
 use crate::model::Account::AccountCore;
 
@@ -54,7 +54,7 @@ pub async fn task(req: HttpRequest, body: web::Json<ReqBody>) -> Result<HttpResp
         };
 
         /*
-          `utils::password` owns the comparison; this handler never sees the
+          `util::password` owns the comparison; this handler never sees the
           stored form. It deliberately does not upgrade a legacy row the way
           sign_in.rs does — turning off two-step is not an authentication,
           and a write here would be a side effect nobody asked for.
@@ -93,10 +93,10 @@ pub async fn task(req: HttpRequest, body: web::Json<ReqBody>) -> Result<HttpResp
 
     // A security change the owner should hear about even if they made it —
     // this is the notification that betrays an attacker who made it instead.
-    crate::utils::notify::send(
+    crate::util::notify::send(
         &db,
         &user.user_id,
-        crate::utils::notify::Notice {
+        crate::util::notify::Notice {
             kind: crate::model::Notification::NotifType::Security,
             title: if body.enabled {
                 "Two-step sign-in is on".to_string()

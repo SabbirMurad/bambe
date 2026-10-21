@@ -1,35 +1,53 @@
-use std::env;
 use actix_cors::Cors;
+use std::env;
 
 /*
   Cross-Origin Resource Sharing (CORS)
-  An HTTP-header based mechanism that allows a server to indicate any origins (domain, scheme, or port) other than its own from which a browser should permit loading resources.
+  https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS
 
-  Visit: https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS
+  Allowed browser origins are configured via the `CORS_ALLOWED_ORIGINS`
+  environment variable (a comma-separated list) instead of being hardcoded.
+  Credentialed cross-origin requests (cookies) are enabled ONLY for those
+  explicit origins — the policy never combines credentials with a
+  reflect-any-origin rule, which would let any site drive authenticated calls.
 
-  In Plain English:
-  Let's say, this server is for `foo.com`
-  The following `allowed_origin()` indicate that only
-  The listed FQDN are allowed to make `JavaScript API` calls
-  Such as `XHR` or `fetch()` request to the `foo.com`
-  Otherwise, leave it as it is
+  The mobile app is native (not subject to CORS) and the dashboard is served
+  same-origin, so a typical deployment sets `CORS_ALLOWED_ORIGINS` to the
+  dashboard's own origin (e.g. `https://app.example.com`). In `development`,
+  when nothing is configured, any origin is allowed but WITHOUT credentials, so a
+  cross-origin page can never ride the dashboard's auth cookie.
 */
-
 pub fn get_policy() -> Cors {
-    let mode = env::var("APP_STAGE")
-        .expect("APP_STAGE must be set on .env file");
+    let mode = env::var("APP_STAGE").expect("APP_STAGE must be set on .env file");
+    let configured = env::var("CORS_ALLOWED_ORIGINS").unwrap_or_default();
 
-    if mode == "development" { Cors::permissive() }
-    else {
-        // Replace the Origin names with targeted FQDN
-        // You can also add more constraints if needed
-        Cors::default()
-            // .allowed_origin("https://example.com")
-            .allowed_origin("https://sabbirhassan.com:444")
-            .allowed_origin("https://www.sabbirhassan.com:444")
-            .allow_any_header()
-            .allow_any_method()
-            .supports_credentials()
-            .max_age(3600)
+    let mut cors = Cors::default()
+        .allow_any_method()
+        .allow_any_header()
+        .max_age(3600);
+
+    let mut has_origin = false;
+    for origin in configured.split(',').map(str::trim).filter(|s| !s.is_empty()) {
+        cors = cors.allowed_origin(origin);
+        has_origin = true;
     }
+
+    if has_origin {
+        // Specific, trusted origins only — safe to allow credentials (cookies).
+        cors = cors.supports_credentials();
+    } else if mode == "development" {
+        // Dev convenience: reflect any origin, but WITHOUT credentials, so a
+        // cross-origin request can't carry the auth cookie. Same-origin dashboard
+        // requests are unaffected (they always send their own cookies).
+        cors = cors.allow_any_origin();
+    } else {
+        log::warn!(
+            "CORS_ALLOWED_ORIGINS is empty and APP_STAGE != \"development\": all \
+             cross-origin requests (including same-origin dashboard POSTs, which \
+             carry an Origin header) will be blocked. Set CORS_ALLOWED_ORIGINS to \
+             the dashboard's origin."
+        );
+    }
+
+    cors
 }

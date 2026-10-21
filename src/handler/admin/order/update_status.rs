@@ -6,7 +6,7 @@ use mongodb::bson::doc;
 use mongodb::options::ReturnDocument;
 use actix_web::{web, Error, HttpResponse, HttpRequest};
 use crate::BuiltIns::mongo::MongoDB;
-use crate::utils::response::Response;
+use crate::util::response::Response;
 use crate::Middleware::Auth::{require_access, AccessRequirement};
 use crate::model::Account::AccountRole;
 use crate::model::Order::{Order, OrderItem, FulfilmentStatus};
@@ -110,7 +110,7 @@ pub async fn task(req: HttpRequest, path: web::Path<String>, body: web::Json<Req
     ).await;
 
     if newly_cancelled {
-        crate::utils::order::release_coupon(&db, &order_id).await;
+        crate::util::order::release_coupon(&db, &order_id).await;
     }
 
     // Tell the customer, but only about the transitions they'd care about and
@@ -118,7 +118,7 @@ pub async fn task(req: HttpRequest, path: web::Path<String>, body: web::Json<Req
     // shipped order shouldn't send a second dispatch notice.
     if body.fulfilment_status != order.fulfilment_status {
         use crate::model::Notification::NotifType;
-        use crate::utils::notify::{send, Email, Notice};
+        use crate::util::notify::{send, Email, Notice};
 
         let notice = match body.fulfilment_status {
             FulfilmentStatus::Shipped => Some((
@@ -172,7 +172,7 @@ pub async fn task(req: HttpRequest, path: web::Path<String>, body: web::Json<Req
 
     // First time it reaches Delivered: one stamp on the customer's card.
     if body.fulfilment_status == FulfilmentStatus::Delivered && order.fulfilment_status != FulfilmentStatus::Delivered {
-        crate::utils::loyalty::stamp_delivery(&db, &order.user_id, &order_id, &order.number).await;
+        crate::util::loyalty::stamp_delivery(&db, &order.user_id, &order_id, &order.number).await;
     }
 
     Ok(Response::ok_message("Order status updated"))

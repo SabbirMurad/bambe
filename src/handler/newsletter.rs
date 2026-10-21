@@ -4,8 +4,8 @@ use mongodb::bson::doc;
 use serde::{Deserialize, Serialize};
 use actix_web::{web, Error, HttpResponse};
 use crate::BuiltIns::mongo::MongoDB;
-use crate::utils::response::Response;
-use crate::utils::validation::validate_email;
+use crate::util::response::Response;
+use crate::util::validation::validate_email;
 
 #[derive(Debug, Deserialize)]
 pub struct ReqBody {

@@ -13,7 +13,7 @@ pub async fn task(req: HttpRequest) -> Result<HttpResponse, Error> {
     let user = require_access(&req, AccessRequirement::AnyToken)?;
     let db = MongoDB.connect();
 
-    let cards = crate::utils::loyalty::cards_of(&db, &user.user_id).await;
+    let cards = crate::util::loyalty::cards_of(&db, &user.user_id).await;
 
     let mut current = None;
     let mut full = Vec::new();

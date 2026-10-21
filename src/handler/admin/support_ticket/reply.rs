@@ -4,7 +4,7 @@ use serde::Deserialize;
 use mongodb::bson::{doc, Document};
 use actix_web::{web, Error, HttpResponse, HttpRequest};
 use crate::BuiltIns::mongo::MongoDB;
-use crate::utils::response::Response;
+use crate::util::response::Response;
 use crate::Middleware::Auth::{require_access, AccessRequirement};
 use crate::model::Account::{AccountRole, AdminAccount};
 use crate::model::Support::{SupportTicket, TicketMessage, TicketStatus};
@@ -114,10 +114,10 @@ pub async fn task(req: HttpRequest, path: web::Path<String>, body: web::Json<Req
     // `user_id` is optional — a ticket can be opened by a guest, who has no
     // account to hang a notification on.
     if let Some(user_id) = &ticket.user_id {
-        crate::utils::notify::send(
+        crate::util::notify::send(
             &db,
             user_id,
-            crate::utils::notify::Notice {
+            crate::util::notify::Notice {
                 kind: crate::model::Notification::NotifType::SupportReply,
                 title: format!("Reply on ticket {}", ticket.number),
                 body: preview(&body.body),

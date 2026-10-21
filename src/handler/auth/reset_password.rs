@@ -2,11 +2,11 @@ use chrono::Utc;
 use mongodb::bson::doc;
 use crate::Model::Account;
 use crate::BuiltIns::mongo::MongoDB;
-use crate::Utils::response::Response;
+use crate::Util::response::Response;
 use serde::{ Serialize, Deserialize };
 use actix_web::{ web, Error, HttpResponse };
-use crate::Utils::validation::validate_password;
-use crate::Utils::password;
+use crate::Util::validation::validate_password;
+use crate::Util::password;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ResetPasswordFormData {
@@ -31,7 +31,7 @@ pub async fn task(form_data: web::Json<ResetPasswordFormData>) -> Result<HttpRes
     /* DATABASE ACID SESSION INIT */
 
     let (db, mut session) = MongoDB.connect_acid().await;
-    if let Err(error) = session.start_transaction().await {
+    if let Err(error) = MongoDB::begin(&mut session).await {
         log::error!("{:?}", error);
         return Ok(Response::internal_server_error(&error.to_string()));
     }
@@ -46,14 +46,14 @@ pub async fn task(form_data: web::Json<ResetPasswordFormData>) -> Result<HttpRes
 
     if let Err(error) = result {
         log::error!("{:?}", error);
-        session.abort_transaction().await.ok().unwrap();
+        MongoDB::abort(&mut session).await;
         return Ok(Response::internal_server_error(&error.to_string()));
     }
 
     let option = result.unwrap();
 
     if let None = option {
-        session.abort_transaction().await.ok().unwrap();
+        MongoDB::abort(&mut session).await;
         return Ok(Response::not_found("reset request does not exist"));
     }
 
@@ -61,17 +61,17 @@ pub async fn task(form_data: web::Json<ResetPasswordFormData>) -> Result<HttpRes
     let reset = option.unwrap();
 
     if reset.expires_at < Utc::now().timestamp_millis() {
-        session.abort_transaction().await.ok().unwrap();
+        MongoDB::abort(&mut session).await;
         return Ok(Response::forbidden("request time expired"));
     }
 
     if !reset.code_validated {
-        session.abort_transaction().await.ok().unwrap();
+        MongoDB::abort(&mut session).await;
         return Ok(Response::forbidden("Validation code not validated"));
     }
 
     if reset.secret_key != post_data.secret_key {
-        session.abort_transaction().await.ok().unwrap();
+        MongoDB::abort(&mut session).await;
         return Ok(Response::forbidden("Secret key invalid"));
     }
 
@@ -80,7 +80,7 @@ pub async fn task(form_data: web::Json<ResetPasswordFormData>) -> Result<HttpRes
         Ok(h) => h,
         Err(error) => {
             log::error!("{error}");
-            session.abort_transaction().await.ok().unwrap();
+            MongoDB::abort(&mut session).await;
             return Ok(Response::internal_server_error("Could not reset the password"));
         }
     };
@@ -96,7 +96,7 @@ pub async fn task(form_data: web::Json<ResetPasswordFormData>) -> Result<HttpRes
 
     if let Err(error) = result {
         log::error!("{:?}", error);
-        session.abort_transaction().await.ok().unwrap();
+        MongoDB::abort(&mut session).await;
         return Ok(Response::internal_server_error(&error.to_string()));
     }
 
@@ -110,12 +110,12 @@ pub async fn task(form_data: web::Json<ResetPasswordFormData>) -> Result<HttpRes
 
     if let Err(error) = result {
         log::error!("{:?}", error);
-        session.abort_transaction().await.ok().unwrap();
+        MongoDB::abort(&mut session).await;
         return Ok(Response::internal_server_error(&error.to_string()));
     }
 
     /* DATABASE ACID COMMIT */
-    if let Err(error) = session.commit_transaction().await {
+    if let Err(error) = MongoDB::commit(&mut session).await {
         log::error!("{:?}", error);
         return Ok(Response::internal_server_error(&error.to_string()));
     }

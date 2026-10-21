@@ -2,7 +2,7 @@ use chrono::Utc;
 use mongodb::bson::doc;
 use crate::Model::Account;
 use crate::BuiltIns::mongo::MongoDB;
-use crate::utils::response::Response;
+use crate::util::response::Response;
 use serde::{ Serialize, Deserialize };
 use actix_web::{ web, Error, HttpResponse };
 
@@ -29,7 +29,7 @@ pub async fn task(form_data: web::Json<ValidateResetFormData>) -> Result<HttpRes
 
     /* DATABASE ACID SESSION INIT */
     let (db, mut session) = MongoDB.connect_acid().await;
-    if let Err(error) = session.start_transaction().await {
+    if let Err(error) = MongoDB::begin(&mut session).await {
         log::error!("{:?}", error);
         return Ok(Response::internal_server_error(&error.to_string()));
     }
@@ -43,14 +43,14 @@ pub async fn task(form_data: web::Json<ValidateResetFormData>) -> Result<HttpRes
 
     if let Err(error) = result {
         log::error!("{:?}", error);
-        session.abort_transaction().await.ok().unwrap();
+        MongoDB::abort(&mut session).await;
         return Ok(Response::internal_server_error(&error.to_string()));
     }
 
     let option = result.unwrap();
 
     if let None = option {
-        session.abort_transaction().await.ok().unwrap();
+        MongoDB::abort(&mut session).await;
         return Ok(Response::not_found("Account not found"));
     }
 
@@ -65,25 +65,33 @@ pub async fn task(form_data: web::Json<ValidateResetFormData>) -> Result<HttpRes
 
     if let Err(error) = result {
         log::error!("{:?}", error);
-        session.abort_transaction().await.ok().unwrap();
+        MongoDB::abort(&mut session).await;
         return Ok(Response::internal_server_error(&error.to_string()));
     }
 
     let option = result.unwrap();
 
     if let None = option {
-        session.abort_transaction().await.ok().unwrap();
+        MongoDB::abort(&mut session).await;
         return Ok(Response::not_found("Reset request not found"));
     }
 
     let reset_request = option.unwrap();
     if reset_request.expires_at < Utc::now().timestamp_millis() {
-        session.abort_transaction().await.ok().unwrap();
+        MongoDB::abort(&mut session).await;
         return Ok(Response::not_found("Reset request expired"));
     }
 
+    if reset_request.attempts >= super::MAX_CODE_ATTEMPTS {
+        MongoDB::abort(&mut session).await;
+        return Ok(Response::forbidden("Too many incorrect attempts. Please request a new code."));
+    }
+
     if reset_request.validation_code != validation_code {
-        session.abort_transaction().await.ok().unwrap();
+        MongoDB::abort(&mut session).await;
+        if super::record_wrong_code(&db, "password_reset_request", &reset_request.uuid).await {
+            return Ok(Response::forbidden("Too many incorrect attempts. Please request a new code."));
+        }
         return Ok(Response::forbidden("Validation Code Invalid"));
     }
 
@@ -98,12 +106,12 @@ pub async fn task(form_data: web::Json<ValidateResetFormData>) -> Result<HttpRes
 
     if let Err(error) = result {
         log::error!("{:?}", error);
-        session.abort_transaction().await.ok().unwrap();
+        MongoDB::abort(&mut session).await;
         return Ok(Response::internal_server_error(&error.to_string()));
     }
 
     /* DATABASE ACID COMMIT */
-    if let Err(error) = session.commit_transaction().await {
+    if let Err(error) = MongoDB::commit(&mut session).await {
         log::error!("{:?}", error);
         return Ok(Response::internal_server_error(&error.to_string()));
     }

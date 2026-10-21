@@ -5,7 +5,7 @@ use serde::Deserialize;
 use mongodb::bson::doc;
 use actix_web::{web, Error, HttpResponse, HttpRequest};
 use crate::BuiltIns::mongo::MongoDB;
-use crate::utils::response::Response;
+use crate::util::response::Response;
 use crate::Middleware::Auth::optional_access;
 use crate::model::Support::{SupportTicket, TicketMessage, TicketTopic, TicketStatus, TicketPriority};
 use crate::model::Store::StoreSettings;

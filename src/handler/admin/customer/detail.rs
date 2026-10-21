@@ -3,7 +3,7 @@ use serde_json::json;
 use mongodb::bson::doc;
 use actix_web::{web, Error, HttpResponse, HttpRequest};
 use crate::BuiltIns::mongo::MongoDB;
-use crate::utils::response::Response;
+use crate::util::response::Response;
 use crate::Middleware::Auth::{require_access, AccessRequirement};
 use crate::model::Account::{AccountRole, AccountCore, AccountProfile};
 use crate::model::Customer::CustomerProfile;
@@ -127,7 +127,7 @@ pub async fn task(req: HttpRequest, path: web::Path<String>) -> Result<HttpRespo
         .collect();
 
     let mut cards = Vec::new();
-    for card in crate::utils::loyalty::cards_of(&db, &user_id).await.iter().rev().take(4) {
+    for card in crate::util::loyalty::cards_of(&db, &user_id).await.iter().rev().take(4) {
         cards.push(crate::Handler::Loyalty::card_view(&db, card, true).await);
     }
 

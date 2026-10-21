@@ -359,10 +359,9 @@ pub async fn send_email(email: &str, sub: &str, body: &str) -> Result<(), resend
 
     let resend = Resend::new(&resend_api);
 
-    // The sending domain has to be one verified in Resend; override it with
-    // MAIL_FROM once Bambee has its own.
-    let from = env::var("MAIL_FROM")
-        .unwrap_or_else(|_| "Bambee <no-reply@sabbirhassan.com>".to_string());
+    // "APP_NAME <MAIL_FROM>", from src/constant.rs. The address has to be on a
+    // domain verified in Resend.
+    let from = crate::Constant::mail_from().to_string();
     let to = [email];
 
     let email = CreateEmailBaseOptions::new(&from, to, sub).with_html(body);

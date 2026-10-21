@@ -10,7 +10,7 @@ use mongodb::bson::doc;
 use actix_session::Session;
 use jsonwebtoken::{decode, decode_header, Algorithm, DecodingKey, Validation};
 use crate::BuiltIns::{mongo::MongoDB, jwt};
-use crate::utils::response::Response;
+use crate::util::response::Response;
 use actix_web::{web, Error, HttpResponse};
 use crate::model::Account;
 
@@ -201,10 +201,10 @@ pub async fn task(
         }
     };
 
-    let (access_token, valid_minutes) = jwt::access_token::generate_default(
-        &user_id,
-        Account::AccountRole::User,
-    );
+    let (access_token, valid_minutes) = match jwt::access_token::generate_default(&user_id, Account::AccountRole::User,) {
+        Ok(pair) => pair,
+        Err(error) => return Ok(Response::internal_server_error(&format!("could not mint an access token: {:?}", error))),
+    };
     let access_token_valid_till = now + (valid_minutes as i64 * 60 * 1000);
 
     let refresh_token = match jwt::refresh_token::new(&user_id) {

@@ -7,7 +7,7 @@ use mongodb::bson::doc;
 use mongodb::options::ReturnDocument;
 use actix_web::{web, Error, HttpResponse, HttpRequest};
 use crate::BuiltIns::mongo::MongoDB;
-use crate::utils::response::Response;
+use crate::util::response::Response;
 use crate::Middleware::Auth::{require_access, AccessRequirement};
 use crate::model::Account::AccountRole;
 use crate::model::Cents;
@@ -317,7 +317,7 @@ pub async fn task(req: HttpRequest, path: web::Path<String>, body: web::Json<Req
             crate::model::Notification::NotifType::RefundIssued,
             format!("Refund issued for order {}", order_number),
             "Your return was accepted and the refund is on its way.".to_string(),
-            Some(crate::utils::notify::Email {
+            Some(crate::util::notify::Email {
                 subject: format!("Your Bambee refund for order {}", order_number),
                 html: crate::Integrations::Resend::refund_issued_template(&order_number, amount, &refund_currency),
             }),
@@ -326,7 +326,7 @@ pub async fn task(req: HttpRequest, path: web::Path<String>, body: web::Json<Req
             crate::model::Notification::NotifType::OrderConfirmed,
             format!("Return update for order {}", order_number),
             format!("Your return is now {}.", body.status),
-            Some(crate::utils::notify::Email {
+            Some(crate::util::notify::Email {
                 subject: format!("An update on your Bambee return for order {}", order_number),
                 html: crate::Integrations::Resend::return_update_template(
                     &order_number,
@@ -337,10 +337,10 @@ pub async fn task(req: HttpRequest, path: web::Path<String>, body: web::Json<Req
         ),
     };
 
-    crate::utils::notify::send(
+    crate::util::notify::send(
         &db,
         &request.user_id,
-        crate::utils::notify::Notice {
+        crate::util::notify::Notice {
             kind,
             title,
             body: message,

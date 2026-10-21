@@ -8,7 +8,7 @@ use mongodb::bson::doc;
 use mongodb::options::ReturnDocument;
 use actix_web::{web, Error, HttpResponse, HttpRequest};
 use crate::BuiltIns::mongo::MongoDB;
-use crate::utils::response::Response;
+use crate::util::response::Response;
 use crate::Middleware::Auth::{require_access, AccessRequirement};
 use crate::model::Cart::{Cart, CartItem};
 use crate::model::Product::{Product, ProductVariant, Brand, StockMovement, StockReason};
@@ -228,7 +228,7 @@ pub async fn task(req: HttpRequest, body: web::Json<ReqBody>) -> Result<HttpResp
     // and placing the order. A code that's gone stale is just dropped
     // rather than blocking checkout over a promo.
     let applied_discount = match &cart.coupon_code {
-        Some(code) => crate::utils::coupon::evaluate(&db, code, Some(&user.user_id), subtotal, &product_ids).await.ok(),
+        Some(code) => crate::util::coupon::evaluate(&db, code, Some(&user.user_id), subtotal, &product_ids).await.ok(),
         None => None,
     };
     let discount = applied_discount.as_ref().map(|a| a.discount).unwrap_or(0);
@@ -242,7 +242,7 @@ pub async fn task(req: HttpRequest, body: web::Json<ReqBody>) -> Result<HttpResp
 
     // Shared with GET /v1/checkout/quote, which is what the review page
     // showed the shopper a moment ago. One function, one answer.
-    let quote = crate::utils::pricing::totals(
+    let quote = crate::util::pricing::totals(
         subtotal,
         discount,
         free_shipping,
@@ -369,7 +369,7 @@ pub async fn task(req: HttpRequest, body: web::Json<ReqBody>) -> Result<HttpResp
     // `order.number` is what the customer quotes to support. The counter is one
     // atomic `$inc`, so concurrent checkouts can't draw the same seq.
     let year = chrono::Utc::now().format("%Y").to_string();
-    let seq = match crate::utils::counter::next(&db, &format!("order-number-{}", year)).await {
+    let seq = match crate::util::counter::next(&db, &format!("order-number-{}", year)).await {
         Some(seq) => seq,
         None => {
             release_stock(&db, &cart_items, now).await;
@@ -518,7 +518,7 @@ pub async fn task(req: HttpRequest, body: web::Json<ReqBody>) -> Result<HttpResp
       refund path sums, so a row in it has to mean money actually moved.
     */
 
-    crate::utils::customer::roll_up_purchase(&db, &user.user_id, grand_total, now).await;
+    crate::util::customer::roll_up_purchase(&db, &user.user_id, grand_total, now).await;
 
     // The cart is converted, not deleted — it's the denominator behind
     // abandonment stats, and this order is what it converted into.
@@ -545,17 +545,17 @@ pub async fn task(req: HttpRequest, body: web::Json<ReqBody>) -> Result<HttpResp
         .map(|a| a.email_address)
         .unwrap_or_default();
     let summary = order.payment_summary.clone().unwrap_or_else(|| "—".to_string());
-    crate::utils::notify::send(
+    crate::util::notify::send(
         &db,
         &user.user_id,
-        crate::utils::notify::Notice {
+        crate::util::notify::Notice {
             kind: crate::model::Notification::NotifType::OrderPlaced,
             title: format!("Order {} placed", order.number),
             body: format!("We've received your order of {} item(s).", item_count),
             image_id: order_items.first().and_then(|i| i.image_id.clone()),
             related_id: Some(order_id.clone()),
             link: Some("/account/orders".to_string()),
-            email: Some(crate::utils::notify::Email {
+            email: Some(crate::util::notify::Email {
                 subject: format!("Your Bambee order {}", order.number),
                 html: crate::Integrations::Resend::order_placed_template(
                     &order.number,

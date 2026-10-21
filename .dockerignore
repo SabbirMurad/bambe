@@ -1,0 +1,25 @@
+# Keeps the build context small and secrets out of images.
+#
+# `target/` is by far the largest thing in the repo and is rebuilt inside the
+# image anyway; sending it wastes time on every build. The rest is local state
+# that must never be baked into an image.
+
+target/
+.git/
+.gitignore
+
+# Local env and runtime state
+.env
+.env.local
+data/
+logs/
+upload/
+uploaded_video/
+
+# Dev-only TLS material — generate real certificates for a real deployment
+.dev_tls/
+
+# Editor / OS noise
+.vscode/
+.idea/
+.DS_Store

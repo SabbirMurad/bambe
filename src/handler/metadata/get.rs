@@ -2,7 +2,7 @@ use crate::Model;
 use mongodb::bson::doc;
 use crate::builtins::mongo::MongoDB;
 use actix_web::{ Error, HttpResponse};
-use crate::utils::response::Response;
+use crate::util::response::Response;
 
 pub async fn task() -> Result<HttpResponse, Error> {
     let db = MongoDB.connect();

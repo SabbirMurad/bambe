@@ -3,7 +3,7 @@ use mongodb::bson::doc;
 use crate::{builtins::jwt, Model::Account};
 use crate::BuiltIns::mongo::MongoDB;
 use serde::{ Serialize, Deserialize };
-use crate::utils::response::Response;
+use crate::util::response::Response;
 use actix_web::{ web, Error, HttpResponse };
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -30,7 +30,7 @@ pub async fn task(form_data: web::Json<ReqBody>) -> Result<HttpResponse, Error> 
 
     /* DATABASE ACID SESSION INIT */
     let (db, mut session) = MongoDB.connect_acid().await;
-    if let Err(error) = session.start_transaction().await {
+    if let Err(error) = MongoDB::begin(&mut session).await {
         log::error!("{:?}", error);
         return Ok(Response::internal_server_error(&error.to_string()));
     }
@@ -43,19 +43,19 @@ pub async fn task(form_data: web::Json<ReqBody>) -> Result<HttpResponse, Error> 
 
     if let Err(error) = result {
         log::error!("{:?}", error);
-        session.abort_transaction().await.ok().unwrap();
+        MongoDB::abort(&mut session).await;
         return Ok(Response::internal_server_error(&error.to_string()));
     }
 
     let option = result.unwrap();
     if let None = option {
-        session.abort_transaction().await.ok().unwrap();
+        MongoDB::abort(&mut session).await;
         return Ok(Response::not_found("User not found"));
     }
 
     let account_core = option.unwrap();
     if account_core.email_verified {
-        session.abort_transaction().await.ok().unwrap();
+        MongoDB::abort(&mut session).await;
         return Ok(Response::forbidden("User already verified"));
     }
 
@@ -68,24 +68,32 @@ pub async fn task(form_data: web::Json<ReqBody>) -> Result<HttpResponse, Error> 
 
     if let Err(error) = result {
         log::error!("{:?}", error);
-        session.abort_transaction().await.ok().unwrap();
+        MongoDB::abort(&mut session).await;
         return Ok(Response::internal_server_error(&error.to_string()));
     }
 
     let option = result.unwrap();
     if let None = option {
-        session.abort_transaction().await.ok().unwrap();
+        MongoDB::abort(&mut session).await;
         return Ok(Response::not_found("Verification request not found"));
     }
 
     let request = option.unwrap();
     if request.expires_at < Utc::now().timestamp_millis() {
-        session.abort_transaction().await.ok().unwrap();
+        MongoDB::abort(&mut session).await;
         return Ok(Response::forbidden("Verification code expired"));
     }
 
+    if request.attempts >= super::MAX_CODE_ATTEMPTS {
+        MongoDB::abort(&mut session).await;
+        return Ok(Response::forbidden("Too many incorrect attempts. Please request a new code."));
+    }
+
     if request.code != post_data.verification_code {
-        session.abort_transaction().await.ok().unwrap();
+        MongoDB::abort(&mut session).await;
+        if super::record_wrong_code(&db, "account_verification_request", &request.uuid).await {
+            return Ok(Response::forbidden("Too many incorrect attempts. Please request a new code."));
+        }
         return Ok(Response::forbidden("Verification code incorrect"));
     }
 
@@ -98,13 +106,13 @@ pub async fn task(form_data: web::Json<ReqBody>) -> Result<HttpResponse, Error> 
 
     if let Err(error) = result {
         log::error!("{:?}", error);
-        session.abort_transaction().await.ok().unwrap();
+        MongoDB::abort(&mut session).await;
         return Ok(Response::internal_server_error(&error.to_string()));
     }
 
     let count = result.unwrap().modified_count;
     if count == 0 {
-        session.abort_transaction().await.ok().unwrap();
+        MongoDB::abort(&mut session).await;
         return Ok(Response::not_found("User not found"));
     }
 
@@ -117,20 +125,20 @@ pub async fn task(form_data: web::Json<ReqBody>) -> Result<HttpResponse, Error> 
 
     if let Err(error) = result {
       log::error!("{:?}", error);
-      session.abort_transaction().await.ok().unwrap();
+      MongoDB::abort(&mut session).await;
       return Ok(Response::internal_server_error(&error.to_string()));
     }
 
     // getting access token
-    let (access_token, valid_time) = jwt::access_token::generate_default(
-        &account_core.uuid,
-        account_core.role.clone(),
-    );
+    let (access_token, valid_time) = match jwt::access_token::generate_default(&account_core.uuid, account_core.role.clone(),) {
+        Ok(pair) => pair,
+        Err(error) => return Ok(Response::internal_server_error(&format!("could not mint an access token: {:?}", error))),
+    };
 
     // getting refresh token
     let result = jwt::refresh_token::new(&account_core.uuid);
     if let Err(error) = result {
-        session.abort_transaction().await.ok().unwrap();
+        MongoDB::abort(&mut session).await;
         log::error!("{:?}", error); 
         return Ok(Response::internal_server_error(&error));
     }
@@ -138,7 +146,7 @@ pub async fn task(form_data: web::Json<ReqBody>) -> Result<HttpResponse, Error> 
     let refresh_token = result.unwrap();
 
     /* DATABASE ACID COMMIT */
-    if let Err(error) = session.commit_transaction().await {
+    if let Err(error) = MongoDB::commit(&mut session).await {
         log::error!("{:?}", error);
         return Ok(Response::internal_server_error(&error.to_string()));
     }

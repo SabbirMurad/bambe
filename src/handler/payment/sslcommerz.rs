@@ -202,10 +202,10 @@ async fn settle(callback: &Callback) -> Outcome {
         .await
         .ok();
 
-    crate::utils::notify::send(
+    crate::util::notify::send(
         &db,
         &order.user_id,
-        crate::utils::notify::Notice {
+        crate::util::notify::Notice {
             kind: crate::model::Notification::NotifType::OrderConfirmed,
             title: format!("Payment received for order {}", order.number),
             body: "Thanks — your payment has gone through.".to_string(),
@@ -264,7 +264,7 @@ async fn release(order_id: &str, reason: &str) {
         return;
     }
 
-    crate::utils::order::release_order_holds(&db, order_id, now).await;
+    crate::util::order::release_order_holds(&db, order_id, now).await;
 }
 
 #[derive(Debug, Deserialize)]
@@ -331,9 +331,9 @@ pub async fn abandon(
         .unwrap_or(0);
 
     if owned == 0 {
-        return Ok(crate::utils::response::Response::not_found("Order not found"));
+        return Ok(crate::util::response::Response::not_found("Order not found"));
     }
 
     release(&query.tran_id, "Payment abandoned").await;
-    Ok(crate::utils::response::Response::ok_message("Order cancelled"))
+    Ok(crate::util::response::Response::ok_message("Order cancelled"))
 }

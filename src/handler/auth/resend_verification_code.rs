@@ -5,7 +5,7 @@ use crate::Model::Account;
 use crate::Integrations::Resend;
 use crate::BuiltIns::mongo::MongoDB;
 use serde::{ Serialize, Deserialize };
-use crate::utils::response::Response;
+use crate::util::response::Response;
 use actix_web::{ web, Error, HttpResponse };
 
 //in minutes
@@ -23,7 +23,7 @@ pub async fn task(form_data: web::Json<ReqBody>) -> Result<HttpResponse, Error> 
 
     /* DATABASE ACID SESSION INIT */
     let (db, mut session) = MongoDB.connect_acid().await;
-    if let Err(error) = session.start_transaction().await {
+    if let Err(error) = MongoDB::begin(&mut session).await {
         log::error!("{:?}", error);
         return Ok(Response::internal_server_error(&error.to_string()));
     }
@@ -36,19 +36,19 @@ pub async fn task(form_data: web::Json<ReqBody>) -> Result<HttpResponse, Error> 
 
     if let Err(error) = result {
         log::error!("{:?}", error);
-        session.abort_transaction().await.ok().unwrap();
+        MongoDB::abort(&mut session).await;
         return Ok(Response::internal_server_error(&error.to_string()));
     }
 
     let option = result.unwrap();
     if let None = option {
-        session.abort_transaction().await.ok().unwrap();
+        MongoDB::abort(&mut session).await;
         return Ok(Response::not_found("User not found"));
     }
 
     let user = option.unwrap();
     if user.email_verified {
-        session.abort_transaction().await.ok().unwrap();
+        MongoDB::abort(&mut session).await;
         return Ok(Response::forbidden("User already verified"));
     }
 
@@ -61,13 +61,13 @@ pub async fn task(form_data: web::Json<ReqBody>) -> Result<HttpResponse, Error> 
 
     if let Err(error) = result {
         log::error!("{:?}", error);
-        session.abort_transaction().await.ok().unwrap();
+        MongoDB::abort(&mut session).await;
         return Ok(Response::internal_server_error(&error.to_string()));
     }
 
     let option = result.unwrap();
     if let None = option {
-        session.abort_transaction().await.ok().unwrap();
+        MongoDB::abort(&mut session).await;
         return Ok(Response::not_found("Previous validation request not found"));
     }
 
@@ -91,13 +91,14 @@ pub async fn task(form_data: web::Json<ReqBody>) -> Result<HttpResponse, Error> 
                 // reads `request.code`, so resend must update the same field.
                 "code": &validation_code.to_string(),
                 "expires_at": created_at + CODE_EXPIRE_TIME * 60 * 1000,
+                "attempts": 0,
             }
         },
     ).session(&mut session).await;
 
     if let Err(error) = result {
         log::error!("{:?}", error);
-        session.abort_transaction().await.ok().unwrap();
+        MongoDB::abort(&mut session).await;
         return Ok(Response::internal_server_error(&error.to_string()));
     }
 
@@ -111,12 +112,12 @@ pub async fn task(form_data: web::Json<ReqBody>) -> Result<HttpResponse, Error> 
         &message
     ).await;
     if let Err(_) = result {
-        session.abort_transaction().await.ok().unwrap();
+        MongoDB::abort(&mut session).await;
         return Ok(Response::internal_server_error("Failed to send email"));
     }
 
     /* DATABASE ACID COMMIT */
-    if let Err(error) = session.commit_transaction().await {
+    if let Err(error) = MongoDB::commit(&mut session).await {
         log::error!("{:?}", error);
         return Ok(Response::internal_server_error(&error.to_string()));
     }

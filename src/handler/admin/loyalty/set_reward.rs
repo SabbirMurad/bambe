@@ -5,14 +5,14 @@ use serde::Deserialize;
 use mongodb::bson::doc;
 use actix_web::{web, Error, HttpResponse, HttpRequest};
 use crate::BuiltIns::mongo::MongoDB;
-use crate::utils::response::Response;
+use crate::util::response::Response;
 use crate::Middleware::Auth::{require_access, AccessRequirement};
 use crate::model::Account::{AccountCore, AccountRole};
 use crate::model::Cents;
 use crate::model::Coupon::{Coupon, DiscountType};
 use crate::model::Loyalty::LoyaltyCard;
 use crate::model::Notification::NotifType;
-use crate::utils::notify::{send, Notice};
+use crate::util::notify::{send, Notice};
 
 #[derive(Debug, Deserialize)]
 pub struct ReqBody {
@@ -66,7 +66,7 @@ pub async fn task(req: HttpRequest, path: web::Path<String>, body: web::Json<Req
         return Ok(Response::bad_request("Valid for at least one day, or leave it blank"));
     }
 
-    let card = match crate::utils::loyalty::reward_card(&db, &user_id).await {
+    let card = match crate::util::loyalty::reward_card(&db, &user_id).await {
         Some(c) => c,
         None => return Ok(Response::internal_server_error("Couldn't open a loyalty card")),
     };
@@ -149,7 +149,7 @@ pub async fn task(req: HttpRequest, path: web::Path<String>, body: web::Json<Req
     // A full card was waiting on this: tell the customer, and clear the
     // console's alerts about them.
     if card.is_full() {
-        crate::utils::loyalty::resolve_admin_alerts(&db, &user_id).await;
+        crate::util::loyalty::resolve_admin_alerts(&db, &user_id).await;
         if card.reward_coupon_id.is_none() {
             send(&db, &user_id, Notice {
                 kind: NotifType::LoyaltyPoints,
@@ -162,7 +162,7 @@ pub async fn task(req: HttpRequest, path: web::Path<String>, body: web::Json<Req
             }).await;
         }
     } else if card.stamps() >= crate::model::Loyalty::ALMOST_THERE {
-        crate::utils::loyalty::resolve_admin_alerts(&db, &user_id).await;
+        crate::util::loyalty::resolve_admin_alerts(&db, &user_id).await;
     }
 
     let name = crate::Handler::Admin::Settings::AuditLog::admin_name(&db, &admin.user_id).await;

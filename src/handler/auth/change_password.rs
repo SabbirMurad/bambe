@@ -1,10 +1,10 @@
 use mongodb::bson::doc;
 use crate::Model::Account;
 use crate::BuiltIns::mongo::MongoDB;
-use crate::utils::response::Response;
+use crate::util::response::Response;
 use serde::{ Serialize, Deserialize };
-use crate::utils::validation::validate_password;
-use crate::utils::password::{self, Verified};
+use crate::util::validation::validate_password;
+use crate::util::password::{self, Verified};
 use actix_web::{ web, Error, HttpResponse, HttpRequest };
 use crate::Middleware::Auth::{require_access, AccessRequirement};
 

@@ -18,7 +18,7 @@ use actix_session::Session;
 use crate::Model::Account;
 use crate::BuiltIns::mongo::MongoDB;
 use crate::builtins::jwt;
-use crate::utils::response::Response;
+use crate::util::response::Response;
 
 #[derive(Debug, Deserialize)]
 pub struct ReqBody {
@@ -72,7 +72,14 @@ pub async fn task(form_data: web::Json<ReqBody>, actix_session: Session) -> Resu
         return Ok(Response::forbidden("That code isn't right, or it has expired"));
     }
 
+    if request.attempts >= super::MAX_CODE_ATTEMPTS {
+        return Ok(Response::forbidden("Too many incorrect attempts. Please request a new code."));
+    }
+
     if request.validation_code != validation_code {
+        if super::record_wrong_code(&db, "sign_in_verification_request", &request.uuid).await {
+            return Ok(Response::forbidden("Too many incorrect attempts. Please request a new code."));
+        }
         return Ok(Response::forbidden("That code isn't right, or it has expired"));
     }
 
@@ -114,7 +121,10 @@ pub async fn task(form_data: web::Json<ReqBody>, actix_session: Session) -> Resu
         }
     }
 
-    let (access_token, valid_time) = jwt::access_token::generate_default(&account.uuid, account.role.clone());
+    let (access_token, valid_time) = match jwt::access_token::generate_default(&account.uuid, account.role.clone()) {
+        Ok(pair) => pair,
+        Err(error) => return Ok(Response::internal_server_error(&format!("could not mint an access token: {:?}", error))),
+    };
 
     let refresh_token = match jwt::refresh_token::new(&account.uuid) {
         Ok(token) => token,

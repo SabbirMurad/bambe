@@ -6,7 +6,7 @@ use mongodb::bson::doc;
 use mongodb::options::ReturnDocument;
 use actix_web::{web, Error, HttpResponse, HttpRequest};
 use crate::BuiltIns::mongo::MongoDB;
-use crate::utils::response::Response;
+use crate::util::response::Response;
 use crate::Middleware::Auth::{require_access, AccessRequirement};
 use crate::model::Order::{Order, OrderItem, FulfilmentStatus, PaymentStatus};
 use crate::model::Product::{Product, ProductVariant, StockMovement, StockReason};
@@ -149,7 +149,7 @@ pub async fn task(req: HttpRequest, path: web::Path<String>, body: web::Json<Req
         return Ok(Response::internal_server_error(&error.to_string()));
     }
 
-    crate::utils::order::release_coupon(&db, &order_id).await;
+    crate::util::order::release_coupon(&db, &order_id).await;
 
     // A confirmation of what they just did, and the record of the refund. The
     // customer triggered this, so it's a receipt rather than news.
@@ -158,10 +158,10 @@ pub async fn task(req: HttpRequest, path: web::Path<String>, body: web::Json<Req
     } else {
         None
     };
-    crate::utils::notify::send(
+    crate::util::notify::send(
         &db,
         &user.user_id,
-        crate::utils::notify::Notice {
+        crate::util::notify::Notice {
             kind: crate::model::Notification::NotifType::OrderCancelled,
             title: format!("Order {} cancelled", order.number),
             body: match refunded {
@@ -171,7 +171,7 @@ pub async fn task(req: HttpRequest, path: web::Path<String>, body: web::Json<Req
             image_id: None,
             related_id: Some(order_id.clone()),
             link: Some("/account/orders".to_string()),
-            email: Some(crate::utils::notify::Email {
+            email: Some(crate::util::notify::Email {
                 subject: format!("Your Bambee order {} was cancelled", order.number),
                 html: crate::Integrations::Resend::order_cancelled_template(&order.number, refunded),
             }),

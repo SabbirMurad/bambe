@@ -8,7 +8,7 @@
   knowing. So the browser stops guessing and asks.
 
   Read-only, and safe to call on every click of a delivery option. It
-  shares `utils::pricing::totals` with `place_order`, which is the whole
+  shares `util::pricing::totals` with `place_order`, which is the whole
   point — the number shown here is the number that will be charged.
 */
 use serde::Deserialize;
@@ -18,7 +18,7 @@ use actix_web::{web, Error, HttpResponse, HttpRequest};
 use crate::BuiltIns::mongo::MongoDB;
 use crate::model::Order::{DeliveryMethod, PackagingOption};
 use crate::model::Store::StoreSettings;
-use crate::utils::pricing;
+use crate::util::pricing;
 use crate::Handler::Cart::{resolve_owner, find_cart, build_response, compute_subtotal, Owner};
 
 #[derive(Debug, Deserialize)]
@@ -107,7 +107,7 @@ pub async fn task(req: HttpRequest, query: web::Query<ReqQuery>) -> Result<HttpR
                 Owner::User(id) => Some(id.as_str()),
                 Owner::Guest(_) => None,
             };
-            crate::utils::coupon::evaluate(&db, code, user_id, sub, &product_ids)
+            crate::util::coupon::evaluate(&db, code, user_id, sub, &product_ids)
                 .await
                 .map(|applied| applied.free_shipping)
                 .unwrap_or(false)

@@ -4,7 +4,7 @@ use futures_util::StreamExt as _;
 use webp::Encoder;
 use std::collections::HashMap;
 use actix_multipart::Multipart;
-use crate::utils::{blurhash, response::Response};
+use crate::util::{blurhash, response::Response};
 use actix_web::{Error, HttpRequest, HttpResponse};
 use image::io::Reader as ImageReader;
 use image::DynamicImage;

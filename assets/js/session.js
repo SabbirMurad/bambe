@@ -65,6 +65,9 @@ class Session {
     localStorage.removeItem(AUTH_KEY);
   }
 
+  /** The refresh token to hand back on sign-out, so the server revokes it. */
+  refreshToken() { const a = this.read(); return a ? a.refresh_token : null; }
+
   token()      { const a = this.read(); return a ? a.access_token : null; }
   userId()     { const a = this.read(); return a ? a.user_id : null; }
   role()       { const a = this.read(); return a ? a.role : null; }
@@ -114,6 +117,10 @@ class Session {
         const next = this.read() || auth;
         next.access_token = body.access_token;
         next.access_token_valid_till = body.access_token_valid_till;
+        // Refresh tokens are single-use: the server rotates it on every
+        // refresh and the one just sent is now dead, so the new one has to
+        // replace it or the next refresh signs the user out.
+        if (body.refresh_token) next.refresh_token = body.refresh_token;
         localStorage.setItem(AUTH_KEY, JSON.stringify(next));
         return body.access_token;
       })

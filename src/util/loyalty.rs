@@ -14,7 +14,7 @@ use crate::model::Customer::{CustomerProfile, LoyaltyLedgerEntry, LoyaltyReason}
 use crate::model::Loyalty::{LoyaltyCard, ALMOST_THERE, CARD_SIZE};
 use crate::model::Notification::NotifType;
 use crate::Model::Account::AccountCore;
-use crate::utils::notify::{send, Notice};
+use crate::util::notify::{send, Notice};
 
 const CARDS: &str = "loyalty_card";
 

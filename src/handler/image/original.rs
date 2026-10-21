@@ -1,12 +1,17 @@
 use mongodb::bson::doc;
+use crate::util::response::Response;
 use crate::model::ImageStruct;
-use crate::utils::response::Response;
 use crate::builtins::{mongo::MongoDB, sqlite};
 use actix_web::{web, Error, HttpResponse};
 
 pub async fn task(image_id: web::Path<String>) -> Result<HttpResponse, Error> {
     let image_id = image_id.trim().to_string();
-    let sqlite_conn = sqlite::connect(sqlite::DBF::IMG).unwrap();
+    let sqlite_conn = match sqlite::connect(sqlite::DBF::IMG) {
+        Ok(conn) => conn,
+        Err(error) => {
+            return Ok(Response::internal_server_error(&format!("Storage unavailable: {:?}", error)));
+        }
+    };
 
     let result = sqlite_conn.query_row(
         "SELECT original FROM image WHERE uuid = ?1",
@@ -26,7 +31,6 @@ pub async fn task(image_id: web::Path<String>) -> Result<HttpResponse, Error> {
     let result = collection.find_one(doc!{"uuid": image_id}).await;
 
     if let Err(error) = result {
-        log::error!("{:?}", error);
         return Ok(Response::internal_server_error(&error.to_string()));
     }
 
@@ -40,9 +44,13 @@ pub async fn task(image_id: web::Path<String>) -> Result<HttpResponse, Error> {
     if image_meta.temporary  || image_meta.deleted {
         return Ok(Response::not_found("Image not found!"));
     }
+    // The stored bytes may be gif/jpeg/webp as well as png; `original_type` holds
+    // the MIME type detected at upload. Announcing image/png for all of them was
+    // a lie the browser had to sniff its way past - and with nosniff now set,
+    // sniffing is no longer an option.
     Ok(
         HttpResponse::Ok()
-        .content_type("image/png")
+        .content_type(image_meta.original_type.clone())
         .body(image_data)
     )
 }

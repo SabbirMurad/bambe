@@ -3,7 +3,7 @@ use serde_json::{json, Value};
 use mongodb::bson::{doc, Document};
 use serde::Deserialize;
 use crate::BuiltIns::mongo::MongoDB;
-use crate::utils::response::Response;
+use crate::util::response::Response;
 use actix_web::{web, Error, HttpResponse, HttpRequest};
 use crate::Middleware::Auth::{require_access, AccessRequirement};
 use crate::Model::Account::{AccountRole, AccountDeletionRequest};

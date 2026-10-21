@@ -3,7 +3,7 @@ use mongodb::bson::doc;
 use serde_json::json;
 use actix_web::{web, Error, HttpResponse, HttpRequest};
 use crate::BuiltIns::mongo::MongoDB;
-use crate::utils::response::Response;
+use crate::util::response::Response;
 use crate::Middleware::Auth::{require_access, AccessRequirement};
 use crate::model::Support::{SupportTicket, TicketMessage};
 

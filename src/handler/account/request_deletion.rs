@@ -3,8 +3,8 @@ use uuid::Uuid;
 use mongodb::bson::doc;
 use serde::Deserialize;
 use crate::BuiltIns::mongo::MongoDB;
-use crate::utils::response::Response;
-use crate::utils::password::{self, Verified};
+use crate::util::response::Response;
+use crate::util::password::{self, Verified};
 use crate::Model::Account;
 use actix_web::{web, Error, HttpResponse};
 

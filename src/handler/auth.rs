@@ -4,7 +4,7 @@ use actix_web::HttpResponse;
 use mongodb::{ClientSession, Database, IndexModel};
 use mongodb::options::IndexOptions;
 use crate::BuiltIns::mongo::MongoDB;
-use crate::utils::response::Response;
+use crate::util::response::Response;
 
 pub mod refresh;
 pub use refresh as Refresh;
@@ -45,8 +45,6 @@ pub use reset_password as ResetPassword;
 pub mod change_password;
 pub use change_password as ChangePassword;
 
-pub mod get;
-pub use get as Get;
 
 pub mod social_login;
 pub use social_login as SocialLogin;
@@ -90,7 +88,7 @@ pub async fn ensure_indexes() {
 
   It can do this without anyone signing in, because a plaintext row *is* the
   password — so it can be hashed directly. That matters: the fallback in
-  `utils::password::verify` would otherwise keep reading plaintext for as long
+  `util::password::verify` would otherwise keep reading plaintext for as long
   as an account went untouched, which for an abandoned account is forever.
 
   Idempotent. A row already stored as a PHC string is skipped, so this is safe
@@ -98,7 +96,7 @@ pub async fn ensure_indexes() {
   yet still authenticates through the legacy path.
 */
 pub async fn migrate_plaintext_passwords() {
-    use crate::utils::password;
+    use crate::util::password;
 
     let db = MongoDB.connect();
     let mut migrated = 0_u64;
@@ -187,7 +185,7 @@ pub async fn delete_account(
 
     if let Err(error) = result {
         log::error!("{:?}", error);
-        session.abort_transaction().await.ok().unwrap();
+        MongoDB::abort(session).await;
         return Err(Response::internal_server_error(&error.to_string()));
     }
 
@@ -199,7 +197,7 @@ pub async fn delete_account(
 
     if let Err(error) = result {
         log::error!("{:?}", error);
-        session.abort_transaction().await.ok().unwrap();
+        MongoDB::abort(session).await;
         return Err(Response::internal_server_error(&error.to_string()));
     }
 
@@ -211,9 +209,42 @@ pub async fn delete_account(
 
     if let Err(error) = result {
         log::error!("{:?}", error);
-        session.abort_transaction().await.ok().unwrap();
+        MongoDB::abort(session).await;
         return Err(Response::internal_server_error(&error.to_string()));
     }
 
     Ok(())
+}
+
+/// Wrong guesses a 6-digit code may take before it is destroyed. A code with no
+/// limit is brute-forceable inside its 15-minute life at the rate limiter's pace.
+pub const MAX_CODE_ATTEMPTS: u32 = 5;
+
+/// Records a wrong guess against a verification request and reports whether it
+/// has now used up its guesses (in which case it has been deleted, and the user
+/// must ask for a new code).
+///
+/// Deliberately NOT part of the caller's transaction: the wrong-guess path
+/// aborts, and a counter incremented inside the transaction would be rolled
+/// back with it - so the limit would never fire. This write has to survive the
+/// rejection it is recording.
+pub async fn record_wrong_code(db: &Database, collection: &str, request_uuid: &str) -> bool {
+    let col = db.collection::<mongodb::bson::Document>(collection);
+    let updated = col
+        .find_one_and_update(doc! { "uuid": request_uuid }, doc! { "$inc": { "attempts": 1 } })
+        .return_document(mongodb::options::ReturnDocument::After)
+        .await
+        .ok()
+        .flatten();
+
+    let attempts = updated
+        .as_ref()
+        .and_then(|d| d.get_i32("attempts").ok().map(|n| n as i64).or_else(|| d.get_i64("attempts").ok()))
+        .unwrap_or(0);
+
+    if attempts >= MAX_CODE_ATTEMPTS as i64 {
+        col.delete_one(doc! { "uuid": request_uuid }).await.ok();
+        return true;
+    }
+    false
 }

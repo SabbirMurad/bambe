@@ -299,7 +299,7 @@ pub async fn build_response(db: &Database, cart: &Cart) -> Value {
     let mut discount: i64 = 0;
     let mut coupon_error: Option<String> = None;
     if let Some(code) = &cart.coupon_code {
-        match crate::utils::coupon::evaluate(db, code, cart.user_id.as_deref(), subtotal, &cart_product_ids).await {
+        match crate::util::coupon::evaluate(db, code, cart.user_id.as_deref(), subtotal, &cart_product_ids).await {
             Ok(applied) => discount = applied.discount,
             Err(err) => coupon_error = Some(err),
         }

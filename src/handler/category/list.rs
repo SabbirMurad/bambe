@@ -2,7 +2,7 @@ use futures::StreamExt;
 use serde_json::{json, Value};
 use mongodb::bson::doc;
 use crate::BuiltIns::mongo::MongoDB;
-use crate::utils::response::Response;
+use crate::util::response::Response;
 use actix_web::{Error, HttpResponse};
 use crate::model::Category::Category;
 

@@ -1,5 +1,46 @@
 use regex::Regex;
 
+use uuid::Uuid;
+
+/* ***************************** PATH SAFETY ***************************** */
+
+/// Is `value` safe to interpolate into a filesystem path as a media id?
+///
+/// `web::Path<String>` hands back the PERCENT-DECODED segment, so `%2e%2e%2f`
+/// arrives as `../` and routing never sees it. Interpolating that into a path is
+/// an unauthenticated arbitrary file read.
+///
+/// This is a whitelist, not an escaping pass: ids are minted with `Uuid`, so
+/// requiring the value to parse as one leaves no room for a separator, a dot, or
+/// an encoding trick. Blacklisting "../" would not - `....//`, `%252e`, UTF-8
+/// overlongs and platform-specific separators all get past that sort of filter.
+pub fn is_media_id(value: &str) -> bool {
+    Uuid::parse_str(value).is_ok()
+}
+
+/// Is `value` one of the file names our own transcoder writes?
+///
+/// ffmpeg is invoked with `index.m3u8` and `segment-%04d.ts`, so those are the
+/// only names that should ever be requested. Anything else is refused rather
+/// than opened.
+pub fn is_hls_file_name(value: &str) -> bool {
+    if value == "index.m3u8" {
+        return true;
+    }
+
+    match value
+        .strip_prefix("segment-")
+        .and_then(|rest| rest.strip_suffix(".ts"))
+    {
+        Some(digits) => {
+            !digits.is_empty()
+                && digits.len() <= 10
+                && digits.chars().all(|c| c.is_ascii_digit())
+        }
+        None => false,
+    }
+}
+
 /***************************** REGULAR EXPRESSION *****************************/
 
 #[allow(dead_code)]

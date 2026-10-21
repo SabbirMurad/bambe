@@ -5,7 +5,7 @@ use serde_json::json;
 use mongodb::bson::{doc, Document};
 use actix_web::{web, Error, HttpResponse};
 use crate::BuiltIns::mongo::MongoDB;
-use crate::utils::response::Response;
+use crate::util::response::Response;
 use crate::model::Product::{Product, ProductVariant, Brand};
 use crate::model::Category::Category;
 use crate::model::ImageStruct;
