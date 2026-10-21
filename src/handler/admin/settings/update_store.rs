@@ -14,6 +14,8 @@ pub struct ReqBody {
     store_name: Option<String>,
     support_email: Option<String>,
     support_phone: Option<String>,
+    facebook_url: Option<String>,
+    instagram_url: Option<String>,
     business_address: Option<String>,
     default_currency: Option<String>,
     timezone: Option<String>,
@@ -68,7 +70,17 @@ pub async fn task(req: HttpRequest, body: web::Json<ReqBody>) -> Result<HttpResp
 
     // Optional fields need no insert-time default — a missing key
     // deserializes to `None` on `Option<T>`.
-    if let Some(v) = &body.support_phone { set_doc.insert("support_phone", v); }
+    // An empty string clears these; leaving the key out keeps them.
+    if let Some(v) = &body.support_phone { set_doc.insert("support_phone", v.trim()); }
+    for (key, value) in [("facebook_url", &body.facebook_url), ("instagram_url", &body.instagram_url)] {
+        if let Some(v) = value {
+            let v = v.trim();
+            if !v.is_empty() && !(v.starts_with("https://") || v.starts_with("http://")) {
+                return Ok(Response::bad_request("Social links must be full addresses starting with https://"));
+            }
+            set_doc.insert(key, v);
+        }
+    }
     if let Some(v) = &body.logo_image_id { set_doc.insert("logo_image_id", v); }
     if let Some(v) = &body.theme { set_doc.insert("theme", v); }
 

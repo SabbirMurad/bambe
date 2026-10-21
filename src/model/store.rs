@@ -13,6 +13,11 @@ pub struct StoreSettings {
     pub store_name: String,
     pub support_email: String,
     pub support_phone: Option<String>,
+    // The footer's social buttons; each is hidden while its link is empty.
+    #[serde(default)]
+    pub facebook_url: Option<String>,
+    #[serde(default)]
+    pub instagram_url: Option<String>,
     pub business_address: String,
     pub default_currency: CurrencyCode,
     // IANA name ("America/New_York"). Delivery cutoffs and "ends today" on a

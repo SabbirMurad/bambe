@@ -404,12 +404,11 @@
      below would blend towards grey against it. */
   --band-fade: rgba(255,255,255,0);
   background: var(--band);
-  /* Generous, and deliberately so: the band is the only thing
-     separating this section from the hero above and the category
-     doors below, both of which are full-bleed and busy. The air is
-     what lets it read as its own page rather than a strip wedged
-     between two photographs. */
-  padding: 190px 0;
+  /* Generous below, where the full-bleed category doors follow. Above,
+     the hero is now a contained card with its claims strip under it,
+     so the section can follow on closely — a long empty band after a
+     short hero just reads as a gap. */
+  padding: 72px 0 190px;
 }
 .collage-inner {
   max-width: var(--content-max);
@@ -726,6 +725,7 @@
       rgba(234,214,187,0.88) 100%
     );
   }
+  .collage { padding-top: 56px; }
   .collage-inner { grid-template-columns: 1fr; row-gap: 28px; }
   .collage-portrait { margin-top: 0; aspect-ratio: 4 / 5; }
   .collage-side { align-items: flex-start; padding-top: 0; }
@@ -766,7 +766,7 @@
   .hero-title br { display: none; }
   .hero-title { text-wrap: balance; }
   .hero-actions { flex-direction: column; align-items: stretch; }
-  .collage { padding: 104px 0 112px; }
+  .collage { padding: 44px 0 112px; }
   .collage-inner { padding: 0 16px; }
 }
 
@@ -2048,3 +2048,84 @@ html:not(.nav-past-hero) .has-hero-overlay:has(.hero--side) .subnav::before {
 .about-hero--dark .about-eyebrow { color: #FF8A80; }
 .about-hero--dark .about-title { color: #FFFFFF; }
 .about-hero--dark .about-tagline { color: rgba(255,255,255,0.82); }
+
+/* ── Card hero (.hero--card) ─────────────────────────────────────
+   The photograph as a rounded panel inside the content column, below
+   the ordinary white nav, rather than a full-bleed screen the nav sits
+   on. It stops well short of the fold so the next section shows on
+   arrival. The claims strip runs underneath the card instead of over
+   the picture. Drop `hero--card` (and put `has-hero-overlay` back on
+   <body>) to return to the full-screen hero. */
+/* Full-bleed band in the collage's white, so there is no seam where the
+   hero meets the next section; the padding lines the card up with the
+   content column (which carries its own 32px gutter). */
+.hero--card {
+  background: var(--white);
+  padding: 20px max(32px, calc((100% - var(--content-max)) / 2 + 32px)) 0;
+}
+.hero--card .hero-frame {
+  min-height: 0;
+  height: clamp(420px, 62svh, 600px);
+  border-radius: 28px;
+  isolation: isolate;
+  background-color: #FFFFFF;
+  /* The photo's ground is white too, so the edge needs a line. */
+  border: 1px solid rgba(0,0,0,0.06);
+  box-shadow: 0 1px 0 rgba(0,0,0,0.04), 0 24px 48px -32px rgba(0,0,0,0.22);
+}
+/* The card sits below the nav now, so the copy no longer needs to clear it. */
+.hero--card .hero-body { padding: 48px 56px; }
+.hero--card .hero-marquee {
+  position: relative;
+  margin-top: 14px;
+  background: none;
+  border-top: 0;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  /* Fade the ends so the loop slides in and out rather than being cut. */
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+}
+.hero--card .hero-marquee-track { padding: 12px 0; }
+.hero--card .hero-marquee-group span { font-size: 12px; color: var(--mid); }
+
+@media (min-width: 1025px) {
+  /* The card already sits in the content column; the copy just takes
+     its own inset from the card's edge. */
+  .hero--card .hero-body { margin-left: 0; max-width: 620px; }
+  .hero--card .hero-title { font-size: clamp(52px, 4.6vw, 80px); }
+}
+/* Stacked: the copy can't sit beside the products, and laid over them
+   it needs a wash heavy enough to hide them. So the card splits — the
+   photograph, clear, across the top; the copy on white beneath. */
+@media (max-width: 1024px) {
+  .hero--card { padding: 16px 20px 0; }
+  .hero--card .hero-frame {
+    height: auto;
+    flex-direction: column;
+    align-items: stretch;
+    border-radius: 22px;
+  }
+  .hero--card .hero-photo {
+    position: relative;
+    inset: auto;
+    height: 300px;
+    flex-shrink: 0;
+    /* The products cluster on the right of this picture. */
+    background-position: 88% center;
+  }
+  .hero--card .hero-scrim,
+  .hero--card .hero-orbs { display: none; }
+  .hero--card .hero-body { padding: 8px 32px 36px; }
+}
+@media (max-width: 640px) {
+  .hero--card { padding: 12px 16px 0; }
+  .hero--card .hero-frame { border-radius: 18px; }
+  /* The products are the right ~40% of a 16:9 picture: scaled to a
+     little over the box's height, they fill most of a phone's width. */
+  .hero--card .hero-photo { height: 250px; background-size: auto 118%; background-position: 86% 45%; }
+  .hero--card .hero-body { padding: 4px 20px 26px; }
+  .hero--card .hero-title { font-size: 38px; }
+  .hero--card .hero-desc { margin-top: 12px; }
+  .hero--card .hero-actions { margin-top: 20px; }
+}

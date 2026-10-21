@@ -25,7 +25,7 @@ let rows = [];
 function wishlistCard(row) {
   const card = document.createElement('a');
   card.className = 'product-card';
-  card.href = '/product?slug=' + encodeURIComponent(row.slug || '');
+  card.href = '/product/' + encodeURIComponent(row.slug || '');
   card.style.textDecoration = 'none';
   card.style.color = 'inherit';
 
@@ -111,7 +111,7 @@ function wishlistCard(row) {
 */
 async function addToCart(row, button) {
   if (!row.variant_id) {
-    location.href = '/product?slug=' + encodeURIComponent(row.slug || '');
+    location.href = '/product/' + encodeURIComponent(row.slug || '');
     return;
   }
 

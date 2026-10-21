@@ -152,7 +152,7 @@ function productRow(product) {
     location.href = '/admin/products/new?id=' + encodeURIComponent(product.uuid);
   }));
   actions.appendChild(rowButton('View', () => {
-    window.open('/product?slug=' + encodeURIComponent(product.slug), '_blank');
+    window.open('/product/' + encodeURIComponent(product.slug), '_blank');
   }));
   actions.appendChild(rowButton('Delete', () => remove(product), { danger: true }));
   tr.appendChild(cell(actions, 'col-actions'));

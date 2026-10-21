@@ -109,7 +109,7 @@ function lineRow(line) {
   row.dataset.itemId = line.uuid;
   if (!line.available) row.classList.add('unselected');
 
-  const href = line.slug ? '/product?slug=' + encodeURIComponent(line.slug) : null;
+  const href = line.slug ? '/product/' + encodeURIComponent(line.slug) : null;
 
   row.innerHTML =
     '<div class="cart-item-info">'

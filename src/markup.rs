@@ -2,7 +2,10 @@ use tera::{Tera, Context};
 use futures::StreamExt;
 use mongodb::bson::doc;
 use serde_json::{json, Value};
-use actix_web::{web, error, Error, HttpResponse};
+use actix_web::{web, error, Error, HttpRequest, HttpResponse};
+use actix_web::http::StatusCode;
+use std::collections::HashMap;
+use crate::seo;
 use crate::BuiltIns::mongo::MongoDB;
 use crate::model::Category::Category;
 
@@ -19,20 +22,75 @@ async fn render(template: &web::Data<Tera>, name: &str) -> Result<HttpResponse, 
   (data-store-theme), so the right palette applies on the first frame — no
   flash of the default colours before a script could switch them.
 */
-async fn store_theme() -> String {
-  let db = MongoDB.connect();
-  crate::Handler::Admin::Settings::load(&db).await
-    .and_then(|settings| settings.theme)
-    .filter(|theme| crate::Handler::Admin::Settings::UpdateStore::THEMES.contains(&theme.as_str()))
-    .unwrap_or_else(|| "orange".to_string())
+struct StoreChrome {
+  theme: String,
+  whatsapp: Option<String>,
+  facebook: Option<String>,
+  instagram: Option<String>,
 }
 
-async fn render_with(template: &web::Data<Tera>, name: &str, mut context: Context) -> Result<HttpResponse, Error> {
-  context.insert("store_theme", &store_theme().await);
+async fn store_chrome() -> StoreChrome {
+  let db = MongoDB.connect();
+  let settings = crate::Handler::Admin::Settings::load(&db).await;
+  let theme = settings.as_ref()
+    .and_then(|settings| settings.theme.clone())
+    .filter(|theme| crate::Handler::Admin::Settings::UpdateStore::THEMES.contains(&theme.as_str()))
+    .unwrap_or_else(|| "orange".to_string());
+  /* The footer's WhatsApp button chats with the store's support phone.
+     wa.me wants the full international number as bare digits — no +,
+     spaces or dashes — and opens the app where it's installed, WhatsApp
+     Web or the download page where it isn't. */
+  let whatsapp = settings.as_ref()
+    .and_then(|settings| settings.support_phone.clone())
+    .map(|phone| phone.chars().filter(|c| c.is_ascii_digit()).collect::<String>())
+    .filter(|digits| digits.len() >= 8);
+  let link = |value: Option<String>| value.map(|v| v.trim().to_string()).filter(|v| v.starts_with("http"));
+  StoreChrome {
+    theme,
+    whatsapp,
+    facebook: link(settings.as_ref().and_then(|s| s.facebook_url.clone())),
+    instagram: link(settings.as_ref().and_then(|s| s.instagram_url.clone())),
+  }
+}
+
+async fn render_with(template: &web::Data<Tera>, name: &str, context: Context) -> Result<HttpResponse, Error> {
+  render_status(template, name, context, StatusCode::OK).await
+}
+
+async fn render_status(template: &web::Data<Tera>, name: &str, mut context: Context, status: StatusCode) -> Result<HttpResponse, Error> {
+  let chrome = store_chrome().await;
+  context.insert("store_theme", &chrome.theme);
+  if let Some(number) = &chrome.whatsapp { context.insert("whatsapp_number", number); }
+  if let Some(url) = &chrome.facebook { context.insert("facebook_url", url); }
+  if let Some(url) = &chrome.instagram { context.insert("instagram_url", url); }
+  // The home page's Organization data lists the same profiles.
+  let same_as: Vec<&String> = chrome.facebook.iter().chain(chrome.instagram.iter()).collect();
+  if let Some(seo) = context.get("seo").cloned() {
+    if seo.get("json_ld").is_some() && !same_as.is_empty() {
+      let mut seo = seo;
+      if let Some(blocks) = seo["json_ld"].as_array_mut() {
+        for block in blocks.iter_mut() {
+          if let Some(text) = block.as_str() {
+            if let Ok(mut value) = serde_json::from_str::<Value>(text) {
+              if value["@type"] == "Organization" {
+                value["sameAs"] = json!(same_as);
+                *block = json!(seo::ld(&value));
+              }
+            }
+          }
+        }
+      }
+      context.insert("seo", &seo);
+    }
+  }
+  // Search Console's ownership check, when GOOGLE_SITE_VERIFICATION is set.
+  if let Ok(code) = std::env::var("GOOGLE_SITE_VERIFICATION") {
+    if !code.trim().is_empty() { context.insert("google_site_verification", code.trim()); }
+  }
   let res_data = template.render(name, &context)
     .map_err(|e| error::ErrorInternalServerError(e))?;
 
-  Ok(HttpResponse::Ok().content_type("text/html").body(res_data))
+  Ok(HttpResponse::build(status).content_type("text/html").body(res_data))
 }
 
 /*
@@ -71,23 +129,108 @@ async fn nav_categories() -> Vec<Value> {
 }
 
 async fn render_with_nav(template: &web::Data<Tera>, name: &str) -> Result<HttpResponse, Error> {
+  render_with(template, name, nav_context().await).await
+}
+
+async fn nav_context() -> Context {
   let mut context = Context::new();
   context.insert("nav_categories", &nav_categories().await);
+  context
+}
+
+/// A public page with its own title, description and canonical URL.
+async fn render_seo(template: &web::Data<Tera>, name: &str, seo: Value) -> Result<HttpResponse, Error> {
+  let mut context = nav_context().await;
+  context.insert("seo", &seo);
   render_with(template, name, context).await
 }
 
 /* ── Storefront ──────────────────────────────────────────── */
 
-pub async fn home(template: web::Data<Tera>) -> Result<HttpResponse, Error> {
-  render_with_nav(&template, "shopping/home.html").await
+pub async fn home(template: web::Data<Tera>, req: HttpRequest) -> Result<HttpResponse, Error> {
+  let base = seo::base_url(&req);
+  let mut page = seo::page(
+    "Bambee — Cosmetics, Skincare, Body, Hair & Grooming",
+    "Bambee stocks seven lines of everyday beauty: cosmetics and accessories, skincare, body care and sprays, wellness, hair care and extensions, nail care, and men's grooming.",
+    format!("{}/", base),
+    Some(format!("{}/assets/brand/photos/hero_bg_3.png", base)),
+  );
+  page["json_ld"] = json!(seo::home_json_ld(&base));
+  render_seo(&template, "shopping/home.html", page).await
 }
 
-pub async fn listing(template: web::Data<Tera>) -> Result<HttpResponse, Error> {
-  render_with_nav(&template, "shopping/listing.html").await
+/*
+  One indexable page per category. Sorting, paging and filter variants of
+  it point their canonical back at the plain category URL, and a search
+  results page (`q`) is kept out of the index: it's endless, thin, and
+  every product on it already has a page of its own.
+*/
+pub async fn listing(template: web::Data<Tera>, req: HttpRequest, query: web::Query<HashMap<String, String>>) -> Result<HttpResponse, Error> {
+  let base = seo::base_url(&req);
+  let db = MongoDB.connect();
+
+  let category = match query.get("category").filter(|c| !c.is_empty()) {
+    Some(slug) => db.collection::<Category>("category").find_one(doc! { "slug": slug, "visible": true }).await.ok().flatten(),
+    None => None,
+  };
+
+  let mut page = match &category {
+    Some(c) => seo::page(
+      &format!("{} — Shop {} Online | {}", c.name, c.name, seo::SITE_NAME),
+      &c.description.clone().filter(|d| !d.trim().is_empty())
+        .unwrap_or_else(|| format!("Shop {} at {}: hand-picked products from brands you trust, delivered to your door.", c.name, seo::SITE_NAME)),
+      format!("{}/listing?category={}", base, seo::encode(&c.slug)),
+      c.image_id.as_ref().map(|id| seo::image_url(&base, id)),
+    ),
+    None => seo::page(
+      &format!("Shop All Beauty Products | {}", seo::SITE_NAME),
+      "Browse every product at Bambee — makeup, skincare, body care, wellness, hair care, nail care and men's grooming.",
+      format!("{}/listing", base),
+      None,
+    ),
+  };
+  if query.get("q").map(|q| !q.trim().is_empty()).unwrap_or(false) {
+    page["noindex"] = json!(true);
+  }
+  render_seo(&template, "shopping/listing.html", page).await
 }
 
-pub async fn product(template: web::Data<Tera>) -> Result<HttpResponse, Error> {
-  render_with_nav(&template, "shopping/product.html").await
+/// `/product/{slug}` — the canonical product page.
+pub async fn product(template: web::Data<Tera>, req: HttpRequest, path: web::Path<String>) -> Result<HttpResponse, Error> {
+  product_page(&template, &req, &path.into_inner()).await
+}
+
+async fn product_page(template: &web::Data<Tera>, req: &HttpRequest, slug: &str) -> Result<HttpResponse, Error> {
+  let base = seo::base_url(req);
+  let db = MongoDB.connect();
+
+  let mut context = nav_context().await;
+  match seo::product_page(&db, &base, slug).await {
+    Some((page, first_paint)) => {
+      context.insert("seo", &page);
+      context.insert("product_ssr", &first_paint);
+      render_with(template, "shopping/product.html", context).await
+    }
+    None => {
+      // Still the product page, so product.js can say "not found" in the
+      // shop's own chrome, but a real 404, so it never gets indexed.
+      let mut page = seo::page(&format!("Product not found | {}", seo::SITE_NAME), "", format!("{}/listing", base), None);
+      page["noindex"] = json!(true);
+      context.insert("seo", &page);
+      render_status(template, "shopping/product.html", context, StatusCode::NOT_FOUND).await
+    }
+  }
+}
+
+/// The old `/product?slug=…` address, kept working for links already out
+/// there: a permanent redirect hands their ranking to the new URL.
+pub async fn product_legacy(template: web::Data<Tera>, req: HttpRequest, query: web::Query<HashMap<String, String>>) -> Result<HttpResponse, Error> {
+  match query.get("slug").filter(|s| !s.is_empty()) {
+    Some(slug) => Ok(HttpResponse::MovedPermanently()
+      .append_header(("Location", seo::product_path(slug)))
+      .finish()),
+    None => product_page(&template, &req, "").await,
+  }
 }
 
 pub async fn search(template: web::Data<Tera>) -> Result<HttpResponse, Error> {
@@ -98,16 +241,22 @@ pub async fn wishlist(template: web::Data<Tera>) -> Result<HttpResponse, Error> 
   render_with_nav(&template, "shopping/wishlist.html").await
 }
 
-pub async fn about(template: web::Data<Tera>) -> Result<HttpResponse, Error> {
-  render_with_nav(&template, "shopping/about.html").await
+pub async fn about(template: web::Data<Tera>, req: HttpRequest) -> Result<HttpResponse, Error> {
+  let base = seo::base_url(&req);
+  let page = seo::page("About Us | Bambee", "At Bambee, we believe true beauty starts with intentional self-care: clean, salon-grade skincare, hair care, cosmetics and men's grooming, curated for every skin tone, lifestyle and beauty goal.", format!("{}/about", base), None);
+  render_seo(&template, "shopping/about.html", page).await
 }
 
-pub async fn privacy(template: web::Data<Tera>) -> Result<HttpResponse, Error> {
-  render_with_nav(&template, "shopping/privacy.html").await
+pub async fn privacy(template: web::Data<Tera>, req: HttpRequest) -> Result<HttpResponse, Error> {
+  let base = seo::base_url(&req);
+  let page = seo::page("Privacy Policy | Bambee", "How Bambee collects, uses and protects your personal information — and the choices you have.", format!("{}/privacy", base), None);
+  render_seo(&template, "shopping/privacy.html", page).await
 }
 
-pub async fn terms(template: web::Data<Tera>) -> Result<HttpResponse, Error> {
-  render_with_nav(&template, "shopping/terms.html").await
+pub async fn terms(template: web::Data<Tera>, req: HttpRequest) -> Result<HttpResponse, Error> {
+  let base = seo::base_url(&req);
+  let page = seo::page("Terms of Use | Bambee", "The terms that apply when you use the Bambee website and shop with us.", format!("{}/terms", base), None);
+  render_seo(&template, "shopping/terms.html", page).await
 }
 
 /* ── Checkout ────────────────────────────────────────────── */

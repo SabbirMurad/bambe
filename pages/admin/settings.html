@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
 <title>Settings — Bambee Admin</title>
 {% include "common/favicon.html" %}
 <link rel="stylesheet" href="/assets/css/common.css">
@@ -83,7 +84,17 @@
               </div>
               <div class="form-group">
                 <label class="form-label" for="store-phone">Support phone</label>
-                <input class="form-input" id="store-phone" type="tel" inputmode="tel">
+                <input class="form-input" id="store-phone" type="tel" inputmode="tel" placeholder="+880 1XXX-XXXXXX">
+                <div class="form-hint" style="font-size:12px;color:var(--subtle);margin-top:6px;">With the country code. Also the footer's WhatsApp button.</div>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="store-facebook">Facebook page</label>
+                <input class="form-input" id="store-facebook" type="url" inputmode="url" placeholder="https://www.facebook.com/…">
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="store-instagram">Instagram</label>
+                <input class="form-input" id="store-instagram" type="url" inputmode="url" placeholder="https://www.instagram.com/…">
+                <div class="form-hint" style="font-size:12px;color:var(--subtle);margin-top:6px;">Leave a link empty to hide its button in the footer.</div>
               </div>
               <div class="form-group">
                 <label class="form-label" for="store-currency">Default currency</label>

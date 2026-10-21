@@ -165,7 +165,7 @@ function openReview(review) {
   review.products.forEach((p) => {
     const row = document.createElement(p.slug ? 'a' : 'div');
     if (p.slug) {
-      row.href = '/product?slug=' + encodeURIComponent(p.slug);
+      row.href = '/product/' + encodeURIComponent(p.slug);
       row.target = '_blank';
       row.rel = 'noopener';
     }

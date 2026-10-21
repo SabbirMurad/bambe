@@ -31,7 +31,12 @@ let reviewPage = 1;
 const $ = (sel) => document.querySelector(sel);
 const $$ = (sel) => [...document.querySelectorAll(sel)];
 
+/* /product/<slug>, the canonical address. The old ?slug= form is
+   redirected by the server, but is still read here in case a cached
+   page asks. */
 function slugFromUrl() {
+  const match = location.pathname.match(/^\/product\/([^/]+)/);
+  if (match) return decodeURIComponent(match[1]);
   return new URLSearchParams(location.search).get('slug') || '';
 }
 

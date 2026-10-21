@@ -182,7 +182,7 @@ function discountPercent(item) {
 export function productCard(item, options = {}) {
   const card = document.createElement('a');
   card.className = 'product-card';
-  card.href = '/product?slug=' + encodeURIComponent(item.slug);
+  card.href = '/product/' + encodeURIComponent(item.slug);
   card.style.textDecoration = 'none';
   card.style.color = 'inherit';
   card.dataset.productId = item.uuid;

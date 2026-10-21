@@ -119,6 +119,8 @@ function paintStore() {
   set('#store-name', store.store_name);
   set('#store-email', store.support_email);
   set('#store-phone', store.support_phone);
+  set('#store-facebook', store.facebook_url);
+  set('#store-instagram', store.instagram_url);
   set('#store-address', store.business_address);
 
   const currency = $('#store-currency');
@@ -254,7 +256,10 @@ async function saveStore(button) {
     body: {
       store_name: value('#store-name'),
       support_email: value('#store-email'),
-      support_phone: value('#store-phone') || null,
+      // '' clears a field; the footer hides a button whose link is empty.
+      support_phone: value('#store-phone') || '',
+      facebook_url: value('#store-facebook') || '',
+      instagram_url: value('#store-instagram') || '',
       business_address: value('#store-address'),
       default_currency: value('#store-currency'),
       order_number_prefix: value('#store-prefix'),

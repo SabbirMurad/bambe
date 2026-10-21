@@ -15,7 +15,23 @@ pub fn router(cfg: &mut web::ServiceConfig) {
         )
         .route(
             "/product",
+            web::get().to(Markup::product_legacy)
+        )
+        .route(
+            "/product/{slug}",
             web::get().to(Markup::product)
+        )
+        .route(
+            "/robots.txt",
+            web::get().to(crate::seo::robots)
+        )
+        .route(
+            "/sitemap.xml",
+            web::get().to(crate::seo::sitemap)
+        )
+        .route(
+            "/feeds/google.xml",
+            web::get().to(crate::seo::merchant_feed)
         )
         .route(
             "/search",

@@ -25,6 +25,8 @@ pub async fn task(req: HttpRequest) -> Result<HttpResponse, Error> {
         store_name: "My Store".to_string(),
         support_email: String::new(),
         support_phone: None,
+        facebook_url: None,
+        instagram_url: None,
         business_address: String::new(),
         default_currency: "USD".to_string(),
         timezone: "UTC".to_string(),
