@@ -256,6 +256,12 @@ pub async fn privacy(template: web::Data<Tera>, req: HttpRequest) -> Result<Http
   render_seo(&template, "shopping/privacy.html", page).await
 }
 
+pub async fn return_policy(template: web::Data<Tera>, req: HttpRequest) -> Result<HttpResponse, Error> {
+  let base = seo::base_url(&req);
+  let page = seo::page("Return & Refund Policy | Bambee", "10-day returns with free return shipping. What you can return, how to start a return, and how refunds work at Bambee.", format!("{}/return-policy", base), None);
+  render_seo(&template, "shopping/return-policy.html", page).await
+}
+
 pub async fn terms(template: web::Data<Tera>, req: HttpRequest) -> Result<HttpResponse, Error> {
   let base = seo::base_url(&req);
   let page = seo::page("Terms of Use | Bambee", "The terms that apply when you use the Bambee website and shop with us.", format!("{}/terms", base), None);

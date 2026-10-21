@@ -330,7 +330,7 @@ pub async fn sitemap(req: HttpRequest) -> Result<HttpResponse, Error> {
          <urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\" \
          xmlns:image=\"http://www.google.com/schemas/sitemap-image/1.1\">\n",
     );
-    for path in ["/", "/listing", "/about", "/privacy", "/terms"] {
+    for path in ["/", "/listing", "/about", "/privacy", "/terms", "/return-policy"] {
         out.push_str(&format!("  <url><loc>{}</loc></url>\n", xml(&format!("{}{}", base, path))));
     }
 
