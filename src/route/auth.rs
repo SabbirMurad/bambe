@@ -60,6 +60,10 @@ pub fn router(cfg: &mut web::ServiceConfig) {
             "/social-login",
             web::post().to(Handler::Auth::SocialLogin::task)
         )
+        .route(
+            "/firebase-config",
+            web::get().to(Handler::Auth::SocialLogin::web_config)
+        )
     );
 
     // The frontend hardcodes the unversioned `/api/auth/refresh` URL
