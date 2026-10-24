@@ -333,3 +333,65 @@ fn blur_hash_of(img: &DynamicImage) -> String {
         small.as_raw(),
     ).unwrap_or_default()
 }
+
+/*
+  Stores one image the server fetched itself rather than one a client posted
+  - the profile photo a Google or Facebook sign-in carries. Same checks and
+  same two writes as an upload, so the result is indistinguishable from one
+  and is served by /image/webp/{id} like any other.
+*/
+pub async fn store(bytes: &[u8], used_at: AssetUsedAt) -> Result<String, String> {
+    let image_type = match imghdr::from_bytes(bytes) {
+        Some(imghdr::Type::Gif) => AllowedImageType::Gif,
+        Some(imghdr::Type::Png) => AllowedImageType::Png,
+        Some(imghdr::Type::Jpeg) => AllowedImageType::Jpeg,
+        Some(imghdr::Type::Webp) => AllowedImageType::Webp,
+        other => return Err(format!("not an accepted image type: {:?}", other)),
+    };
+
+    let (width, height) = imagesize::blob_size(bytes)
+        .map(|size| (size.width, size.height))
+        .map_err(|error| format!("unreadable dimensions: {:?}", error))?;
+    if width as u64 * height as u64 > MAX_PIXELS {
+        return Err(format!("{}x{} is over the pixel limit", width, height));
+    }
+
+    let decoded = decode(bytes)?;
+    let webp = convert_to_webp(&decoded)?;
+    let uuid = Uuid::now_v7().to_string();
+    let doc = ImageStruct {
+        uuid: uuid.clone(),
+        blur_hash: blur_hash_of(&decoded),
+        width,
+        height,
+        created_at: Utc::now().timestamp_millis(),
+        original_size: bytes.len(),
+        webp_size: webp.len(),
+        used_at,
+        temporary: false,
+        deleted: false,
+        original_type: image_type.to_str().to_string(),
+    };
+
+    let sqlite_conn = sqlite::connect(sqlite::DBF::IMG).map_err(|error| error.to_string())?;
+    sqlite_conn
+        .execute("INSERT INTO image (uuid, original, webp) VALUES (?1, ?2, ?3)", (&uuid, bytes, &webp))
+        .map_err(|error| error.to_string())?;
+
+    if let Err(error) = MongoDB.connect().collection::<ImageStruct>("image").insert_one(doc).await {
+        let _ = sqlite_conn.execute("DELETE FROM image WHERE uuid = ?1", (&uuid,));
+        return Err(error.to_string());
+    }
+    Ok(uuid)
+}
+
+/* Removes an image `store` wrote, once nothing points at it any more. */
+pub async fn discard(uuid: &str) {
+    if let Ok(conn) = sqlite::connect(sqlite::DBF::IMG) {
+        let _ = conn.execute("DELETE FROM image WHERE uuid = ?1", (uuid,));
+    }
+    let _ = MongoDB.connect()
+        .collection::<ImageStruct>("image")
+        .delete_one(mongodb::bson::doc! { "uuid": uuid })
+        .await;
+}

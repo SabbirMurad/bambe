@@ -51,7 +51,14 @@ pub struct AccountProfile {
     pub first_name: String,
     pub last_name: String,
     pub phone_number: Option<String>,
+    /// The picture the customer uploaded here. Theirs to set, and nothing
+    /// a sign-in does ever changes it.
     pub profile_picture: Option<String>,
+    /// A copy of the photo from their latest Google or Facebook sign-in,
+    /// refreshed on each one. Shown only while `profile_picture` is empty,
+    /// so a provider photo is a default, never an override.
+    #[serde(default)]
+    pub social_picture: Option<String>,
 
     pub modified_at: i64,
 }
