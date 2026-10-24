@@ -127,6 +127,7 @@ pub async fn task(form_data: web::Json<ReqBody>) -> Result<HttpResponse, Error> 
         first_name: post_data.first_name.clone(),
         last_name: post_data.last_name.clone(),
         profile_picture: None,
+        social_picture: None,
         phone_number: None,
         modified_at: now,
     };

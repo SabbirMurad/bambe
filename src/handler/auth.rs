@@ -80,6 +80,19 @@ pub async fn ensure_indexes() {
         log::warn!("admin_account email index: {:?}", error);
     }
 
+    // One account per Google/Facebook identity; see social_login.rs.
+    let identity_index = IndexModel::builder()
+        .keys(doc!{ "firebase_uid": 1 })
+        .options(IndexOptions::builder().unique(true).build())
+        .build();
+    if let Err(error) = db
+        .collection::<mongodb::bson::Document>("social_identity")
+        .create_index(identity_index)
+        .await
+    {
+        log::warn!("social_identity index: {:?}", error);
+    }
+
 }
 
 /*

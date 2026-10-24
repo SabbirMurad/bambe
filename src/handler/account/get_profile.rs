@@ -34,7 +34,9 @@ pub async fn task(req: HttpRequest) -> Result<HttpResponse, Error> {
         "first_name": profile.as_ref().map(|p| p.first_name.clone()),
         "last_name": profile.as_ref().map(|p| p.last_name.clone()),
         "phone_number": profile.as_ref().and_then(|p| p.phone_number.clone()),
-        "profile_picture": profile.as_ref().and_then(|p| p.profile_picture.clone()),
+        // Their own upload wins; the latest Google/Facebook photo stands in
+        // until they have one.
+        "profile_picture": profile.as_ref().and_then(|p| p.profile_picture.clone().or_else(|| p.social_picture.clone())),
         "segment": customer.as_ref().map(|c| c.segment.clone()).unwrap_or_default(),
         "loyalty_points": customer.as_ref().map(|c| c.loyalty_points).unwrap_or(0),
         "accepts_marketing": customer.as_ref().map(|c| c.accepts_marketing).unwrap_or(false),

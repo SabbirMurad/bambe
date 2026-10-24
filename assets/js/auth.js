@@ -580,7 +580,7 @@ function initForgotPassword() {
 /* ── Social buttons ───────────────────────────────────────── */
 
 /*
-  Google goes through Firebase Auth: its popup returns a Firebase ID token,
+  Google and Facebook both go through Firebase Auth: its popup returns a Firebase ID token,
   and /v1/auth/social-login verifies that against Google's keys and answers
   with our own session tokens — the same payload a password sign-in gets.
 
@@ -609,8 +609,32 @@ async function loadFirebaseAuth() {
 /* Popup outcomes that are the customer changing their mind, not a fault. */
 const POPUP_DISMISSED = ['auth/popup-closed-by-user', 'auth/cancelled-popup-request'];
 
-async function signInWithGoogle(button) {
-  await withBusy(button, 'Opening Google…', async () => {
+/* What each button opens. Facebook is asked for the email explicitly —
+   without it there is no account to match or create. */
+const PROVIDERS = {
+  google: {
+    label: 'Google',
+    make: (sdk) => {
+      const provider = new sdk.GoogleAuthProvider();
+      provider.setCustomParameters({ prompt: 'select_account' });
+      return provider;
+    },
+  },
+  facebook: {
+    label: 'Facebook',
+    make: (sdk) => {
+      const provider = new sdk.FacebookAuthProvider();
+      provider.addScope('email');
+      return provider;
+    },
+  },
+};
+
+async function signInWith(name, button) {
+  const choice = PROVIDERS[name];
+  if (!choice) return;
+
+  await withBusy(button, `Opening ${choice.label}…`, async () => {
     let firebase;
     try {
       firebase = await loadFirebaseAuth();
@@ -618,31 +642,39 @@ async function signInWithGoogle(button) {
       console.error('[auth] Firebase SDK failed to load', error);
     }
     if (!firebase) {
-      toast.error('Google sign-in is unavailable right now');
+      toast.error(`${choice.label} sign-in is unavailable right now`);
       return;
     }
 
     const { auth, sdk } = firebase;
     let idToken;
     try {
-      const provider = new sdk.GoogleAuthProvider();
-      provider.setCustomParameters({ prompt: 'select_account' });
-      const result = await sdk.signInWithPopup(auth, provider);
+      const result = await sdk.signInWithPopup(auth, choice.make(sdk));
       idToken = await result.user.getIdToken();
     } catch (error) {
       if (POPUP_DISMISSED.includes(error.code)) return;
       if (error.code === 'auth/popup-blocked') {
-        toast.error('Your browser blocked the Google window — allow pop-ups for this site and try again');
+        toast.error(`Your browser blocked the ${choice.label} window — allow pop-ups for this site and try again`);
         return;
       }
-      console.error('[auth] Google sign-in failed', error);
-      toast.error('Google sign-in failed — please try again');
+      /* Firebase keeps one identity per email: someone who signed in with
+         Google first gets this from Facebook with the same address. */
+      if (error.code === 'auth/account-exists-with-different-credential') {
+        toast.error('This email already signs in with another method — use Google, or your email and password');
+        return;
+      }
+      if (error.code === 'auth/operation-not-allowed') {
+        toast.error(`${choice.label} sign-in is unavailable right now`);
+        return;
+      }
+      console.error(`[auth] ${choice.label} sign-in failed`, error);
+      toast.error(`${choice.label} sign-in failed — please try again`);
       return;
     }
 
     const res = await Fetcher.post({
       endpoint: '/v1/auth/social-login',
-      body: { provider: 'google', token: idToken },
+      body: { provider: name, token: idToken },
     });
     // Our session is the one that counts; Firebase's own is not needed again.
     sdk.signOut(auth).catch(() => {});
@@ -652,15 +684,9 @@ async function signInWithGoogle(button) {
   });
 }
 
-/*
-  Facebook would need its own app review before it could sign anyone in,
-  so its button says so rather than silently doing nothing.
-*/
 function initSocialButtons() {
   document.querySelectorAll('.social-btn').forEach((button) => {
-    button.onclick = button.dataset.provider === 'google'
-      ? () => signInWithGoogle(button)
-      : () => toast.info('Facebook sign-in is not connected yet');
+    button.onclick = () => signInWith(button.dataset.provider, button);
   });
 }
 
