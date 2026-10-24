@@ -63,7 +63,7 @@ async fn render_status(template: &web::Data<Tera>, name: &str, mut context: Cont
   if let Some(number) = &chrome.whatsapp { context.insert("whatsapp_number", number); }
   if let Some(url) = &chrome.facebook { context.insert("facebook_url", url); }
   if let Some(url) = &chrome.instagram { context.insert("instagram_url", url); }
-  // The home page's Organization data lists the same profiles.
+  // The home page's OnlineStore data lists the same profiles.
   let same_as: Vec<&String> = chrome.facebook.iter().chain(chrome.instagram.iter()).collect();
   if let Some(seo) = context.get("seo").cloned() {
     if seo.get("json_ld").is_some() && !same_as.is_empty() {
@@ -72,7 +72,7 @@ async fn render_status(template: &web::Data<Tera>, name: &str, mut context: Cont
         for block in blocks.iter_mut() {
           if let Some(text) = block.as_str() {
             if let Ok(mut value) = serde_json::from_str::<Value>(text) {
-              if value["@type"] == "Organization" {
+              if value["@type"] == "OnlineStore" {
                 value["sameAs"] = json!(same_as);
                 *block = json!(seo::ld(&value));
               }
@@ -153,8 +153,8 @@ async fn render_seo(template: &web::Data<Tera>, name: &str, seo: Value) -> Resul
 pub async fn home(template: web::Data<Tera>, req: HttpRequest) -> Result<HttpResponse, Error> {
   let base = seo::base_url(&req);
   let mut page = seo::page(
-    "Bambee — Cosmetics, Skincare, Body, Hair & Grooming",
-    "Bambee stocks seven lines of everyday beauty: cosmetics and accessories, skincare, body care and sprays, wellness, hair care and extensions, nail care, and men's grooming.",
+    "Bambee — Cosmetics & Skincare Shop in Bangladesh",
+    "Bambee is an online beauty shop in Bangladesh: cosmetics, skincare, body care, wellness, hair care, nail care and men's grooming, delivered across the country with free 10-day returns.",
     format!("{}/", base),
     None,
   );

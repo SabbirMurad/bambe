@@ -111,20 +111,34 @@ pub fn page(title: &str, description: &str, canonical: String, image: Option<Str
     })
 }
 
-/// Organization + WebSite (with the sitelinks search box), for the home page.
+/*
+  Other names people use for the shop. Google reads WebSite.alternateName
+  when choosing the site name it shows in results, and the Organization's
+  for matching a search to the business. Deliberately no misspellings:
+  Google corrects those itself, and listing them reads as stuffing.
+*/
+const ALTERNATE_NAMES: [&str; 2] = ["Bambee Store", "bambee.store"];
+
+/// OnlineStore (an Organization) + WebSite (with the sitelinks search box),
+/// for the home page. `areaServed` is what sets this Bambee apart from the
+/// unrelated businesses abroad that share the name.
 pub fn home_json_ld(base: &str) -> Vec<String> {
     vec![
         ld(&json!({
             "@context": "https://schema.org",
-            "@type": "Organization",
+            "@type": "OnlineStore",
             "name": SITE_NAME,
+            "alternateName": ALTERNATE_NAMES,
+            "description": "Online beauty and cosmetics shop in Bangladesh.",
             "url": format!("{}/", base),
             "logo": format!("{}/assets/favicon/web-app-manifest-512x512.png", base),
+            "areaServed": { "@type": "Country", "name": "Bangladesh" },
         })),
         ld(&json!({
             "@context": "https://schema.org",
             "@type": "WebSite",
             "name": SITE_NAME,
+            "alternateName": ALTERNATE_NAMES,
             "url": format!("{}/", base),
             "potentialAction": {
                 "@type": "SearchAction",
