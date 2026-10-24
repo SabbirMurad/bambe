@@ -31,6 +31,10 @@ struct FirebaseClaims {
     /// The stable Firebase user id.
     sub: String,
     email: Option<String>,
+    /// Google always verifies the address it hands over, but an account is
+    /// matched by email alone, so an unverified one must not get that far.
+    #[serde(default)]
+    email_verified: bool,
     name: Option<String>,
 }
 
@@ -142,19 +146,31 @@ pub async fn task(
         Some(email) => email.to_lowercase(),
         None => return Ok(Response::bad_request("No email associated with this account")),
     };
+    if !claims.email_verified {
+        return Ok(Response::forbidden("Verify this email address with Google first"));
+    }
 
     let db = MongoDB.connect();
     let now = Utc::now().timestamp_millis();
     let account_col = db.collection::<Account::AccountCore>("account_core");
 
-    // Find existing account by email or create one.
-    let existing = account_col.find_one(doc!{ "email_address": &email }).await;
+    // Find existing account by email or create one. Scoped to shoppers, as
+    // sign_in.rs is: a Google sign-in mints a User token, so it must never
+    // resolve to a row of any other role.
+    let existing = account_col
+        .find_one(doc!{ "email_address": &email, "role": Account::AccountRole::User.to_string() })
+        .await;
     if let Err(error) = existing {
         log::error!("{:?}", error);
         return Ok(Response::internal_server_error(&error.to_string()));
     }
 
     let user_id = match existing.unwrap() {
+        // Same rule as the password sign-in: a suspension holds whichever
+        // way the customer tries to get back in.
+        Some(account) if account.suspended_at.is_some() => {
+            return Ok(Response::forbidden("This account has been suspended"));
+        }
         Some(account) => account.uuid,
         None => {
             // Create a new account for first-time social login.
@@ -215,7 +231,11 @@ pub async fn task(
         }
     };
 
+    // The same cookie session sign_in.rs sets, so server-rendered pages see
+    // a Google sign-in exactly as they see a password one.
+    session.insert("refresh_token", &refresh_token).ok();
     session.insert("user_id", &user_id).ok();
+    session.insert("role", Account::AccountRole::User.to_string()).ok();
 
     Ok(HttpResponse::Ok().content_type("application/json").json(json!({
         "access_token": access_token,
@@ -223,5 +243,31 @@ pub async fn task(
         "refresh_token": refresh_token,
         "user_id": user_id,
         "role": "User",
+    })))
+}
+
+/// The Firebase web config the sign-in page needs to open Google's popup.
+/// None of it is secret — a web API key only identifies the project, and
+/// Firebase ships it to every browser — but it lives in `.env` so a second
+/// project (staging) is a config change rather than a code change. 404 until
+/// it is set, which the page reads as "Google sign-in is off".
+pub async fn web_config() -> Result<HttpResponse, Error> {
+    let read = |key: &str| std::env::var(key).ok().filter(|v| !v.trim().is_empty());
+
+    let (Some(api_key), Some(app_id), Some(project_id)) = (
+        read("FIREBASE_WEB_API_KEY"),
+        read("FIREBASE_APP_ID"),
+        crate::Integrations::Firebase::project_id(),
+    ) else {
+        return Ok(Response::not_found("Google sign-in is not configured"));
+    };
+    let auth_domain = read("FIREBASE_AUTH_DOMAIN")
+        .unwrap_or_else(|| format!("{}.firebaseapp.com", project_id));
+
+    Ok(HttpResponse::Ok().content_type("application/json").json(json!({
+        "apiKey": api_key,
+        "authDomain": auth_domain,
+        "projectId": project_id,
+        "appId": app_id,
     })))
 }

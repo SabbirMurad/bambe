@@ -19,6 +19,10 @@
 ///     for Google Fonts' stylesheet from fonts.googleapis.com.
 ///   - `img-src` allows `blob:` and `data:`: blur-hash placeholders are data URIs,
 ///     and the admin's CSV exports are blob downloads.
+///   - Google sign-in (auth.js) loads the Firebase SDK from www.gstatic.com,
+///     talks to Google's identity APIs, and runs its popup handshake through a
+///     hidden iframe on the project's `*.firebaseapp.com` auth domain - hence
+///     the Google entries in script-src, connect-src and frame-src.
 ///   - `frame-ancestors 'self'` matches X-Frame-Options: SAMEORIGIN - the site
 ///     may frame its own pages (responsive previews), nobody else may.
 const DIRECTIVES: &[&str] = &[
@@ -27,12 +31,13 @@ const DIRECTIVES: &[&str] = &[
     "form-action 'self'",
     "frame-ancestors 'self'",
     "object-src 'none'",
-    "script-src 'self' 'unsafe-inline'",
+    "script-src 'self' 'unsafe-inline' https://www.gstatic.com https://apis.google.com",
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "font-src 'self' data: https://fonts.gstatic.com",
     "img-src 'self' data: blob:",
     "media-src 'self' blob:",
-    "connect-src 'self'",
+    "connect-src 'self' https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://www.googleapis.com",
+    "frame-src 'self' https://*.firebaseapp.com https://accounts.google.com",
 ];
 
 pub fn get_policy() -> (String, String) {

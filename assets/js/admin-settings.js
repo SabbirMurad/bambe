@@ -561,7 +561,7 @@ function editPackaging(option) {
 
   const image = textInput({
     value: option ? (option.image || '') : '',
-    placeholder: '/assets/images/packaging/premium.svg',
+    placeholder: '/assets/images/packaging/premium.webp',
   });
   form.appendChild(field('Image', image, 'Path to a picture shipped with the site, shown on the cart page.'));
 

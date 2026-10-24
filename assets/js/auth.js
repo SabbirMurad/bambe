@@ -580,13 +580,87 @@ function initForgotPassword() {
 /* ── Social buttons ───────────────────────────────────────── */
 
 /*
-  /v1/auth/social-login expects a token minted by Google or Facebook's own
-  SDK, and neither SDK is loaded. Saying so beats a button that silently
-  does nothing.
+  Google goes through Firebase Auth: its popup returns a Firebase ID token,
+  and /v1/auth/social-login verifies that against Google's keys and answers
+  with our own session tokens — the same payload a password sign-in gets.
+
+  The SDK is fetched on the first click rather than with the page: it is a
+  few hundred KB that most visitors, signing in by email or not at all,
+  never need. Pinned to one version so a Firebase release can't change the
+  sign-in page under us.
+*/
+const FIREBASE_SDK = 'https://www.gstatic.com/firebasejs/10.12.2';
+
+let firebaseAuth = null;
+async function loadFirebaseAuth() {
+  if (firebaseAuth) return firebaseAuth;
+
+  const config = await Fetcher.get({ endpoint: '/v1/auth/firebase-config', showError: false });
+  if (!config.ok) return null;
+
+  const [{ initializeApp }, auth] = await Promise.all([
+    import(`${FIREBASE_SDK}/firebase-app.js`),
+    import(`${FIREBASE_SDK}/firebase-auth.js`),
+  ]);
+  firebaseAuth = { auth: auth.getAuth(initializeApp(config.data)), sdk: auth };
+  return firebaseAuth;
+}
+
+/* Popup outcomes that are the customer changing their mind, not a fault. */
+const POPUP_DISMISSED = ['auth/popup-closed-by-user', 'auth/cancelled-popup-request'];
+
+async function signInWithGoogle(button) {
+  await withBusy(button, 'Opening Google…', async () => {
+    let firebase;
+    try {
+      firebase = await loadFirebaseAuth();
+    } catch (error) {
+      console.error('[auth] Firebase SDK failed to load', error);
+    }
+    if (!firebase) {
+      toast.error('Google sign-in is unavailable right now');
+      return;
+    }
+
+    const { auth, sdk } = firebase;
+    let idToken;
+    try {
+      const provider = new sdk.GoogleAuthProvider();
+      provider.setCustomParameters({ prompt: 'select_account' });
+      const result = await sdk.signInWithPopup(auth, provider);
+      idToken = await result.user.getIdToken();
+    } catch (error) {
+      if (POPUP_DISMISSED.includes(error.code)) return;
+      if (error.code === 'auth/popup-blocked') {
+        toast.error('Your browser blocked the Google window — allow pop-ups for this site and try again');
+        return;
+      }
+      console.error('[auth] Google sign-in failed', error);
+      toast.error('Google sign-in failed — please try again');
+      return;
+    }
+
+    const res = await Fetcher.post({
+      endpoint: '/v1/auth/social-login',
+      body: { provider: 'google', token: idToken },
+    });
+    // Our session is the one that counts; Firebase's own is not needed again.
+    sdk.signOut(auth).catch(() => {});
+    if (!res.ok) return;
+
+    await completeSignIn(res.data, nextPath('/'));
+  });
+}
+
+/*
+  Facebook would need its own app review before it could sign anyone in,
+  so its button says so rather than silently doing nothing.
 */
 function initSocialButtons() {
   document.querySelectorAll('.social-btn').forEach((button) => {
-    button.onclick = () => toast.info('Social sign-in is not connected yet');
+    button.onclick = button.dataset.provider === 'google'
+      ? () => signInWithGoogle(button)
+      : () => toast.info('Facebook sign-in is not connected yet');
   });
 }
 
