@@ -107,8 +107,13 @@ pub async fn task(path: web::Path<String>) -> Result<HttpResponse, Error> {
     */
     let mut image_ids: Vec<String> = Vec::new();
     for variant in &variants {
-        if !image_ids.contains(&variant.image_id) {
-            image_ids.push(variant.image_id.clone());
+        // Main photo, then its extras. The page shows the selected
+        // variant's own run of these (product.js); the image objects for
+        // all of them come from here, blur hashes included.
+        for id in std::iter::once(&variant.image_id).chain(variant.extra_image_ids.iter()) {
+            if !image_ids.contains(id) {
+                image_ids.push(id.clone());
+            }
         }
     }
 
@@ -177,6 +182,8 @@ pub async fn task(path: web::Path<String>) -> Result<HttpResponse, Error> {
         "breadcrumb": breadcrumb,
         "tags": product.tags,
         "gallery": gallery,
+        // The pickers, in order: [{ name: "Shade", swatch: true }, ...].
+        "options": product.options,
         "variants": variants,
         "price_min": product.price_min,
         "price_max": product.price_max,

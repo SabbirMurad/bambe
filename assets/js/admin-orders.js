@@ -159,8 +159,17 @@ async function openOrder(orderId) {
   body.appendChild(states);
 
   body.appendChild(line('Placed', dateTime(order.placed_at)));
-  body.appendChild(line('Customer', customer ? customer.username : '—'));
-  body.appendChild(line('Email', customer ? customer.email : '—'));
+  /* `customer` is null when the order's account is gone, or was never
+     a customer's (an admin account, before checkout refused them) —
+     the recipient on the shipping label is then the best name there is. */
+  const recipient = order.shipping_address ? order.shipping_address.recipient_name : '';
+  body.appendChild(line('Customer', customer
+    ? (customer.name || customer.username)
+    : (recipient ? recipient + ' (no customer account)' : '—')));
+  body.appendChild(line('Email', customer && customer.email ? customer.email : '—'));
+  const phone = (customer && customer.phone) || (order.shipping_address && order.shipping_address.phone);
+  if (phone) body.appendChild(line('Phone', phone));
+  body.appendChild(line('Payment', order.payment_summary || '—'));
   body.appendChild(line('Delivery', order.delivery ? order.delivery.name : '—'));
   if (order.packaging) body.appendChild(line('Packaging', order.packaging.name));
   if (order.coupon) body.appendChild(line('Coupon', order.coupon.code));

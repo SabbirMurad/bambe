@@ -14,10 +14,13 @@ use super::recompute_aggregates;
 #[derive(Debug, Deserialize)]
 pub struct ReqBody {
     sku: String,
-    size: Option<String>,
-    color: Option<String>,
+    /// One value per product option, in the product's option order.
+    #[serde(default)]
+    options: Vec<String>,
     color_hex: Option<String>,
     image_id: String,
+    #[serde(default)]
+    extra_image_ids: Vec<String>,
     price: Cents,
     compare_at_price: Option<Cents>,
     #[serde(default)]
@@ -32,23 +35,32 @@ pub async fn task(req: HttpRequest, path: web::Path<String>, body: web::Json<Req
     let db = MongoDB.connect();
     let product_id = path.into_inner();
 
-    if db.collection::<Product>("product").find_one(doc! { "uuid": &product_id, "deleted_at": null }).await.ok().flatten().is_none() {
-        return Ok(Response::not_found("Product not found"));
-    }
+    let product = match db.collection::<Product>("product").find_one(doc! { "uuid": &product_id, "deleted_at": null }).await.ok().flatten() {
+        Some(p) => p,
+        None => return Ok(Response::not_found("Product not found")),
+    };
+    let pairs = match super::pair_values(&product.options, &body.options) {
+        Ok(pairs) => pairs,
+        Err(message) => return Ok(Response::bad_request(&message)),
+    };
 
     if let Err(message) = super::check_compare_at(body.price, body.compare_at_price) {
         return Ok(Response::bad_request(message));
     }
+    let extra_image_ids = match super::check_extra_photos(&body.image_id, &body.extra_image_ids) {
+        Ok(ids) => ids,
+        Err(message) => return Ok(Response::bad_request(&message)),
+    };
 
     let now = Utc::now().timestamp_millis();
     let variant = ProductVariant {
         uuid: Uuid::now_v7().to_string(),
         product_id: product_id.clone(),
         sku: body.sku.clone(),
-        size: body.size.clone(),
-        color: body.color.clone(),
+        options: pairs,
         color_hex: body.color_hex.clone(),
         image_id: body.image_id.clone(),
+        extra_image_ids,
         price: body.price,
         compare_at_price: body.compare_at_price,
         stock: body.stock,

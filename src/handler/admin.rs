@@ -18,6 +18,9 @@ pub use product as Product;
 pub mod category;
 pub use category as Category;
 
+pub mod brand;
+pub use brand as Brand;
+
 pub mod order;
 pub use order as Order;
 

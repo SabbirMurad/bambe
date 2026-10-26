@@ -41,13 +41,24 @@ function slugFromUrl() {
 }
 
 /* ── Gallery ──────────────────────────────────────────────────  */
+/* The photos on show: the selected variant's own, main photo first,
+   in the order the admin set. The image objects (with blur hashes)
+   come from `product.gallery`, which holds every variant's. */
+function photos() {
+  const all = product.gallery || [];
+  if (!selected) return all;
+  const ids = [selected.image_id, ...(selected.extra_image_ids || [])].filter(Boolean);
+  const own = ids.map((id) => all.find((g) => g.image_id === id) || { image_id: id });
+  return own.length ? own : all;
+}
+
 function renderGallery() {
   const thumbs = $('.pd-thumbnails');
   const main = $('.pd-main-img-bg');
   const dots = $('.pd-img-dots');
   if (!thumbs || !main) return;
 
-  const images = product.gallery || [];
+  const images = photos();
   thumbs.innerHTML = '';
   if (dots) dots.innerHTML = '';
 
@@ -79,7 +90,7 @@ function renderGallery() {
 }
 
 function showImage(index) {
-  const images = product.gallery || [];
+  const images = photos();
   if (!images.length) return;
 
   galleryIndex = Math.max(0, Math.min(index, images.length - 1));
@@ -89,12 +100,12 @@ function showImage(index) {
   $$('.pd-dot').forEach((el, i) => el.classList.toggle('active', i === galleryIndex));
 }
 
-/* Picking a colour should move the gallery to that colourway rather
-   than leaving the previous photo up beside the new swatch. */
+/* Picking a shade swaps the gallery to that variant's photos, opening
+   on its main one, rather than leaving the previous shade's up. */
 function jumpGalleryToVariant() {
   if (!selected) return;
-  const index = (product.gallery || []).findIndex((g) => g.image_id === selected.image_id);
-  if (index >= 0) showImage(index);
+  galleryIndex = 0;
+  renderGallery();
 }
 
 /* ── Header block ─────────────────────────────────────────────  */
@@ -192,112 +203,111 @@ function sep() {
   return s;
 }
 
-/* ── Variant pickers ──────────────────────────────────────────  */
-function colours() {
-  const seen = new Map();
-  (product.variants || []).forEach((v) => {
-    if (v.color && !seen.has(v.color)) seen.set(v.color, v);
-  });
-  return [...seen.values()];
+/* ── Variant pickers ──────────────────────────────────────────
+   One picker per option the product has, named by the admin
+   ("Shade", "Volume", "Skin type"), in the product's order. Each
+   picker offers the values found among the variants that match the
+   choices made above it, so a later picker never offers a
+   combination that doesn't exist. The swatch option draws dots in
+   each variant's colour; the rest draw text buttons.            */
+function productOptions() {
+  return product.options || [];
 }
 
-function sizesForColour(colour) {
-  const seen = new Map();
-  (product.variants || [])
-    .filter((v) => v.color === colour)
-    .forEach((v) => { if (!seen.has(v.size)) seen.set(v.size, v); });
-  return [...seen.values()];
+function valueOf(variant, name) {
+  const pair = (variant.options || []).find((o) => o.name === name);
+  return pair ? pair.value : '';
 }
 
-function renderColours() {
-  const row = $('.pd-swatches');
-  const label = $('.pd-section-label');
-  if (!row) return;
+// Variants agreeing with the current selection on every option before `level`.
+function candidates(level) {
+  const opts = productOptions();
+  return (product.variants || []).filter((v) =>
+    opts.slice(0, level).every((o) => valueOf(v, o.name) === valueOf(selected, o.name)));
+}
 
-  const options = colours();
-  row.innerHTML = '';
-  row.style.display = options.length > 1 ? '' : 'none';
+/* The variant to switch to when `value` is picked at `level`: keep the
+   later choices where that combination exists, and prefer something
+   in stock, so the picker never lands on a sold-out variant if it
+   doesn't have to. */
+function bestFor(level, value) {
+  const opts = productOptions();
+  const pool = candidates(level).filter((v) => valueOf(v, opts[level].name) === value);
+  const keeps = (v) => opts.slice(level + 1).every((o) => valueOf(v, o.name) === valueOf(selected, o.name));
+  return pool.find((v) => keeps(v) && v.stock > 0)
+    || pool.find((v) => v.stock > 0)
+    || pool.find(keeps)
+    || pool[0];
+}
 
-  options.forEach((variant) => {
-    const swatch = document.createElement('div');
-    const active = selected && variant.color === selected.color;
-    swatch.className = 'pd-swatch' + (active ? ' active' : '');
-    swatch.style.background = variant.color_hex || '#ccc';
-    swatch.setAttribute('role', 'button');
-    swatch.setAttribute('tabindex', '0');
-    swatch.setAttribute('aria-label', variant.color);
-    swatch.title = variant.color;
+function renderOptions() {
+  const host = $('.pd-options');
+  if (!host) return;
+  host.innerHTML = '';
+  if (!selected) return;
 
-    if (active) {
-      swatch.style.borderColor = 'var(--blue)';
-      // A white swatch on a white card needs its own outline or the
-      // selected state is the only thing that renders.
-      swatch.style.boxShadow = 'inset 0 0 0 1px var(--border)';
-    }
-
-    swatch.addEventListener('click', () => pickColour(variant.color));
-    swatch.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pickColour(variant.color); }
+  productOptions().forEach((option, level) => {
+    const pool = candidates(level);
+    const values = [];
+    pool.forEach((v) => {
+      const value = valueOf(v, option.name);
+      if (value && !values.includes(value)) values.push(value);
     });
-    row.appendChild(swatch);
-  });
+    if (!values.length) return;
 
-  if (label && selected) {
-    label.innerHTML = 'Color — <strong style="color:var(--dark);font-weight:700;"></strong>';
-    label.querySelector('strong').textContent = selected.color || '';
-    label.style.display = options.length > 1 ? '' : 'none';
-  }
-}
+    const current = valueOf(selected, option.name);
+    const label = document.createElement('div');
+    label.className = 'pd-section-label';
+    label.textContent = option.name + ' — ';
+    const strong = document.createElement('strong');
+    strong.style.cssText = 'color:var(--dark);font-weight:700;';
+    strong.textContent = current;
+    label.appendChild(strong);
+    host.appendChild(label);
 
-function renderSizes() {
-  const row = $('.pd-sizes');
-  const label = $$('.pd-section-label')[1];
-  if (!row || !selected) return;
+    const row = document.createElement('div');
+    row.className = option.swatch ? 'pd-swatches' : 'pd-sizes';
+    row.setAttribute('role', 'radiogroup');
+    row.setAttribute('aria-label', option.name);
 
-  const options = sizesForColour(selected.color);
-  row.innerHTML = '';
-  row.style.display = options.length > 1 ? '' : 'none';
+    values.forEach((value) => {
+      const withValue = pool.filter((v) => valueOf(v, option.name) === value);
+      const out = withValue.every((v) => v.stock <= 0);
+      const active = value === current;
+      const el = document.createElement('div');
+      el.setAttribute('role', 'radio');
+      el.setAttribute('aria-checked', String(active));
+      el.setAttribute('aria-label', value + (out ? ' (out of stock)' : ''));
+      el.tabIndex = active ? 0 : -1;
 
-  options.forEach((variant) => {
-    const cell = document.createElement('div');
-    const out = variant.stock <= 0;
-    cell.className = 'pd-size' + (out ? ' out' : '') + (variant.uuid === selected.uuid ? ' active' : '');
-    cell.textContent = variant.size;
-    cell.setAttribute('role', 'button');
-    cell.setAttribute('tabindex', out ? '-1' : '0');
-    cell.setAttribute('aria-disabled', String(out));
-    if (out) cell.title = 'Out of stock';
+      if (option.swatch) {
+        el.className = 'pd-swatch' + (active ? ' active' : '') + (out ? ' out' : '');
+        el.style.background = (withValue.find((v) => v.color_hex) || {}).color_hex || '#ccc';
+        el.title = value + (out ? ' — out of stock' : '');
+        // A white shade on a white card needs its own outline.
+        el.style.boxShadow = 'inset 0 0 0 1px var(--border)';
+      } else {
+        el.className = 'pd-size' + (active ? ' active' : '') + (out ? ' out' : '');
+        el.textContent = value;
+        if (out) el.title = 'Out of stock';
+      }
 
-    if (!out) {
-      cell.addEventListener('click', () => pickVariant(variant));
-      cell.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pickVariant(variant); }
+      const pick = () => pickVariant(bestFor(level, value));
+      el.addEventListener('click', pick);
+      el.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pick(); }
       });
-    }
-    row.appendChild(cell);
+      row.appendChild(el);
+    });
+    host.appendChild(row);
   });
-
-  if (label) {
-    label.innerHTML = 'Size — <strong style="color:var(--dark);"></strong>';
-    label.querySelector('strong').textContent = selected.size || '';
-    label.style.display = options.length > 1 ? '' : 'none';
-  }
-}
-
-function pickColour(colour) {
-  const options = sizesForColour(colour);
-  // Keep the size if the new colour has it; otherwise take the first
-  // one that is actually buyable, so the picker never lands on "out".
-  const sameSize = options.find((v) => v.size === selected.size && v.stock > 0);
-  pickVariant(sameSize || options.find((v) => v.stock > 0) || options[0]);
 }
 
 function pickVariant(variant) {
   if (!variant) return;
   selected = variant;
   quantity = Math.min(quantity, Math.max(1, variant.stock));
-  renderColours();
-  renderSizes();
+  renderOptions();
   renderPrice();
   renderQuantity();
   jumpGalleryToVariant();
@@ -817,8 +827,7 @@ function wireTabs() {
 
   renderHeader();
   renderGallery();
-  renderColours();
-  renderSizes();
+  renderOptions();
   renderPrice();
   renderQuantity();
   wireQuantity();

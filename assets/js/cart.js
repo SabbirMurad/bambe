@@ -61,14 +61,13 @@ function itemsHost() {
   return $('.cart-items');
 }
 
-/* "Maison Lume · Size: M · Color: White", minus whatever is missing —
-   a one-variant product has neither size nor colour, and the meta
-   line should not read "Size: · Color:". */
+/* "Maison Lume · Shade: Ruby Woo · Volume: 3 g" — the brand, then the
+   variant's options under the names the admin gave them. A product
+   sold in one form has none, and the line is just the brand. */
 function metaLine(line) {
   const bits = [];
   if (line.brand_name) bits.push(line.brand_name);
-  if (line.size) bits.push('Size: ' + line.size);
-  if (line.color) bits.push('Color: ' + line.color);
+  (line.options || []).forEach((o) => { if (o.value) bits.push(o.name + ': ' + o.value); });
   return bits.join('  ·  ');
 }
 

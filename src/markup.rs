@@ -370,6 +370,10 @@ pub async fn admin_categories(template: web::Data<Tera>) -> Result<HttpResponse,
   render(&template, "admin/categories.html").await
 }
 
+pub async fn admin_brands(template: web::Data<Tera>) -> Result<HttpResponse, Error> {
+  render(&template, "admin/brands.html").await
+}
+
 pub async fn admin_orders(template: web::Data<Tera>) -> Result<HttpResponse, Error> {
   render(&template, "admin/orders.html").await
 }

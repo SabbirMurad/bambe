@@ -6,17 +6,17 @@
 
    The shapes here are the model's, not the wireframe's:
 
-   - **A variant owns its image**, and `image_id` is required, not
-     optional (model/product.rs says so at length: the gallery, the
-     card thumbnail and every order line are all built from it). So
-     each SKU row has its own uploader and a row without a picture
-     cannot be saved.
+   - **A variant owns its photos**: a main one, `image_id`, which is
+     required (the card thumbnail and every order line are built from
+     it), and up to nine more in `extra_image_ids` for the product
+     page's gallery. Each SKU row has its own photo manager, and a
+     row without a photo cannot be saved.
    - **Create takes its variants inline**; editing writes them one
      at a time through `/product/{id}/variant`. That is the shape
      of the two endpoints, so it is the shape of the save.
-   - **Brand is a picker, not a text box.** `/v1/product/brand/list`
-     reads brands and no endpoint creates one, so typing a new
-     brand name here could only ever be discarded.
+   - **Brand is a picker, not a text box.** Brands live on Admin →
+     Brands; "+ Add brand" opens that page's form (brands.js) so a
+     new one can be made without leaving the product.
    - **"Track inventory" and "Continue selling at zero" are gone.**
      Nothing stores either. Stock is always tracked and zero always
      stops the sale; a switch implying otherwise would be a lie.
@@ -25,8 +25,9 @@
    one place at the boundary.
 ═══════════════════════════════════════════════════════════════ */
 import {
-  Fetcher, toast, $, $$, money, mountAdminChrome, uploadImage, confirmModal,
+  Fetcher, toast, $, $$, money, mountAdminChrome, uploadImage, confirmModal, openModal,
 } from './admin-core.js';
+import { brandForm } from './brands.js';
 import { paintImage } from './catalog.js';
 
 let mode = 'create';       // or 'edit'
@@ -38,8 +39,17 @@ let tags = [];
 let rowSeq = 0;
 
 /* Each SKU row on screen, in document order. `uuid` is set only for
-   rows that already exist on the server. */
+   rows that already exist on the server. `values` holds the row's
+   value for each option, in the same order as `options`. */
 let skus = [];
+
+/* What the SKUs differ by, named by the admin: { key, name, swatch }.
+   At most MAX_OPTIONS, at most one shown as colour swatches. */
+let options = [];
+let optionSeq = 0;
+const MAX_OPTIONS = 3;
+const OPTION_EXAMPLES = ['Shade', 'Volume', 'Skin type'];
+const VALUE_EXAMPLES = { 0: 'Ruby Woo', 1: '50 ml', 2: 'Oily' };
 
 const cents = (dollars) => Math.round(Number(dollars || 0) * 100);
 const dollars = (c) => (c === null || c === undefined ? '' : (c / 100).toFixed(2));
@@ -98,6 +108,14 @@ function wireTags() {
 
 /* ── SKU rows ─────────────────────────────────────────────────  */
 
+/* ── SKU photos ───────────────────────────────────────────────
+   `sku.images` is the row's photos in display order; the first is
+   the main one (`image_id` on save), which stands for the SKU on its
+   card, cart line and order. The cell shows that one with a count of
+   the rest, and opens the photo manager below on click.          */
+const MAX_PHOTOS = 10;
+const MAX_PHOTO_BYTES = 8 * 1024 * 1024;
+
 function imageCell(sku) {
   const wrap = document.createElement('div');
   wrap.style.cssText = 'position:relative;width:44px;height:44px;';
@@ -108,53 +126,150 @@ function imageCell(sku) {
     + 'display:flex;align-items:center;justify-content:center;color:var(--faint);font-size:18px;';
   preview.setAttribute('role', 'button');
   preview.tabIndex = 0;
-  preview.title = 'Upload an image for this SKU';
+
+  const count = document.createElement('span');
+  count.className = 'sku-photo-count';
 
   const paint = () => {
-    if (sku.image_id) {
+    const main = sku.images[0];
+    if (main) {
       preview.textContent = '';
       preview.style.border = '1px solid var(--border)';
-      paintImage(preview, sku.image_id);
+      paintImage(preview, main);
     } else {
       preview.textContent = '+';
       preview.style.border = '1px dashed var(--border)';
       preview.style.background = 'var(--input-bg)';
     }
+    const extra = sku.images.length - 1;
+    count.textContent = extra > 0 ? '+' + extra : '';
+    count.style.display = extra > 0 ? '' : 'none';
+    preview.title = sku.images.length
+      ? sku.images.length + (sku.images.length === 1 ? ' photo' : ' photos') + ' — click to manage'
+      : 'Add photos for this SKU';
   };
   paint();
 
-  const picker = document.createElement('input');
-  picker.type = 'file';
-  picker.accept = 'image/*';
-  picker.style.display = 'none';
-
-  picker.addEventListener('change', async () => {
-    const file = picker.files && picker.files[0];
-    if (!file) return;
-
-    preview.textContent = '…';
-    preview.style.background = 'var(--input-bg)';
-
-    const id = await uploadImage(file, 'ProductImage');
-    if (!id) { paint(); return; }
-
-    sku.image_id = id;
-    paint();
-
-    /* In edit mode an existing SKU's picture is a field like any
-       other — saved with the row, not on upload — so nothing is
-       written here. A new row has nowhere to write it to yet. */
-  });
-
-  const open = () => picker.click();
+  const open = () => managePhotos(sku, paint);
   preview.addEventListener('click', open);
   preview.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); }
   });
 
-  wrap.appendChild(preview);
-  wrap.appendChild(picker);
+  wrap.append(preview, count);
   return wrap;
+}
+
+/* The photo manager for one SKU: every photo in order, the first
+   marked Main. Add several at once; move one earlier or later, or
+   make it the main photo; remove one. Changes are kept on the row
+   and saved with the product, like every other field. */
+function managePhotos(sku, onChange) {
+  const body = document.createElement('div');
+  const grid = document.createElement('div');
+  grid.className = 'sku-photo-grid';
+  body.appendChild(grid);
+
+  const picker = document.createElement('input');
+  picker.type = 'file';
+  picker.accept = 'image/*';
+  picker.multiple = true;
+  picker.hidden = true;
+  body.appendChild(picker);
+
+  const note = document.createElement('div');
+  note.className = 'form-hint';
+  body.appendChild(note);
+
+  const move = (from, to) => {
+    if (to < 0 || to >= sku.images.length) return;
+    const [id] = sku.images.splice(from, 1);
+    sku.images.splice(to, 0, id);
+    paint();
+  };
+
+  const button = (label, title, onClick) => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'sku-photo-btn';
+    b.textContent = label;
+    b.title = title;
+    b.setAttribute('aria-label', title);
+    b.addEventListener('click', onClick);
+    return b;
+  };
+
+  function paint() {
+    grid.innerHTML = '';
+    sku.images.forEach((id, index) => {
+      const tile = document.createElement('div');
+      tile.className = 'sku-photo';
+      const img = document.createElement('div');
+      img.className = 'sku-photo-img';
+      paintImage(img, id);
+      tile.appendChild(img);
+
+      if (index === 0) {
+        const main = document.createElement('span');
+        main.className = 'sku-photo-main';
+        main.textContent = 'Main';
+        tile.appendChild(main);
+      }
+
+      const tools = document.createElement('div');
+      tools.className = 'sku-photo-tools';
+      if (index > 0) {
+        tools.appendChild(button('★', 'Make this the main photo', () => move(index, 0)));
+        tools.appendChild(button('←', 'Move earlier', () => move(index, index - 1)));
+      }
+      if (index < sku.images.length - 1) tools.appendChild(button('→', 'Move later', () => move(index, index + 1)));
+      tools.appendChild(button('✕', 'Remove this photo', () => { sku.images.splice(index, 1); paint(); }));
+      tile.appendChild(tools);
+      grid.appendChild(tile);
+    });
+
+    if (sku.images.length < MAX_PHOTOS) {
+      const add = document.createElement('div');
+      add.className = 'sku-photo sku-photo-add';
+      add.setAttribute('role', 'button');
+      add.tabIndex = 0;
+      add.textContent = '+ Add photos';
+      add.addEventListener('click', () => picker.click());
+      add.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); picker.click(); }
+      });
+      grid.appendChild(add);
+    }
+
+    note.textContent = 'The main photo stands for this SKU on its card, in the cart and on orders. '
+      + 'The product page shows all of them, in this order, when the SKU is selected. Up to '
+      + MAX_PHOTOS + '.';
+    onChange();
+  }
+
+  picker.addEventListener('change', async () => {
+    const files = [...(picker.files || [])];
+    picker.value = '';
+    const room = MAX_PHOTOS - sku.images.length;
+    if (files.length > room) toast.error('Only ' + room + ' more ' + (room === 1 ? 'photo fits' : 'photos fit') + ' on this SKU.');
+    for (const file of files.slice(0, room)) {
+      if (!file.type.startsWith('image/')) { toast.error(file.name + ' isn’t an image.'); continue; }
+      if (file.size > MAX_PHOTO_BYTES) { toast.error(file.name + ' is over 8 MB.'); continue; }
+      note.textContent = 'Uploading ' + file.name + '…';
+      // One at a time, so they land in the order they were picked.
+      const id = await uploadImage(file, 'ProductImage');
+      if (id) sku.images.push(id);
+      paint();
+    }
+  });
+
+  openModal({
+    title: 'Photos' + (sku.sku.trim() ? ' — ' + sku.sku.trim() : ''),
+    body,
+    width: '620px',
+    actions: [{ label: 'Done', className: 'btn-primary', onClick: (close) => close() }],
+  });
+  paint();
 }
 
 function input(value, placeholder, width) {
@@ -166,6 +281,81 @@ function input(value, placeholder, width) {
   el.style.cssText = 'height:34px;font-size:13px;padding:0 10px;'
     + (width ? 'width:' + width + ';' : '');
   return el;
+}
+
+/* ── Options ──────────────────────────────────────────────────
+   The panel above the SKU table. Each option is a name the admin
+   types and a "colour swatches" switch; adding, removing or
+   renaming one reshapes the SKU table to match. Values follow their
+   option by position, so removing an option drops that column's
+   values from every row.                                         */
+function paintOptions() {
+  const host = $('#option-list');
+  if (!host) return;
+  host.innerHTML = '';
+
+  if (!options.length) {
+    const empty = document.createElement('div');
+    empty.className = 'form-hint';
+    empty.style.margin = '0';
+    empty.textContent = 'No options: this product is sold in one form, with a single SKU.';
+    host.appendChild(empty);
+  }
+
+  options.forEach((option, index) => {
+    const row = document.createElement('div');
+    row.className = 'option-row';
+
+    const name = input(option.name, OPTION_EXAMPLES[index] || 'Option name');
+    name.setAttribute('aria-label', 'Option ' + (index + 1) + ' name');
+    name.maxLength = 60;
+    // Only the header needs to follow the typing; repainting the rows
+    // here would take focus away mid-word.
+    name.addEventListener('input', () => { option.name = name.value; paintSkuHead(); });
+
+    const swatch = document.createElement('label');
+    swatch.className = 'option-swatch';
+    const box = document.createElement('input');
+    box.type = 'checkbox';
+    box.checked = !!option.swatch;
+    box.addEventListener('change', () => {
+      // One swatch row per product: ticking this one unticks the rest.
+      options.forEach((o) => { o.swatch = o === option ? box.checked : false; });
+      paintOptions();
+      paintSkus();
+    });
+    swatch.append(box, document.createTextNode('Show as colour swatches'));
+
+    const remove = document.createElement('button');
+    remove.type = 'button';
+    remove.className = 'btn btn-ghost btn-sm';
+    remove.textContent = 'Remove';
+    remove.addEventListener('click', () => {
+      options.splice(index, 1);
+      skus.forEach((sku) => sku.values.splice(index, 1));
+      paintOptions();
+      paintSkus();
+    });
+
+    row.append(name, swatch, remove);
+    host.appendChild(row);
+  });
+
+  const add = $('#add-option');
+  if (add) {
+    add.disabled = options.length >= MAX_OPTIONS;
+    add.title = add.disabled ? 'A product can have up to ' + MAX_OPTIONS + ' options' : '';
+  }
+}
+
+function addOption() {
+  if (options.length >= MAX_OPTIONS) return;
+  options.push({ key: 'opt-' + (++optionSeq), name: '', swatch: false });
+  skus.forEach((sku) => sku.values.push(''));
+  paintOptions();
+  paintSkus();
+  const inputs = $$('#option-list .option-row input.form-input');
+  if (inputs.length) inputs[inputs.length - 1].focus();
 }
 
 function skuRow(sku) {
@@ -186,26 +376,30 @@ function skuRow(sku) {
     return el;
   };
 
-  bind(input(sku.size, 'M'), 'size');
-
-  /* Colour is a name plus a swatch — the storefront's variant picker
-     draws the swatch from `color_hex` and labels it with `color`. */
-  const colourTd = document.createElement('td');
-  const colourWrap = document.createElement('div');
-  colourWrap.style.cssText = 'display:flex;gap:6px;align-items:center;';
-  const colourName = input(sku.color, 'Navy');
-  colourName.style.flex = '1';
-  colourName.addEventListener('input', () => { sku.color = colourName.value; });
-  const colourHex = document.createElement('input');
-  colourHex.type = 'color';
-  colourHex.className = 'color-swatch';
-  colourHex.value = sku.color_hex || '#1A1A18';
-  colourHex.setAttribute('aria-label', 'Colour swatch');
-  colourHex.addEventListener('input', () => { sku.color_hex = colourHex.value; });
-  colourWrap.appendChild(colourName);
-  colourWrap.appendChild(colourHex);
-  colourTd.appendChild(colourWrap);
-  tr.appendChild(colourTd);
+  /* One cell per option. The swatch option also takes the colour the
+     product page draws its dot in (`color_hex`). */
+  options.forEach((option, index) => {
+    const td = document.createElement('td');
+    const value = input(sku.values[index], VALUE_EXAMPLES[index] || '');
+    value.setAttribute('aria-label', option.name || 'Option ' + (index + 1));
+    value.addEventListener('input', () => { sku.values[index] = value.value; });
+    if (option.swatch) {
+      const wrap = document.createElement('div');
+      wrap.style.cssText = 'display:flex;gap:6px;align-items:center;';
+      value.style.flex = '1';
+      const hex = document.createElement('input');
+      hex.type = 'color';
+      hex.className = 'color-swatch';
+      hex.value = sku.color_hex || '#1A1A18';
+      hex.setAttribute('aria-label', (option.name || 'Swatch') + ' colour');
+      hex.addEventListener('input', () => { sku.color_hex = hex.value; });
+      wrap.append(value, hex);
+      td.appendChild(wrap);
+    } else {
+      td.appendChild(value);
+    }
+    tr.appendChild(td);
+  });
 
   const price = input(dollars(sku.price), '0.00');
   price.addEventListener('input', () => { sku.price = cents(price.value); });
@@ -266,10 +460,40 @@ function skuRow(sku) {
   return tr;
 }
 
+/* The header follows the options: Image, one column per option, then
+   the fixed price / was / stock / code columns. */
+function paintSkuHead() {
+  const head = $('#sku-head');
+  if (!head) return;
+  const row = document.createElement('tr');
+  const th = (text, width, extra) => {
+    const el = document.createElement('th');
+    el.scope = 'col';
+    if (width) el.style.width = width;
+    if (extra) Object.assign(el, extra);
+    el.textContent = text;
+    row.appendChild(el);
+    return el;
+  };
+  th('Image', '64px');
+  options.forEach((option, index) => {
+    th(option.name.trim() || 'Option ' + (index + 1), option.swatch ? '200px' : '150px');
+  });
+  th('Price', '120px');
+  th('Was', '120px', { title: 'Fill in to put this SKU on sale' });
+  th('Stock', '100px');
+  th('SKU code');
+  const actions = th('', null, { className: 'col-actions' });
+  actions.innerHTML = '<span class="sr-only">Remove</span>';
+  head.innerHTML = '';
+  head.appendChild(row);
+}
+
 function paintSkus() {
   const tbody = $('#sku-body');
   if (!tbody) return;
 
+  paintSkuHead();
   tbody.innerHTML = '';
   skus.forEach((sku) => tbody.appendChild(skuRow(sku)));
 
@@ -285,10 +509,9 @@ function blankSku() {
     key: 'row-' + (++rowSeq),
     uuid: null,
     sku: '',
-    size: '',
-    color: '',
+    values: options.map(() => ''),
     color_hex: '#1A1A18',
-    image_id: null,
+    images: [],
     price: 0,
     compare_at_price: null,
     stock: 0,
@@ -304,11 +527,21 @@ function problems() {
   if (!$('#p-cat').value) out.push('Pick a category.');
   if (!skus.length) out.push('Add at least one SKU.');
 
+  const names = options.map((o) => o.name.trim().toLowerCase());
+  if (names.some((n) => !n)) out.push('Every option needs a name, like "Shade" or "Volume".');
+  if (new Set(names).size !== names.length) out.push('Two options have the same name.');
+  if (!options.length && skus.length > 1) {
+    out.push('Add an option, like "Shade" or "Volume", to sell this product in more than one form.');
+  }
+
   skus.forEach((sku, index) => {
     const label = 'SKU ' + (index + 1) + (sku.sku ? ' (' + sku.sku + ')' : '');
     if (!sku.sku.trim()) out.push(label + ' needs a code.');
-    if (!sku.image_id) out.push(label + ' needs an image.');
+    if (!sku.images.length) out.push(label + ' needs a photo.');
     if (!(sku.price > 0)) out.push(label + ' needs a price.');
+    options.forEach((option, i) => {
+      if (!String(sku.values[i] || '').trim()) out.push(label + ' needs a ' + (option.name.trim() || 'value') + '.');
+    });
     if (sku.compare_at_price !== null && !(sku.compare_at_price > sku.price)) {
       out.push(label + ': the "was" price must be higher than the price, or empty for no sale.');
     }
@@ -316,6 +549,11 @@ function problems() {
 
   const codes = skus.map((s) => s.sku.trim().toLowerCase()).filter(Boolean);
   if (new Set(codes).size !== codes.length) out.push('Two SKUs share the same code.');
+
+  if (options.length) {
+    const combos = skus.map((s) => s.values.map((v) => String(v || '').trim().toLowerCase()).join('\u001f'));
+    if (new Set(combos).size !== combos.length) out.push('Two SKUs have the same option values.');
+  }
 
   return out;
 }
@@ -330,16 +568,18 @@ function payload(status) {
     brand_id: $('#p-brand').value || null,
     tags,
     status,
+    options: options.map((o) => ({ name: o.name.trim(), swatch: !!o.swatch })),
   };
 }
 
 function variantPayload(sku) {
   return {
     sku: sku.sku.trim(),
-    size: sku.size.trim() || null,
-    color: sku.color.trim() || null,
-    color_hex: sku.color_hex || null,
-    image_id: sku.image_id,
+    options: options.map((_, i) => String(sku.values[i] || '').trim()),
+    // Only the swatch option draws a colour; without one it means nothing.
+    color_hex: options.some((o) => o.swatch) ? (sku.color_hex || null) : null,
+    image_id: sku.images[0],
+    extra_image_ids: sku.images.slice(1),
     price: sku.price,
     compare_at_price: sku.compare_at_price,
     stock: sku.stock,
@@ -441,9 +681,8 @@ async function loadReferenceData() {
     });
   }
 
-  /* The wireframe had a free-text brand box. Nothing creates a brand
-     — `/v1/product/brand/list` is read-only and there is no admin
-     endpoint — so anything typed would have been dropped on save. */
+  /* Brands are managed on Admin → Brands; the dropdown lists them,
+     and "+ Add brand" creates one without leaving this product. */
   const brandInput = $('#p-brand');
   if (brandInput) {
     const select = document.createElement('select');
@@ -452,26 +691,46 @@ async function loadReferenceData() {
 
     const none = document.createElement('option');
     none.value = '';
-    none.textContent = brands.length ? '— No brand —' : '— No brands set up —';
+    none.textContent = '— No brand —';
     select.appendChild(none);
 
-    brands.forEach((brand) => {
+    const addOption = (brand) => {
       const option = document.createElement('option');
       option.value = brand.uuid;
       option.textContent = brand.name;
       select.appendChild(option);
+      return option;
+    };
+    brands.forEach(addOption);
+
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex;gap:8px;align-items:center;';
+    select.style.flex = '1';
+    const add = document.createElement('button');
+    add.type = 'button';
+    add.className = 'btn btn-outline btn-sm';
+    add.textContent = '+ Add brand';
+    add.addEventListener('click', async () => {
+      const created = await brandForm(null);
+      if (!created) return;
+      brands.push(created);
+      // Back into A–Z order, the order the list endpoint uses.
+      const options = [...select.options].slice(1);
+      const option = addOption(created);
+      const after = options.find((o) => o.textContent.localeCompare(created.name) > 0);
+      if (after) select.insertBefore(option, after);
+      select.value = created.uuid;
     });
 
-    brandInput.replaceWith(select);
+    brandInput.replaceWith(row);
+    row.append(select, add);
 
-    const hint = select.parentElement.querySelector('.form-hint');
+    const hint = row.parentElement.querySelector('.form-hint');
     if (!hint) {
       const note = document.createElement('div');
       note.className = 'form-hint';
-      note.textContent = brands.length
-        ? 'Brands are shared across the catalogue.'
-        : 'No brands exist yet, and there is no endpoint to create one from here.';
-      select.after(note);
+      note.textContent = 'Shown on the product page. Rename or remove brands on Admin → Brands.';
+      row.after(note);
     }
   }
 }
@@ -495,14 +754,19 @@ async function loadProduct() {
   tags = [...(product.tags || [])];
   paintTags();
 
+  options = (product.options || []).map((o) => ({ key: 'opt-' + (++optionSeq), name: o.name, swatch: !!o.swatch }));
+  paintOptions();
+
   skus = (variants || []).map((variant) => ({
     key: 'row-' + (++rowSeq),
     uuid: variant.uuid,
     sku: variant.sku || '',
-    size: variant.size || '',
-    color: variant.color || '',
+    values: options.map((option) => {
+      const pair = (variant.options || []).find((p) => p.name === option.name);
+      return pair ? pair.value : '';
+    }),
     color_hex: variant.color_hex || '#1A1A18',
-    image_id: variant.image_id,
+    images: [variant.image_id, ...(variant.extra_image_ids || [])].filter(Boolean),
     price: variant.price,
     compare_at_price: variant.compare_at_price ?? null,
     stock: variant.stock,
@@ -536,6 +800,11 @@ async function loadProduct() {
   mode = productId ? 'edit' : 'create';
 
   wireTags();
+
+  const addOptionButton = $('#add-option');
+  if (addOptionButton) addOptionButton.addEventListener('click', addOption);
+  paintOptions();
+  paintSkuHead();
 
   const add = $('#add-sku');
   if (add) {

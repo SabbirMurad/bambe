@@ -418,8 +418,21 @@ pub async fn merchant_feed(req: HttpRequest) -> Result<HttpResponse, Error> {
         let link = format!("{}{}", base, product_path(&p.slug));
         let description = if p.description.trim().is_empty() { p.title.clone() } else { plain(&p.description, 5000) };
         for v in variants.get(&p.uuid).map(|v| v.as_slice()).unwrap_or(&[]) {
-            let label: Vec<&str> = [v.color.as_deref(), v.size.as_deref()].into_iter().flatten().collect();
+            let label: Vec<&str> = v.options.iter().map(|o| o.value.as_str()).collect();
             let title = if label.is_empty() { p.title.clone() } else { format!("{} - {}", p.title, label.join(" / ")) };
+            /* Google knows colour and size, not the names an admin types, so
+               the swatch option counts as colour and one named for size,
+               volume or weight counts as size. Anything else stays in the
+               title only. */
+            let colour = p.options.iter().find(|o| o.swatch).and_then(|o| v.option(&o.name));
+            let size = p
+                .options
+                .iter()
+                .find(|o| {
+                    let n = o.name.to_lowercase();
+                    !o.swatch && (n.contains("size") || n.contains("volume") || n.contains("weight"))
+                })
+                .and_then(|o| v.option(&o.name));
             let on_sale = v.compare_at_price.map(|was| was > v.price).unwrap_or(false);
 
             out.push_str("<item>\n");
@@ -429,6 +442,9 @@ pub async fn merchant_feed(req: HttpRequest) -> Result<HttpResponse, Error> {
             out.push_str(&format!("  <g:description>{}</g:description>\n", xml(&description)));
             out.push_str(&format!("  <g:link>{}</g:link>\n", xml(&link)));
             out.push_str(&format!("  <g:image_link>{}</g:image_link>\n", xml(&image_url(&base, &v.image_id))));
+            for extra in &v.extra_image_ids {
+                out.push_str(&format!("  <g:additional_image_link>{}</g:additional_image_link>\n", xml(&image_url(&base, extra))));
+            }
             out.push_str(&format!("  <g:availability>{}</g:availability>\n", if v.stock > 0 { "in_stock" } else { "out_of_stock" }));
             if on_sale {
                 out.push_str(&format!("  <g:price>{} {}</g:price>\n", money(v.compare_at_price.unwrap()), currency));
@@ -444,8 +460,8 @@ pub async fn merchant_feed(req: HttpRequest) -> Result<HttpResponse, Error> {
             if let Some(c) = categories.get(&p.category_id) {
                 out.push_str(&format!("  <g:product_type>{}</g:product_type>\n", xml(c)));
             }
-            if let Some(color) = &v.color { out.push_str(&format!("  <g:color>{}</g:color>\n", xml(color))); }
-            if let Some(size) = &v.size { out.push_str(&format!("  <g:size>{}</g:size>\n", xml(size))); }
+            if let Some(color) = colour { out.push_str(&format!("  <g:color>{}</g:color>\n", xml(color))); }
+            if let Some(size) = size { out.push_str(&format!("  <g:size>{}</g:size>\n", xml(size))); }
             out.push_str("</item>\n");
         }
     }
