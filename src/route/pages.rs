@@ -154,6 +154,10 @@ pub fn router(cfg: &mut web::ServiceConfig) {
             web::get().to(Markup::admin_categories)
         )
         .route(
+            "/admin/brands",
+            web::get().to(Markup::admin_brands)
+        )
+        .route(
             "/admin/orders",
             web::get().to(Markup::admin_orders)
         )

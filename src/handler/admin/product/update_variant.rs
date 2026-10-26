@@ -7,16 +7,17 @@ use crate::util::response::Response;
 use crate::Middleware::Auth::{require_access, AccessRequirement};
 use crate::model::Account::AccountRole;
 use crate::model::Cents;
-use crate::model::Product::ProductVariant;
+use crate::model::Product::{Product, ProductVariant};
 use super::recompute_aggregates;
 
 #[derive(Debug, Deserialize)]
 pub struct ReqBody {
     sku: Option<String>,
-    size: Option<String>,
-    color: Option<String>,
+    /// One value per product option, in the product's option order.
+    options: Option<Vec<String>>,
     color_hex: Option<String>,
     image_id: Option<String>,
+    extra_image_ids: Option<Vec<String>>,
     price: Option<Cents>,
     /// Absent leaves it; null clears it, which ends the sale.
     #[serde(default, deserialize_with = "present")]
@@ -48,11 +49,24 @@ pub async fn task(req: HttpRequest, path: web::Path<String>, body: web::Json<Req
     }
 
     let mut set_doc = Document::new();
+    if let Some(values) = &body.options {
+        let product = db.collection::<Product>("product").find_one(doc! { "uuid": &existing.product_id }).await.ok().flatten();
+        let options = product.map(|p| p.options).unwrap_or_default();
+        match super::pair_values(&options, values) {
+            Ok(pairs) => { set_doc.insert("options", mongodb::bson::to_bson(&pairs).unwrap_or_default()); }
+            Err(message) => return Ok(Response::bad_request(&message)),
+        }
+    }
     if let Some(v) = &body.sku { set_doc.insert("sku", v); }
-    if let Some(v) = &body.size { set_doc.insert("size", v); }
-    if let Some(v) = &body.color { set_doc.insert("color", v); }
     if let Some(v) = &body.color_hex { set_doc.insert("color_hex", v); }
     if let Some(v) = &body.image_id { set_doc.insert("image_id", v); }
+    if let Some(extra) = &body.extra_image_ids {
+        let main = body.image_id.clone().unwrap_or_else(|| existing.image_id.clone());
+        match super::check_extra_photos(&main, extra) {
+            Ok(ids) => { set_doc.insert("extra_image_ids", ids); }
+            Err(message) => return Ok(Response::bad_request(&message)),
+        }
+    }
     if let Some(v) = body.price { set_doc.insert("price", v); }
     if let Some(v) = body.compare_at_price { set_doc.insert("compare_at_price", v); }
     if let Some(v) = body.stock { set_doc.insert("stock", v); }

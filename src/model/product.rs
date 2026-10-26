@@ -37,6 +37,15 @@ pub struct Product {
     pub status: ProductStatus,
 
     /*
+      What this product's variants differ by, named by the admin: "Shade",
+      "Volume", "Skin type". Up to three, in display order. Empty for a
+      product sold in one form only, which then has exactly one variant.
+      Each variant carries its own value for every option, by name.
+    */
+    #[serde(default)]
+    pub options: Vec<ProductOption>,
+
+    /*
       Denormalised from the variants. A listing page sorts and filters on price
       across hundreds of products at once; without these it would have to load
       every variant of every product to know what to show. Recomputed whenever
@@ -82,9 +91,17 @@ pub struct ProductVariant {
     pub product_id: String,
     pub sku: String,
 
-    pub size: Option<String>,
-    pub color: Option<String>,
-    // The swatch shown on the product page, e.g. "#1A1A18".
+    /*
+      This variant's value for each of the product's options, in the same
+      order: [Shade: "Ruby Woo", Volume: "3 g"]. The names are copied in
+      rather than looked up, so a cart line, an order and the product feed
+      can label the variant without loading its product — and the server
+      rewrites them here whenever the product's options are renamed.
+    */
+    #[serde(default)]
+    pub options: Vec<VariantOption>,
+    // The dot drawn for this variant when an option is shown as swatches,
+    // e.g. "#B0303A" for a red shade.
     pub color_hex: Option<String>,
     /*
       The variant's photo — an ImageStruct uuid, so the blur hash and generated
@@ -97,6 +114,14 @@ pub struct ProductVariant {
       without it renders as a hole in all three.
     */
     pub image_id: String,
+    /*
+      More photos of this variant — another angle, a swatch on skin, the
+      box — shown after `image_id` in this order on the product page when
+      the variant is selected. `image_id` stays the one that stands for
+      the variant everywhere else: its card, cart line and order.
+    */
+    #[serde(default)]
+    pub extra_image_ids: Vec<String>,
 
     pub price: Cents,
     pub compare_at_price: Option<Cents>,
@@ -108,6 +133,39 @@ pub struct ProductVariant {
 
     pub created_at: i64,
     pub modified_at: i64,
+}
+
+impl ProductVariant {
+    /// "Shade: Ruby Woo · Volume: 3 g", or None for a single-form product.
+    pub fn label(&self) -> Option<String> {
+        let parts: Vec<String> = self
+            .options
+            .iter()
+            .filter(|o| !o.value.trim().is_empty())
+            .map(|o| format!("{}: {}", o.name, o.value))
+            .collect();
+        if parts.is_empty() { None } else { Some(parts.join(" · ")) }
+    }
+
+    /// The value of the option with this name, if the variant has one.
+    pub fn option(&self, name: &str) -> Option<&str> {
+        self.options.iter().find(|o| o.name == name).map(|o| o.value.as_str())
+    }
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
+pub struct ProductOption {
+    pub name: String,
+    // Show this option's values as colour dots (each variant's `color_hex`)
+    // instead of text buttons — for shades. At most one option per product.
+    #[serde(default)]
+    pub swatch: bool,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
+pub struct VariantOption {
+    pub name: String,
+    pub value: String,
 }
 
 //brand

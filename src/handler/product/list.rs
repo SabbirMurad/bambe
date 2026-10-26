@@ -2,7 +2,7 @@ use std::collections::{HashMap, HashSet};
 use futures::StreamExt;
 use serde::Deserialize;
 use serde_json::json;
-use mongodb::bson::{doc, Document};
+use mongodb::bson::doc;
 use actix_web::{web, Error, HttpResponse};
 use crate::BuiltIns::mongo::MongoDB;
 use crate::util::response::Response;
@@ -22,8 +22,10 @@ pub struct ReqQuery {
     pub rating: Option<f32>,
     // true → only products whose compare_at_price is above price_min.
     pub sale: Option<bool>,
-    pub size: Option<String>,
-    pub color: Option<String>,
+    // Variant option values, comma-separated: "Ruby Woo,50 ml". Matches a
+    // product with any variant holding any of them, whatever the option's
+    // name — admins name options per product, so values are what's shared.
+    pub option: Option<String>,
     pub tag: Option<String>,
     pub q: Option<String>,
     // relevance | price_asc | price_desc | newest | rating | best_selling
@@ -144,14 +146,8 @@ pub async fn task(query: web::Query<ReqQuery>) -> Result<HttpResponse, Error> {
         );
     }
 
-    if query.size.is_some() || query.color.is_some() {
-        let mut variant_filter = Document::new();
-        if let Some(size) = &query.size {
-            variant_filter.insert("size", doc! { "$in": csv(size) });
-        }
-        if let Some(color) = &query.color {
-            variant_filter.insert("color", doc! { "$in": csv(color) });
-        }
+    if let Some(values) = &query.option {
+        let variant_filter = doc! { "options.value": { "$in": csv(values) } };
 
         let product_ids: HashSet<String> = match db
             .collection::<ProductVariant>("product_variant")

@@ -419,12 +419,8 @@ pub async fn task(req: HttpRequest, body: web::Json<ReqBody>) -> Result<HttpResp
         .map(|item| {
             let variant = &variants[&item.variant_id];
             let product = &products[&item.product_id];
-            let variant_label = match (&variant.color, &variant.size) {
-                (Some(c), Some(s)) => Some(format!("{} · {}", c, s)),
-                (Some(c), None) => Some(c.clone()),
-                (None, Some(s)) => Some(s.clone()),
-                (None, None) => None,
-            };
+            // "Shade: Ruby Woo · Volume: 3 g", frozen with the order.
+            let variant_label = variant.label();
             let unit_price = variant.price;
             let line_total = unit_price * item.quantity as i64;
 

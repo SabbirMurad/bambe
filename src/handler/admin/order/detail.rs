@@ -6,7 +6,7 @@ use actix_web::{web, Error, HttpResponse, HttpRequest};
 use crate::BuiltIns::mongo::MongoDB;
 use crate::util::response::Response;
 use crate::Middleware::Auth::{require_access, AccessRequirement};
-use crate::model::Account::{AccountRole, AccountCore};
+use crate::model::Account::{AccountRole, AccountCore, AccountProfile};
 use crate::model::Order::{Order, OrderItem, ShipmentEvent};
 use crate::model::Payment::{PaymentTransaction, TransactionKind, TransactionStatus};
 use crate::model::ImageStruct;
@@ -25,6 +25,9 @@ pub async fn task(req: HttpRequest, path: web::Path<String>) -> Result<HttpRespo
     let order_total = order.totals.grand_total;
 
     let customer = db.collection::<AccountCore>("account_core").find_one(doc! { "uuid": &order.user_id }).await.ok().flatten();
+    // The name the customer gave, not the generated username a Google
+    // sign-in leaves behind ("user_0193a1f2").
+    let profile = db.collection::<AccountProfile>("account_profile").find_one(doc! { "uuid": &order.user_id }).await.ok().flatten();
 
     let mut item_cursor = db.collection::<OrderItem>("order_item").find(doc! { "order_id": &order_id }).await.expect("order item lookup");
     let mut items = Vec::new();
@@ -120,7 +123,15 @@ pub async fn task(req: HttpRequest, path: web::Path<String>) -> Result<HttpRespo
 
     Ok(HttpResponse::Ok().content_type("application/json").json(json!({
         "order": order,
-        "customer": customer.map(|c| json!({ "user_id": c.uuid, "email": c.email_address, "username": c.username })),
+        "customer": customer.map(|c| json!({
+            "user_id": c.uuid,
+            "email": c.email_address,
+            "username": c.username,
+            "name": profile.as_ref()
+                .map(|p| format!("{} {}", p.first_name, p.last_name).trim().to_string())
+                .filter(|n| !n.is_empty()),
+            "phone": profile.as_ref().and_then(|p| p.phone_number.clone()),
+        })),
         "items": item_views,
         "shipment_events": events,
         "refunded_total": refunded_total,

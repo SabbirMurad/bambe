@@ -107,8 +107,9 @@ function preview(line) {
   title.textContent = line.title || 'Unavailable';
   const meta = document.createElement('div');
   meta.style.cssText = 'font-size:11px;color:var(--mid);';
-  meta.textContent = [line.color, line.size].filter(Boolean).join(' · ')
-    + (line.size || line.color ? ' · ' : '') + '×' + line.quantity;
+  // Values only — "Ruby Woo · 3 g · ×2" — to fit the narrow summary.
+  meta.textContent = (line.options || []).map((o) => o.value).filter(Boolean)
+    .concat('×' + line.quantity).join(' · ');
   middle.append(title, meta);
 
   const price = document.createElement('div');

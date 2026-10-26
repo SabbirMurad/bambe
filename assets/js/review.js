@@ -50,8 +50,7 @@ function reviewItem(line) {
   meta.style.cssText = 'font-size:12px;color:var(--mid);margin-top:3px;';
   meta.textContent = [
     line.brand_name && 'Brand: ' + line.brand_name,
-    line.size && 'Size: ' + line.size,
-    line.color && 'Color: ' + line.color,
+    ...(line.options || []).filter((o) => o.value).map((o) => o.name + ': ' + o.value),
     'Qty: ' + line.quantity,
   ].filter(Boolean).join(' · ');
   middle.append(title, meta);

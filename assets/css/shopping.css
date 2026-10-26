@@ -1226,6 +1226,7 @@
 .pd-price-old:empty,
 .pd-discount-badge:empty,
 .pd-section-label:empty,
+.pd-options:empty,
 .pd-swatches:empty,
 .pd-sizes:empty,
 .pd-description ul:empty { display: none; }
@@ -1312,6 +1313,10 @@
   transition: border-color 0.15s;
 }
 .pd-swatch.active { border-color: var(--primary-text); }
+/* Sold out: still pickable to see it, but visibly struck through. */
+.pd-swatch.out { opacity: 0.4; background-image: linear-gradient(135deg, transparent 46%, var(--white) 46%, var(--white) 54%, transparent 54%) !important; }
+.pd-options .pd-section-label { margin-top: 16px; }
+.pd-options .pd-section-label:first-child { margin-top: 0; }
 
 /* Size selector */
 .pd-sizes { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }

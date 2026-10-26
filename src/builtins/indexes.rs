@@ -45,6 +45,8 @@ pub async fn ensure_indexes(db: &Database) {
     drop_index(db, "product", "product_slug").await;
     unique(db, "order", doc! { "number": 1 }, "order_number").await;
     unique(db, "coupon", doc! { "code": 1 }, "coupon_code").await;
+    // Two admins adding the same brand at once both pass create.rs's check.
+    unique(db, "brand", doc! { "slug": 1 }, "brand_slug").await;
     unique(db, "newsletter_subscriber", doc! { "email_address": 1 }, "newsletter_email").await;
     unique(db, "counter", doc! { "uuid": 1 }, "counter_uuid").await;
     unique(

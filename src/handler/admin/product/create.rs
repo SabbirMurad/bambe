@@ -8,15 +8,18 @@ use crate::util::response::Response;
 use crate::Middleware::Auth::{require_access, AccessRequirement};
 use crate::model::Account::AccountRole;
 use crate::model::Cents;
-use crate::model::Product::{Product, ProductVariant, ProductStatus};
+use crate::model::Product::{Product, ProductOption, ProductVariant, ProductStatus, VariantOption};
 
 #[derive(Debug, Deserialize)]
 pub struct VariantInput {
     sku: String,
-    size: Option<String>,
-    color: Option<String>,
+    /// One value per product option, in the product's option order.
+    #[serde(default)]
+    options: Vec<String>,
     color_hex: Option<String>,
     image_id: String,
+    #[serde(default)]
+    extra_image_ids: Vec<String>,
     price: Cents,
     compare_at_price: Option<Cents>,
     #[serde(default)]
@@ -37,6 +40,8 @@ pub struct ReqBody {
     tags: Vec<String>,
     #[serde(default)]
     status: ProductStatus,
+    #[serde(default)]
+    options: Vec<ProductOption>,
     #[serde(default)]
     variants: Vec<VariantInput>,
 }
@@ -63,10 +68,35 @@ pub async fn task(req: HttpRequest, body: web::Json<ReqBody>) -> Result<HttpResp
     if body.title.trim().is_empty() || body.category_id.trim().is_empty() {
         return Ok(Response::bad_request("Title and category are required"));
     }
+    let mut extra_photos: Vec<Vec<String>> = Vec::new();
     for v in &body.variants {
         if let Err(message) = super::check_compare_at(v.price, v.compare_at_price) {
             return Ok(Response::bad_request(message));
         }
+        match super::check_extra_photos(&v.image_id, &v.extra_image_ids) {
+            Ok(ids) => extra_photos.push(ids),
+            Err(message) => return Ok(Response::bad_request(&message)),
+        }
+    }
+
+    let options = match super::check_options(&body.options) {
+        Ok(o) => o,
+        Err(message) => return Ok(Response::bad_request(&message)),
+    };
+    let mut variant_options: Vec<Vec<VariantOption>> = Vec::new();
+    for v in &body.variants {
+        match super::pair_values(&options, &v.options) {
+            Ok(pairs) => variant_options.push(pairs),
+            Err(message) => return Ok(Response::bad_request(&message)),
+        }
+    }
+    // With no options there is only one form to sell; with options, two
+    // SKUs holding the same values couldn't be told apart on the page.
+    if options.is_empty() && body.variants.len() > 1 {
+        return Ok(Response::bad_request("Add an option, like \"Shade\" or \"Volume\", to sell this product in more than one form."));
+    }
+    if super::has_duplicate_values(&variant_options) {
+        return Ok(Response::bad_request("Two SKUs have the same option values."));
     }
 
     let slug = body.slug.clone().unwrap_or_else(|| slugify(&body.title));
@@ -94,6 +124,7 @@ pub async fn task(req: HttpRequest, body: web::Json<ReqBody>) -> Result<HttpResp
         category_id: body.category_id.clone(),
         tags: body.tags.clone(),
         status: body.status.clone(),
+        options: options.clone(),
         // The variants are written below in the order they arrived, so the
         // first one is the oldest — the same variant recompute_aggregates will
         // pick once anything edits them.
@@ -124,14 +155,16 @@ pub async fn task(req: HttpRequest, body: web::Json<ReqBody>) -> Result<HttpResp
         let variants: Vec<ProductVariant> = body
             .variants
             .iter()
-            .map(|v| ProductVariant {
+            .zip(variant_options)
+            .zip(extra_photos)
+            .map(|((v, pairs), extra_image_ids)| ProductVariant {
                 uuid: Uuid::now_v7().to_string(),
                 product_id: product_id.clone(),
                 sku: v.sku.clone(),
-                size: v.size.clone(),
-                color: v.color.clone(),
+                options: pairs,
                 color_hex: v.color_hex.clone(),
                 image_id: v.image_id.clone(),
+                extra_image_ids,
                 price: v.price,
                 compare_at_price: v.compare_at_price,
                 stock: v.stock,

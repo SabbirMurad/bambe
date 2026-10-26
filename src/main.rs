@@ -114,6 +114,10 @@ async fn main() -> io::Result<()> {
 
         // Uniqueness and lookup indexes for the storefront collections.
         BuiltIns::indexes::ensure_indexes(&BuiltIns::mongo::MongoDB.connect()).await;
+
+        // Moves products from the old fixed size/colour fields to named
+        // options. Idempotent: a converted database costs one empty query.
+        Handler::Admin::Product::migrate_size_colour(&BuiltIns::mongo::MongoDB.connect()).await;
     });
 
     /*

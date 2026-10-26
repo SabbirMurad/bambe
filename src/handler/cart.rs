@@ -278,8 +278,8 @@ pub async fn build_response(db: &Database, cart: &Cart) -> Value {
                     .and_then(|p| p.brand_id.as_ref())
                     .and_then(|id| brands.get(id))
                     .map(|b| b.name.clone()),
-                "size": variant.and_then(|v| v.size.clone()),
-                "color": variant.and_then(|v| v.color.clone()),
+                // [{ name: "Shade", value: "Ruby Woo" }, ...], in the product's order.
+                "options": variant.map(|v| v.options.clone()).unwrap_or_default(),
                 "image_id": line_image_id,
                 "quantity": item.quantity,
                 "unit_price": variant.map(|v| v.price),

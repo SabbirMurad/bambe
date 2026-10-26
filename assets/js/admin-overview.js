@@ -194,7 +194,7 @@ function paintLowStock() {
     name.textContent = variant.product_title || 'Untitled product';
     wrap.appendChild(name);
 
-    const spec = [variant.size, variant.color].filter(Boolean).join(' · ');
+    const spec = variant.variant_label || '';
     if (spec) {
       const sub = document.createElement('div');
       sub.className = 'cell-sub';

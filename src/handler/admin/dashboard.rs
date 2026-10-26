@@ -131,8 +131,7 @@ pub async fn task(req: HttpRequest, query: web::Query<ReqQuery>) -> Result<HttpR
             "product_id": v.product_id,
             "product_title": product.map(|p| p.title),
             "sku": v.sku,
-            "size": v.size,
-            "color": v.color,
+            "variant_label": v.label(),
             "stock": v.stock,
             "low_stock_threshold": v.low_stock_threshold,
         }));

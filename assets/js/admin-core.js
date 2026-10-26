@@ -269,6 +269,7 @@ async function paintNavCounts() {
     if (label.startsWith('orders')) items.orders = count;
     else if (label.startsWith('products')) items.products = count;
     else if (label.startsWith('categories')) items.categories = count;
+    else if (label.startsWith('brands')) items.brands = count;
     else if (label.startsWith('customers')) items.customers = count;
     else if (label.startsWith('coupons')) items.coupons = count;
     else if (label.startsWith('support')) items.support = count;
@@ -282,7 +283,7 @@ async function paintNavCounts() {
     el.style.display = value ? '' : 'none';
   };
 
-  const [orders, products, categories, customers, coupons, tickets, returns, reviews] = await Promise.all([
+  const [orders, products, categories, customers, coupons, tickets, returns, reviews, brands] = await Promise.all([
     Fetcher.get({ endpoint: '/v1/admin/order/list', query: { limit: 1 }, showError: false }),
     Fetcher.get({ endpoint: '/v1/admin/product/list', query: { limit: 1 }, showError: false }),
     Fetcher.get({ endpoint: '/v1/admin/category/list', showError: false }),
@@ -291,11 +292,13 @@ async function paintNavCounts() {
     Fetcher.get({ endpoint: '/v1/admin/support/ticket/list', query: { status: 'open', limit: 1 }, showError: false }),
     Fetcher.get({ endpoint: '/v1/admin/return/list', query: { limit: 1 }, showError: false }),
     Fetcher.get({ endpoint: '/v1/admin/review/list', query: { limit: 1 }, showError: false }),
+    Fetcher.get({ endpoint: '/v1/admin/brand/list', showError: false }),
   ]);
 
   set(items.orders, orders.ok ? orders.data.total : 0);
   set(items.products, products.ok ? products.data.total : 0);
   set(items.categories, categories.ok ? (categories.data || []).length : 0);
+  set(items.brands, brands.ok ? (brands.data || []).length : 0);
   set(items.customers, customers.ok ? customers.data.total : 0);
   set(items.coupons, coupons.ok ? coupons.data.total : 0);
   set(items.reviews, reviews.ok ? reviews.data.total : 0);
