@@ -261,12 +261,12 @@ async function openOrder(orderId) {
 
   const actions = [
     { label: 'Close', className: 'btn-ghost', onClick: (close) => close() },
-    { label: 'Tracking', className: 'btn-outline', onClick: (close) => { close(); editTracking(order); } },
-    { label: 'Status', className: 'btn-primary', onClick: (close) => { close(); editStatus(order); } },
+    { label: 'Tracking', needs: 'fulfilment', className: 'btn-outline', onClick: (close) => { close(); editTracking(order); } },
+    { label: 'Status', needs: 'fulfilment', className: 'btn-primary', onClick: (close) => { close(); editStatus(order); } },
   ];
   if (paid) {
     actions.splice(1, 0, {
-      label: 'Refund',
+      label: 'Refund', needs: 'refunds',
       className: 'btn-danger',
       onClick: (close) => { close(); refund(order, response.data.refundable, response.data.refunded_total); },
     });

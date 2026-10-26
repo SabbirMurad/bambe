@@ -118,6 +118,7 @@ pub enum AssetUsedAt {
     TicketAttachment,
     ProfilePic,
     StoreLogo,
+    PackagingImage,
 }
 
 impl std::fmt::Display for AssetUsedAt {
@@ -144,13 +145,14 @@ impl AssetUsedAt {
             "TicketAttachment" => Some(AssetUsedAt::TicketAttachment),
             "ProfilePic" => Some(AssetUsedAt::ProfilePic),
             "StoreLogo" => Some(AssetUsedAt::StoreLogo),
+            "PackagingImage" => Some(AssetUsedAt::PackagingImage),
             _ => None,
         }
     }
 
     pub fn variants() -> &'static str {
         "ProductImage, CategoryImage, BrandLogo, ReviewImage, ReturnPhoto, \
-         TicketAttachment, ProfilePic, StoreLogo"
+         TicketAttachment, ProfilePic, StoreLogo, PackagingImage"
     }
 
     pub fn from_str(s: &str) -> AssetUsedAt {
@@ -163,6 +165,7 @@ impl AssetUsedAt {
             "TicketAttachment" => AssetUsedAt::TicketAttachment,
             "ProfilePic" => AssetUsedAt::ProfilePic,
             "StoreLogo" => AssetUsedAt::StoreLogo,
+            "PackagingImage" => AssetUsedAt::PackagingImage,
             // Unknown values land on the safest bucket rather than failing the
             // upload, matching how the rest of these from_str helpers behave.
             _ => AssetUsedAt::ProductImage

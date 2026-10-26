@@ -55,8 +55,8 @@
             <div class="admin-subtitle"></div>
           </div>
           <div class="admin-head-actions">
-            <button class="btn btn-outline btn-sm">Import CSV</button>
-            <a href="/admin/products/new"><button class="btn btn-primary btn-sm">Add product</button></a>
+            <button class="btn btn-outline btn-sm" data-needs="catalogue">Import CSV</button>
+            <a href="/admin/products/new" data-needs="catalogue"><button class="btn btn-primary btn-sm">Add product</button></a>
           </div>
         </div>
 
@@ -91,7 +91,7 @@
 
           <div class="admin-bulk" data-bulk>
             <span data-bulk-count>0 selected</span>
-            <div class="admin-bulk-actions">
+            <div class="admin-bulk-actions" data-needs="catalogue">
               <button class="btn btn-outline btn-sm">Set active</button>
               <button class="btn btn-outline btn-sm">Edit category</button>
               <button class="btn btn-danger btn-sm">Delete</button>

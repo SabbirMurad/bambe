@@ -2,11 +2,11 @@ use futures::StreamExt;
 use serde_json::{json, Value};
 use mongodb::bson::{doc, Document};
 use serde::Deserialize;
+use crate::Handler::Admin::Access::{require_staff, Permission};
 use crate::BuiltIns::mongo::MongoDB;
 use crate::util::response::Response;
 use actix_web::{web, Error, HttpResponse, HttpRequest};
-use crate::Middleware::Auth::{require_access, AccessRequirement};
-use crate::Model::Account::{AccountRole, AccountDeletionRequest};
+use crate::model::Account::AccountDeletionRequest;
 
 #[derive(Debug, Deserialize)]
 pub struct ListQuery {
@@ -17,7 +17,7 @@ pub struct ListQuery {
 /// Paginated queue of pending account-deletion requests, newest first, joined
 /// with the user's display name.
 pub async fn list(req: HttpRequest, query: web::Query<ListQuery>) -> Result<HttpResponse, Error> {
-    require_access(&req, AccessRequirement::Role(AccountRole::Administrator))?;
+    require_staff(&req, Permission::View).await?;
     let db = MongoDB.connect();
 
     let page = query.page.unwrap_or(1).max(1);
@@ -67,7 +67,7 @@ pub async fn list(req: HttpRequest, query: web::Query<ListQuery>) -> Result<Http
 /// Permanently delete the account behind a deletion request, plus every
 /// collection that keys on the user, then clear the request itself.
 pub async fn delete(req: HttpRequest, path: web::Path<String>) -> Result<HttpResponse, Error> {
-    require_access(&req, AccessRequirement::Role(AccountRole::Administrator))?;
+    require_staff(&req, Permission::AccountDeletion).await?;
     let db = MongoDB.connect();
     let user_id = path.into_inner();
 
@@ -79,7 +79,7 @@ pub async fn delete(req: HttpRequest, path: web::Path<String>) -> Result<HttpRes
 /// Dismiss (cancel) a deletion request without deleting the account — e.g. the
 /// user changed their mind or it was raised in error.
 pub async fn dismiss(req: HttpRequest, path: web::Path<String>) -> Result<HttpResponse, Error> {
-    require_access(&req, AccessRequirement::Role(AccountRole::Administrator))?;
+    require_staff(&req, Permission::AccountDeletion).await?;
     let db = MongoDB.connect();
     let user_id = path.into_inner();
 

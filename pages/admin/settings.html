@@ -55,8 +55,8 @@
             <div class="admin-subtitle">Store configuration, payments, shipping and staff access</div>
           </div>
           <div class="admin-head-actions">
-            <button class="btn btn-ghost btn-sm">Discard</button>
-            <button class="btn btn-primary btn-sm">Save changes</button>
+            <button class="btn btn-ghost btn-sm" data-needs="store_settings">Discard</button>
+            <button class="btn btn-primary btn-sm" data-needs="store_settings">Save changes</button>
           </div>
         </div>
 
@@ -145,7 +145,7 @@
         <div class="admin-panel" style="display:none;">
           <div class="admin-panel-head">
             <div class="admin-panel-title">Shipping zones</div>
-            <span class="admin-panel-link" tabindex="0">Add zone</span>
+            <span class="admin-panel-link" tabindex="0" data-needs="shipping">Add zone</span>
           </div>
         </div>
 
@@ -153,7 +153,7 @@
         <div class="admin-panel" style="display:none;">
           <div class="admin-panel-head">
             <div class="admin-panel-title">Staff &amp; roles</div>
-            <span class="admin-panel-link" tabindex="0">Invite staff</span>
+            <span class="admin-panel-link" tabindex="0" data-needs="staff">Invite staff</span>
           </div>
           <div class="table-scroll">
             <table class="admin-table">

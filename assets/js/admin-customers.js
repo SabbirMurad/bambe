@@ -327,7 +327,7 @@ function rewardDialog(customer, userId, card) {
     actions: [
       { label: 'Cancel', className: 'btn-ghost', onClick: (close) => close() },
       {
-        label: 'Save reward',
+        label: 'Save reward', needs: 'customers',
         className: 'btn-primary',
         onClick: async (close, button) => {
           const kind = type.value;
@@ -454,7 +454,7 @@ async function openCustomer(userId) {
     actions: [
       { label: 'Close', className: 'btn-ghost', onClick: (close) => close() },
       {
-        label: 'Save notes',
+        label: 'Save notes', needs: 'customers',
         className: 'btn-primary',
         onClick: async (close, button) => {
           button.disabled = true;
@@ -500,7 +500,7 @@ function bulkTag() {
     actions: [
       { label: 'Cancel', className: 'btn-ghost', onClick: (close) => close() },
       {
-        label: 'Add tag',
+        label: 'Add tag', needs: 'customers',
         className: 'btn-primary',
         onClick: async (close, button) => {
           const label = value.value.trim();

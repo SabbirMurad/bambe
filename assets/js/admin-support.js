@@ -335,7 +335,7 @@ function assignTicket(ticket) {
     actions: [
       { label: 'Cancel', className: 'btn-ghost', onClick: (close) => close() },
       {
-        label: 'Assign',
+        label: 'Assign', needs: 'support',
         className: 'btn-primary',
         onClick: async (close, button) => {
           button.disabled = true;

@@ -71,6 +71,8 @@ export function openModal({ title, body, actions = [], width, onClose } = {}) {
       const button = document.createElement('button');
       button.type = 'button';
       button.className = 'btn ' + (action.className || 'btn-ghost');
+      // Hidden unless the admin's staff role allows it (admin.css).
+      if (action.needs) button.dataset.needs = action.needs;
       button.textContent = action.label;
       button.addEventListener('click', () => action.onClick(close, button));
       footer.appendChild(button);

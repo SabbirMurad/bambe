@@ -183,8 +183,8 @@ function categoryRow(category, depth) {
 
   const actions = document.createElement('div');
   actions.style.cssText = 'display:flex;gap:10px;justify-content:flex-end;';
-  actions.appendChild(rowButton('Edit', () => edit(category)));
-  actions.appendChild(rowButton('Delete', () => remove(category), { danger: true }));
+  actions.appendChild(rowButton('Edit', () => edit(category), { needs: 'catalogue' }));
+  actions.appendChild(rowButton('Delete', () => remove(category), { danger: true, needs: 'catalogue' }));
   tr.appendChild(cell(actions, 'col-actions'));
 
   return tr;

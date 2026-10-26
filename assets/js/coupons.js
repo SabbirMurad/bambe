@@ -261,9 +261,9 @@ function couponRow(coupon) {
 
   const actions = document.createElement('div');
   actions.style.cssText = 'display:flex;gap:10px;justify-content:flex-end;';
-  actions.appendChild(rowButton('Edit', () => edit(coupon)));
-  actions.appendChild(rowButton('Duplicate', () => duplicate(coupon)));
-  actions.appendChild(rowButton('Delete', () => remove(coupon), { danger: true }));
+  actions.appendChild(rowButton('Edit', () => edit(coupon), { needs: 'coupons' }));
+  actions.appendChild(rowButton('Duplicate', () => duplicate(coupon), { needs: 'coupons' }));
+  actions.appendChild(rowButton('Delete', () => remove(coupon), { danger: true, needs: 'coupons' }));
   tr.appendChild(cell(actions, 'col-actions'));
 
   return tr;

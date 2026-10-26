@@ -1,14 +1,14 @@
 use futures::StreamExt;
 use serde_json::{json, Value};
 use mongodb::bson::doc;
+use crate::Handler::Admin::Access::{require_staff, Permission};
 use crate::BuiltIns::mongo::MongoDB;
 use actix_web::{Error, HttpResponse, HttpRequest};
-use crate::Middleware::Auth::{require_access, AccessRequirement};
-use crate::Model::Account::{AdminAccount, AccountRole};
+use crate::model::Account::AdminAccount;
 
 /// List the administrator accounts (for the Settings page).
 pub async fn list(req: HttpRequest) -> Result<HttpResponse, Error> {
-    let me = require_access(&req, AccessRequirement::Role(AccountRole::Administrator))?;
+    let me = require_staff(&req, Permission::View).await?;
     let db = MongoDB.connect();
 
     let cursor = db

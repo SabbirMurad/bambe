@@ -2,10 +2,9 @@ use chrono::Utc;
 use serde::Deserialize;
 use mongodb::bson::{doc, Document};
 use actix_web::{web, Error, HttpResponse, HttpRequest};
+use crate::Handler::Admin::Access::{require_staff, Permission};
 use crate::BuiltIns::mongo::MongoDB;
 use crate::util::response::Response;
-use crate::Middleware::Auth::{require_access, AccessRequirement};
-use crate::model::Account::AccountRole;
 use crate::model::Store::StoreSettings;
 use super::STORE_SETTINGS_ID;
 
@@ -32,7 +31,7 @@ pub struct ReqBody {
 pub const THEMES: [&str; 3] = ["orange", "crimson", "green"];
 
 pub async fn task(req: HttpRequest, body: web::Json<ReqBody>) -> Result<HttpResponse, Error> {
-    let admin = require_access(&req, AccessRequirement::Role(AccountRole::Administrator))?;
+    let admin = require_staff(&req, Permission::StoreSettings).await?;
     let db = MongoDB.connect();
     let col = db.collection::<StoreSettings>("store_settings");
 

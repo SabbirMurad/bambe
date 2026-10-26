@@ -163,9 +163,11 @@ export function stacked(main, sub, mainClass = 'cell-strong') {
 }
 
 /** Buttons for a row's action cell, in the wireframe's own shape. */
-export function rowButton(label, onClick, { danger = false, title } = {}) {
+export function rowButton(label, onClick, { danger = false, title, needs } = {}) {
   const el = document.createElement('span');
   el.className = 'row-btn' + (danger ? ' danger' : '');
+  // Hidden unless the staff role allows it — see can() and admin.css.
+  if (needs) el.dataset.needs = needs;
   el.tabIndex = 0;
   el.textContent = label;
   if (title) el.title = title;
@@ -252,6 +254,40 @@ export function debounce(fn, wait = 300) {
 
 let me = null;
 export function currentAdmin() { return me; }
+
+/* ── Staff roles ──────────────────────────────────────────────
+   /v1/admin/me sends the caller's role and the permissions it
+   grants (access.rs). Each becomes a `can-<permission>` class on
+   <html>; a control marked `data-needs="<permission>"` stays hidden
+   until its class is there (admin.css), so nothing a role can't use
+   flashes up while the page loads. The server refuses those actions
+   regardless — this only keeps the console from offering them.   */
+export function can(permission) {
+  return !!(me && (me.permissions || []).includes(permission));
+}
+
+/** Keeps only the modal actions the role allows: `{ needs: 'refunds' }`. */
+export function allowed(actions) {
+  return actions.filter((action) => !action.needs || can(action.needs));
+}
+
+const ROLE_NOTES = {
+  SupportAgent: 'You’re signed in as a Support agent: you can update orders and their tracking, resolve returns and answer support tickets. Everything else is view-only.',
+  Analyst: 'You’re signed in as an Analyst: the console is view-only for you.',
+};
+
+function paintRole() {
+  (me.permissions || []).forEach((p) => document.documentElement.classList.add('can-' + p));
+
+  const note = ROLE_NOTES[me.role];
+  const head = $('.admin-head');
+  if (note && head && !$('.role-note')) {
+    const banner = document.createElement('div');
+    banner.className = 'role-note';
+    banner.textContent = note;
+    head.after(banner);
+  }
+}
 
 /*
   The sidebar counts were hardcoded (24 orders, 318 products, 1,204
@@ -349,7 +385,8 @@ export async function mountAdminChrome() {
   me = response.data;
 
   const name = $('.nav-user-name');
-  if (name) name.textContent = me.name || 'Admin';
+  if (name) name.textContent = (me.name || 'Admin') + (me.role_label ? ' · ' + me.role_label : '');
+  paintRole();
 
   /*
     The console's own bell, over `/v1/admin/notification/*` — a feed

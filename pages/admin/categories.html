@@ -56,7 +56,7 @@
           </div>
           <div class="admin-head-actions">
             <button class="btn btn-outline btn-sm" id="cat-expand">Collapse all</button>
-            <button class="btn btn-primary btn-sm" id="cat-jump-new">Add category</button>
+            <button class="btn btn-primary btn-sm" id="cat-jump-new" data-needs="catalogue">Add category</button>
           </div>
         </div>
 
@@ -89,7 +89,7 @@
 
           <div class="admin-bulk" data-bulk>
             <span data-bulk-count>0 selected</span>
-            <div class="admin-bulk-actions">
+            <div class="admin-bulk-actions" data-needs="catalogue">
               <button class="btn btn-outline btn-sm">Show</button>
               <button class="btn btn-outline btn-sm">Hide</button>
               <button class="btn btn-outline btn-sm">Move under…</button>
@@ -386,7 +386,7 @@
         </div>
 
         <!-- ── Add category ──────────────────────────────────── -->
-        <div class="admin-panel" id="cat-new">
+        <div class="admin-panel" id="cat-new" data-needs="catalogue">
           <div class="admin-panel-head">
             <div>
               <div class="admin-panel-title">Add category</div>

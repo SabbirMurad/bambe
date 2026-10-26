@@ -169,8 +169,9 @@ pub struct PackagingOption {
     pub price: Cents,
     pub enabled: bool,
     pub position: u16,
-    // A path under /assets — the pictures ship with the site rather than
-    // through the image upload, so this is just where to find one.
+    // Where the picture is: an upload ("/image/webp/<id>", set from the
+    // admin's packaging form) or a file shipped with the site under /assets.
+    // The cart shows it as-is; empty means no picture.
     #[serde(default)]
     pub image: String,
     // One box for the whole order only makes sense with two things to put

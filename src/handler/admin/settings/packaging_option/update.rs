@@ -1,10 +1,9 @@
 use serde::Deserialize;
 use mongodb::bson::{doc, Document};
 use actix_web::{web, Error, HttpResponse, HttpRequest};
+use crate::Handler::Admin::Access::{require_staff, Permission};
 use crate::BuiltIns::mongo::MongoDB;
 use crate::util::response::Response;
-use crate::Middleware::Auth::{require_access, AccessRequirement};
-use crate::model::Account::AccountRole;
 use crate::model::Cents;
 use crate::model::Order::PackagingOption;
 
@@ -20,7 +19,7 @@ pub struct ReqBody {
 }
 
 pub async fn task(req: HttpRequest, path: web::Path<String>, body: web::Json<ReqBody>) -> Result<HttpResponse, Error> {
-    let admin = require_access(&req, AccessRequirement::Role(AccountRole::Administrator))?;
+    let admin = require_staff(&req, Permission::Shipping).await?;
     let db = MongoDB.connect();
     let col = db.collection::<PackagingOption>("packaging_option");
     let id = path.into_inner();

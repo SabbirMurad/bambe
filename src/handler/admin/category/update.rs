@@ -2,10 +2,9 @@ use chrono::Utc;
 use serde::Deserialize;
 use mongodb::bson::{doc, Bson, Document};
 use actix_web::{web, Error, HttpResponse, HttpRequest};
+use crate::Handler::Admin::Access::{require_staff, Permission};
 use crate::BuiltIns::mongo::MongoDB;
 use crate::util::response::Response;
-use crate::Middleware::Auth::{require_access, AccessRequirement};
-use crate::model::Account::AccountRole;
 use crate::model::Category::Category;
 use super::recompute_counts;
 
@@ -21,7 +20,7 @@ pub struct ReqBody {
 }
 
 pub async fn task(req: HttpRequest, path: web::Path<String>, body: web::Json<ReqBody>) -> Result<HttpResponse, Error> {
-    let admin = require_access(&req, AccessRequirement::Role(AccountRole::Administrator))?;
+    let admin = require_staff(&req, Permission::Catalogue).await?;
     let db = MongoDB.connect();
     let col = db.collection::<Category>("category");
     let category_id = path.into_inner();

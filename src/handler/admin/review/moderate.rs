@@ -3,10 +3,9 @@ use serde::Deserialize;
 use serde_json::json;
 use mongodb::bson::doc;
 use actix_web::{web, Error, HttpResponse, HttpRequest};
+use crate::Handler::Admin::Access::{require_staff, Permission};
 use crate::BuiltIns::mongo::MongoDB;
 use crate::util::response::Response;
-use crate::Middleware::Auth::{require_access, AccessRequirement};
-use crate::model::Account::AccountRole;
 use crate::model::Review::ProductReview;
 
 #[derive(Debug, Deserialize)]
@@ -23,7 +22,7 @@ pub struct ReqBody {
   simply post it again; deleting is what clears that.
 */
 pub async fn task(req: HttpRequest, path: web::Path<String>, body: web::Json<ReqBody>) -> Result<HttpResponse, Error> {
-    let admin = require_access(&req, AccessRequirement::Role(AccountRole::Administrator))?;
+    let admin = require_staff(&req, Permission::Reviews).await?;
     let db = MongoDB.connect();
     let id = path.into_inner();
 

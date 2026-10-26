@@ -1,16 +1,15 @@
 use futures::StreamExt;
 use mongodb::bson::doc;
 use actix_web::{Error, HttpResponse, HttpRequest};
+use crate::Handler::Admin::Access::{require_staff, Permission};
 use crate::BuiltIns::mongo::MongoDB;
 use crate::util::response::Response;
-use crate::Middleware::Auth::{require_access, AccessRequirement};
-use crate::model::Account::AccountRole;
 use crate::model::Order::DeliveryMethod;
 
 /// Every row, enabled or not — the console has to be able to re-enable one it
 /// turned off. The storefront's own list filters on `enabled`.
 pub async fn task(req: HttpRequest) -> Result<HttpResponse, Error> {
-    require_access(&req, AccessRequirement::Role(AccountRole::Administrator))?;
+    require_staff(&req, Permission::View).await?;
     let db = MongoDB.connect();
 
     let result = db
