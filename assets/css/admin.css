@@ -43,12 +43,16 @@
    far left once the bar runs the full viewport. Swapping the auto to
    the left moves it over to sit with the account controls. The auto
    margin eats the free space, so the basis has to be an explicit width
-   rather than the storefront's flex-grow off a zero basis. */
-.admin .nav-search {
-  flex: 0 1 720px;
-  max-width: 720px;
-  margin-left: auto;
-  margin-right: 0;
+   rather than the storefront's flex-grow off a zero basis. Desktop
+   only: on a phone the search is an icon like the storefront's
+   (common.css). */
+@media (min-width: 641px) {
+  .admin .nav-search {
+    flex: 0 1 720px;
+    max-width: 720px;
+    margin-left: auto;
+    margin-right: 0;
+  }
 }
 
 .admin-layout {

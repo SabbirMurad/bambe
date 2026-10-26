@@ -428,9 +428,6 @@
   var userBtn = document.querySelector('.nav-user-btn');
   if (userBtn && !userBtn.closest('a')) userBtn.onclick = function() { location.href = '/account/profile'; };
   else if (userBtn && userBtn.closest('a')) userBtn.closest('a').href = '/account/profile';
-  // Search
-  var searchBtn = document.querySelector('.nav-search-btn');
-  if (searchBtn) searchBtn.onclick = function() { location.href = '/search'; };
   // Hero CTA
   var heroBtn = document.querySelector('.hero-cta-primary');
   if (heroBtn) heroBtn.onclick = function() { location.href = '/listing'; };

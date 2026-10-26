@@ -236,8 +236,6 @@
   var icons = document.querySelectorAll('.nav-icon-btn');
   // icons[0] = notifications (active), icons[1] = cart
   if (icons[1]) icons[1].onclick = function() { location.href = '/cart'; };
-  var searchBtn = document.querySelector('.nav-search-btn');
-  if (searchBtn) searchBtn.onclick = function() { location.href = '/search'; };
   // Log out, the rows, the unread tally and Mark all as read are all
   // notifications.js.
   // Notification items — mark as read on click
