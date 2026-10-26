@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-store-theme="{{ store_theme | default(value='orange') }}">
+<html lang="en" data-store-theme="{{ store_theme | default(value='orange') }}" data-currency="{{ store_currency | default(value='BDT') }}">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -51,7 +51,7 @@
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M3 5l3 3 3-3" stroke="#94908A" stroke-width="1.3" stroke-linecap="round"/></svg>
           </div>
           <div class="filter-card-body">
-            <div class="price-range-track" data-min="0" data-max="200" data-step="5">
+            <div class="price-range-track" data-min="0" data-max="10000" data-step="100">
               <div class="price-range-fill"></div>
               <div class="price-range-thumb" style="left:18%;"></div>
               <div class="price-range-thumb" style="left:78%;"></div>

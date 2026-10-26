@@ -1,11 +1,13 @@
 use mongodb::bson::doc;
 use actix_web::{Error, HttpResponse, HttpRequest};
+use crate::Middleware::Auth::refuse_staff;
 use crate::BuiltIns::mongo::MongoDB;
 use crate::util::response::Response;
 use crate::model::Cart::Cart;
 use super::{resolve_owner, find_cart, build_response};
 
 pub async fn task(req: HttpRequest) -> Result<HttpResponse, Error> {
+    refuse_staff(&req)?;
     let owner = match resolve_owner(&req) {
         Some(owner) => owner,
         None => return Ok(Response::unauthorized("No cart identity")),

@@ -4,6 +4,7 @@ use serde::Deserialize;
 use serde_json::{json, Value};
 use mongodb::bson::doc;
 use actix_web::{web, Error, HttpResponse, HttpRequest};
+use crate::Middleware::Auth::refuse_staff;
 use crate::BuiltIns::mongo::MongoDB;
 use crate::util::response::Response;
 use crate::model::Cart::CartItem;
@@ -19,6 +20,7 @@ pub struct ReqBody {
 fn default_quantity() -> u32 { 1 }
 
 pub async fn task(req: HttpRequest, body: web::Json<ReqBody>) -> Result<HttpResponse, Error> {
+    refuse_staff(&req)?;
     if body.quantity == 0 {
         return Ok(Response::bad_request("Quantity must be at least 1"));
     }

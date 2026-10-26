@@ -613,15 +613,19 @@
    Full-bleed panels that touch, each a photograph with the
    category name over it. The row is built by home.js from the
    real category tree, so the count is whatever the shop has —
-   the grid below adapts rather than assuming three.
+   the row adapts rather than assuming three. home.js sets
+   --door-cols (six at most); past that the doors wrap, and a short
+   last row grows to fill the width.
    ───────────────────────────────────────────────────── ── */
 .doors {
-  display: grid;
-  grid-auto-flow: column;
-  grid-auto-columns: 1fr;
+  display: flex;
+  flex-wrap: wrap;
   background: var(--ink);
 }
 .door {
+  /* The 1px slack keeps rounding from pushing the last door of a full
+     row onto the next; flex-grow takes it back. */
+  flex: 1 1 calc(100% / var(--door-cols, 3) - 1px);
   position: relative;
   min-height: 420px;
   display: flex;
@@ -746,8 +750,7 @@
   /* The note is a fixed 470px so its first line can run under the
      button at desktop width. There is no room for that here. */
   .collage-note { width: auto; max-width: 100%; }
-  .doors { grid-auto-flow: row; }
-  .door { min-height: 300px; }
+  .door { flex-basis: 100%; min-height: 300px; }
 }
 @media (max-width: 640px) {
   /*

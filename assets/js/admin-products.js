@@ -222,6 +222,7 @@ function paintTabs() {
     const el = document.createElement('div');
     el.className = 'admin-tab' + (value === state.tab ? ' active' : '');
     el.setAttribute('role', 'tab');
+    el.setAttribute('aria-selected', String(value === state.tab));
     el.tabIndex = 0;
     el.textContent = label;
 
@@ -232,7 +233,17 @@ function paintTabs() {
       el.appendChild(count);
     }
 
-    const pick = () => { state.tab = value; state.page = 1; load(); };
+    /* The tabs are rebuilt here, so admin.js's generic tab switcher is
+       bound to the markup they replaced and never moves the highlight.
+       Repaint them, and keep keyboard focus on the one just picked. */
+    const pick = () => {
+      state.tab = value;
+      state.page = 1;
+      paintTabs();
+      const picked = $$('.admin-tabs .admin-tab')[TABS.findIndex((t) => t.value === value)];
+      if (picked) picked.focus();
+      load();
+    };
     el.addEventListener('click', pick);
     el.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pick(); }

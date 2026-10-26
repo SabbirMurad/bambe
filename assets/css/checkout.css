@@ -467,6 +467,9 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  /* address.js draws the truck / bolt / clock in currentColor, so they
+     follow the store theme rather than a fixed orange. */
+  color: var(--primary-text);
 }
 .delivery-option.selected .delivery-option-icon { background: color-mix(in srgb, var(--primary) 20%, transparent); }
 .delivery-option-info { flex: 1; }

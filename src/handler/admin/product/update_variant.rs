@@ -18,9 +18,16 @@ pub struct ReqBody {
     color_hex: Option<String>,
     image_id: Option<String>,
     price: Option<Cents>,
-    compare_at_price: Option<Cents>,
+    /// Absent leaves it; null clears it, which ends the sale.
+    #[serde(default, deserialize_with = "present")]
+    compare_at_price: Option<Option<Cents>>,
     stock: Option<i32>,
     low_stock_threshold: Option<i32>,
+}
+
+// Tells a field sent as null (Some(None)) from one left out (None).
+fn present<'de, D: serde::Deserializer<'de>>(d: D) -> Result<Option<Option<Cents>>, D::Error> {
+    Option::<Cents>::deserialize(d).map(Some)
 }
 
 pub async fn task(req: HttpRequest, path: web::Path<String>, body: web::Json<ReqBody>) -> Result<HttpResponse, Error> {
@@ -34,6 +41,11 @@ pub async fn task(req: HttpRequest, path: web::Path<String>, body: web::Json<Req
         Some(v) => v,
         None => return Ok(Response::not_found("Variant not found")),
     };
+
+    let compare_at = body.compare_at_price.unwrap_or(existing.compare_at_price);
+    if let Err(message) = super::check_compare_at(body.price.unwrap_or(existing.price), compare_at) {
+        return Ok(Response::bad_request(message));
+    }
 
     let mut set_doc = Document::new();
     if let Some(v) = &body.sku { set_doc.insert("sku", v); }

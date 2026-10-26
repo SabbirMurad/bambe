@@ -559,7 +559,7 @@ function paintTabs() {
       el.appendChild(count);
     }
 
-    const pick = () => { state.tab = value; state.page = 1; load(); };
+    const pick = () => { state.tab = value; state.page = 1; paintTabs(); load(); };
     el.addEventListener('click', pick);
     el.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pick(); }

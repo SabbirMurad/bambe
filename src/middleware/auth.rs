@@ -96,6 +96,36 @@ pub fn require_access(
 }
 
 /*
+  The cart, wishlist, checkout and orders belong to customer accounts.
+  An admin who filled a cart or placed an order would land in the order
+  queue and sales figures they manage, against an id that has no
+  customer profile, address book or notifications behind it.
+
+  `require_shopper` is for endpoints that need a signed-in customer;
+  `refuse_staff` for the cart ones a guest may also call, where the only
+  thing to rule out is a staff token.
+*/
+const SHOPPERS_ONLY: &str =
+    "Admin accounts can't shop. Sign in with a customer account to use the cart, wishlist and checkout.";
+
+pub fn require_shopper(req: &HttpRequest) -> Result<User, Error> {
+    let user = require_access(req, AccessRequirement::AnyToken)?;
+    if user.role != AccountRole::User {
+        return Err(actix_web::error::ErrorForbidden(json!({ "error": SHOPPERS_ONLY })));
+    }
+    Ok(user)
+}
+
+pub fn refuse_staff(req: &HttpRequest) -> Result<(), Error> {
+    match optional_access(req) {
+        Some(user) if user.role != AccountRole::User => {
+            Err(actix_web::error::ErrorForbidden(json!({ "error": SHOPPERS_ONLY })))
+        }
+        _ => Ok(()),
+    }
+}
+
+/*
   Same as `require_access`, but for endpoints a guest may also call — the
   cart, mainly. Returns `None` on a missing or invalid token instead of
   erroring, so the caller can fall back to session-based identity.

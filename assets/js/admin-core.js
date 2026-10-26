@@ -18,6 +18,7 @@
 ═══════════════════════════════════════════════════════════════ */
 import { Fetcher } from './fetcher.js';
 import { toast } from './toast.js';
+import { formatMoney, currencySymbol } from './currency.js';
 import './nav-search.js';
 import { session } from './session.js';
 
@@ -31,18 +32,16 @@ export const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
    drag the product card in behind it.                          */
 export function money(cents) {
   if (cents === null || cents === undefined) return '—';
-  const sign = cents < 0 ? '-' : '';
-  /* Rounded, not floored: most figures arrive as whole cents, but the
-     aggregates do not — `avg_lifetime_value` is a Mongo `$avg` and comes
-     back as 7721.333…, which floors to "$77.21.33333333333". */
-  const abs = Math.round(Math.abs(cents));
-  return sign + '$' + Math.floor(abs / 100).toLocaleString() + '.' + String(abs % 100).padStart(2, '0');
+  /* formatMoney rounds first: most figures arrive as whole cents, but
+     the aggregates do not — `avg_lifetime_value` is a Mongo `$avg` and
+     comes back as 7721.333…, which once printed as "$77.21.33333333333". */
+  return formatMoney(cents);
 }
 
 export function shortMoney(cents) {
-  const dollars = (cents || 0) / 100;
-  if (Math.abs(dollars) >= 1000) return '$' + (dollars / 1000).toFixed(1) + 'k';
-  return '$' + dollars.toFixed(0);
+  const units = (cents || 0) / 100;
+  if (Math.abs(units) >= 1000) return currencySymbol() + (units / 1000).toFixed(1) + 'k';
+  return currencySymbol() + units.toFixed(0);
 }
 
 export function fullDate(ms) {

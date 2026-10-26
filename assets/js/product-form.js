@@ -213,6 +213,18 @@ function skuRow(sku) {
   priceTd.appendChild(price);
   tr.appendChild(priceTd);
 
+  /* The "was" price. Filled in, the SKU is on sale: the storefront
+     strikes it through beside the price and badges the discount.
+     Empty is no sale, so clearing it ends one. */
+  const was = input(dollars(sku.compare_at_price), '—');
+  was.setAttribute('aria-label', 'Was price (leave empty for no sale)');
+  was.addEventListener('input', () => {
+    sku.compare_at_price = was.value.trim() ? cents(was.value) : null;
+  });
+  const wasTd = document.createElement('td');
+  wasTd.appendChild(was);
+  tr.appendChild(wasTd);
+
   const stock = input(sku.stock, '0');
   stock.addEventListener('input', () => { sku.stock = Number(stock.value) || 0; });
   const stockTd = document.createElement('td');
@@ -278,6 +290,7 @@ function blankSku() {
     color_hex: '#1A1A18',
     image_id: null,
     price: 0,
+    compare_at_price: null,
     stock: 0,
   };
 }
@@ -296,6 +309,9 @@ function problems() {
     if (!sku.sku.trim()) out.push(label + ' needs a code.');
     if (!sku.image_id) out.push(label + ' needs an image.');
     if (!(sku.price > 0)) out.push(label + ' needs a price.');
+    if (sku.compare_at_price !== null && !(sku.compare_at_price > sku.price)) {
+      out.push(label + ': the "was" price must be higher than the price, or empty for no sale.');
+    }
   });
 
   const codes = skus.map((s) => s.sku.trim().toLowerCase()).filter(Boolean);
@@ -325,7 +341,7 @@ function variantPayload(sku) {
     color_hex: sku.color_hex || null,
     image_id: sku.image_id,
     price: sku.price,
-    compare_at_price: null,
+    compare_at_price: sku.compare_at_price,
     stock: sku.stock,
   };
 }
@@ -488,6 +504,7 @@ async function loadProduct() {
     color_hex: variant.color_hex || '#1A1A18',
     image_id: variant.image_id,
     price: variant.price,
+    compare_at_price: variant.compare_at_price ?? null,
     stock: variant.stock,
   }));
   paintSkus();

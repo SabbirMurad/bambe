@@ -15,7 +15,6 @@ pub struct ReqBody {
     slug: String,
     description: Option<String>,
     parent_id: Option<String>,
-    swatch: Option<String>,
     image_id: Option<String>,
     #[serde(default = "default_true")]
     visible: bool,
@@ -44,7 +43,6 @@ pub async fn task(req: HttpRequest, body: web::Json<ReqBody>) -> Result<HttpResp
         slug: body.slug.clone(),
         description: body.description.clone(),
         parent_id: body.parent_id.clone(),
-        swatch: body.swatch.clone(),
         image_id: body.image_id.clone(),
         visible: body.visible,
         position: body.position,

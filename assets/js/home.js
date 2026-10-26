@@ -207,6 +207,12 @@ async function loadCategories() {
   const categories = response.data || [];
   if (!categories.length) return;   // the drawn-in empty state already says so
 
+  /* At most six to a row. Past six they wrap, split evenly so the
+     last row is never one lone door: 7 is 4 + 3, 8 is 4 + 4, 13 is
+     5 + 4 + 4. The grid reads the column count from --door-cols. */
+  const rows = Math.ceil(categories.length / 6);
+  doors.style.setProperty('--door-cols', String(Math.ceil(categories.length / rows)));
+
   doors.innerHTML = '';
   const frag = document.createDocumentFragment();
   categories.forEach((node) => frag.appendChild(categoryDoor(node)));

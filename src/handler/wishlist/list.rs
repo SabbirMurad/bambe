@@ -5,13 +5,13 @@ use mongodb::bson::doc;
 use actix_web::{Error, HttpResponse, HttpRequest};
 use crate::BuiltIns::mongo::MongoDB;
 use crate::util::response::Response;
-use crate::Middleware::Auth::{require_access, AccessRequirement};
+use crate::Middleware::Auth::require_shopper;
 use crate::model::Cart::WishlistItem;
 use crate::model::Product::Product;
 use crate::model::ImageStruct;
 
 pub async fn task(req: HttpRequest) -> Result<HttpResponse, Error> {
-    let user = require_access(&req, AccessRequirement::AnyToken)?;
+    let user = require_shopper(&req)?;
     let db = MongoDB.connect();
 
     let result = db

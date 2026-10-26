@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-store-theme="{{ store_theme | default(value='orange') }}">
+<html lang="en" data-store-theme="{{ store_theme | default(value='orange') }}" data-currency="{{ store_currency | default(value='BDT') }}">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -19,7 +19,7 @@
       <aside class="admin-sidebar">
         <div class="admin-brand">
           <div class="admin-brand-mark">
-            <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M3 7.5 9 3l6 4.5V15a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V7.5Z" stroke="var(--warn)" stroke-width="1.5" stroke-linejoin="round"/><path d="M7 16v-5h4v5" stroke="var(--warn)" stroke-width="1.5" stroke-linejoin="round"/></svg>
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M3 7.5 9 3l6 4.5V15a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V7.5Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M7 16v-5h4v5" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
           </div>
           <div>
             <div class="admin-brand-title">Admin Console</div>

@@ -19,6 +19,7 @@
    the shop does not have.
 ═══════════════════════════════════════════════════════════════ */
 import { Fetcher } from './fetcher.js';
+import { formatWhole } from './currency.js';
 import { renderGrid, showSkeleton, hideSkeleton, emptyState } from './catalog.js';
 
 (function() {
@@ -165,11 +166,11 @@ import { renderGrid, showSkeleton, hideSkeleton, emptyState } from './catalog.js
       thumbs[1].style.left = pct(value[1]) + '%';
       fill.style.left = pct(value[0]) + '%';
       fill.style.right = (100 - pct(value[1])) + '%';
-      inputs[0].value = '$' + value[0];
-      inputs[1].value = '$' + value[1];
+      inputs[0].value = formatWhole(value[0]);
+      inputs[1].value = formatWhole(value[1]);
       thumbs.forEach(function(t, i) {
         t.setAttribute('aria-valuenow', value[i]);
-        t.setAttribute('aria-valuetext', '$' + value[i]);
+        t.setAttribute('aria-valuetext', formatWhole(value[i]));
         // Neither handle may cross the other, so each one's own
         // range stops where its partner is standing.
         t.setAttribute('aria-valuemin', i === 0 ? min : value[0]);
@@ -326,7 +327,7 @@ import { renderGrid, showSkeleton, hideSkeleton, emptyState } from './catalog.js
       if (card.dataset.facet === 'price' && priceState && !priceState.isFullRange()) {
         var range = priceState.get();
         any = true;
-        appendChip(card, '$' + range.from + ' – $' + range.to, function() { priceState.reset(); refresh(); });
+        appendChip(card, formatWhole(range.from) + ' – ' + formatWhole(range.to), function() { priceState.reset(); refresh(); });
         return;
       }
       if (!picks.length) return;

@@ -33,7 +33,7 @@ import {
 
 const TABS = ['Store', 'Payments', 'Shipping', 'Staff', 'Activity'];
 
-const CURRENCIES = ['USD', 'GBP', 'EUR', 'CAD', 'AUD', 'JPY'];
+const CURRENCIES = ['BDT', 'USD', 'GBP', 'EUR', 'CAD', 'AUD', 'JPY'];
 
 const STAFF_ROLES = ['Owner', 'Manager', 'SupportAgent', 'Analyst'];
 const STAFF_STATUS = ['Pending', 'Active', 'Suspended'];
