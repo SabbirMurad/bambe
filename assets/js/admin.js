@@ -95,6 +95,9 @@
      real buttons, so Enter/Space have to be wired by hand.     */
   document.addEventListener('keydown', function(e) {
     if (e.key !== 'Enter' && e.key !== ' ') return;
+    // A control that handled the key itself has said so; clicking it
+    // again here would run its action twice.
+    if (e.defaultPrevented) return;
     var el = document.activeElement;
     if (!el) return;
     if (el.matches('.admin-tab, .ticket-item, .cat-toggle, .admin-nav-logout, .row-btn, .admin-panel-link')) {
