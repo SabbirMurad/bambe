@@ -18,6 +18,7 @@
 ═══════════════════════════════════════════════════════════════ */
 import { Fetcher } from './fetcher.js';
 import { toast } from './toast.js';
+import './nav-search.js';
 import { session } from './session.js';
 
 export { Fetcher, toast, session };

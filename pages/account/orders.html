@@ -276,8 +276,6 @@
   var icons = document.querySelectorAll('.nav-icon-btn');
   if (icons[0]) icons[0].onclick = function() { location.href = '/wishlist'; };
   if (icons[1]) icons[1].onclick = function() { location.href = '/cart'; };
-  var searchBtn = document.querySelector('.nav-search-btn');
-  if (searchBtn) searchBtn.onclick = function() { location.href = '/search'; };
   // The log-out button, the tabs, the cards and the pager are all
   // orders.js — it signs the session out properly rather than just
   // navigating to /login with the tokens still in localStorage.

@@ -17,6 +17,7 @@ import { paintImage, clearImage } from './catalog.js';
 import { toast } from './toast.js';
 import './smooth-scroll.js';
 import './nav-autohide.js';
+import './nav-search.js';
 
 /*
   The name is cached so the next page paints it on the first frame.

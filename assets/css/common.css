@@ -1708,57 +1708,82 @@ html.nav-hidden .sticky-top-no-sub { top: 20px; }
      is still reachable from the account pages. */
   .nav-deliver { display: none; }
   /*
-    The search collapses to its magnifier and opens on tap.
+    The search becomes an icon, one of the row of icons on the right,
+    and a tap opens the field as its own row under the bar
+    (assets/js/nav-search.js toggles .search-open on the .navbar).
 
-    A phone header cannot hold a logo, a full search field and three
-    icons — laid out flat, the icons were pushed 108px off the right
-    edge of every storefront page. Rather than shrink the field to a
-    stub too narrow to type in, it becomes an icon and takes the whole
-    row when it has focus, hiding the account icons while it is open.
+    A phone header cannot hold a logo, a full field and three icons.
+    The field used to grow in place on focus instead, which meant the
+    closed state was a grey pill unlike its neighbours and the open one
+    hid the logo and every icon.
 
-    Done with :focus-within rather than a toggle button, so it needs no
-    markup change and works on every page that carries the navbar —
-    storefront, account, checkout and admin alike — with no script.
-
-    min-width:0 is what lets it shrink at all: a flex item defaults to
-    `min-width: auto` and will not go below the intrinsic width of the
-    input inside it.
+    The negative right margin closes the bar's 12px gap down to the 4px
+    the icons keep between themselves. `.navbar` in the selectors
+    outranks admin.css's `.admin .nav-search` width rules.
   */
-  .nav-search {
-    flex: 0 0 var(--nav-h);
-    width: var(--nav-h);
+  .navbar .nav-search {
+    flex: 0 0 auto;
+    width: 40px;
+    height: 40px;
     min-width: 0;
+    max-width: none;
+    margin: 0 -8px 0 auto;
     padding: 0;
     justify-content: center;
-    border-radius: 999px;
-    transition: flex-basis 0.18s ease, width 0.18s ease;
+    background: none;
+    border: 0;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: background 0.15s;
   }
-  .nav-search input {
-    width: 0;
-    min-width: 0;
-    padding: 0;
-    opacity: 0;
-    font-size: 16px;   /* under 16px iOS zooms the page on focus */
-  }
-  /* The submit button is redundant once the field is a single row —
-     the keyboard's own Go key does the same job. */
+  .navbar .nav-search:hover,
+  .navbar .nav-search:focus-within,
+  .navbar.search-open .nav-search { background: var(--input-bg); }
+  .navbar .nav-search:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+  /* Drawn like the other three: 20px, the same ink, a 1.5px line once
+     the 16-unit viewBox is scaled up. */
+  .nav-search > svg:first-child { width: 20px; height: 20px; }
+  .nav-search > svg:first-child [stroke] { stroke: #32302C; stroke-width: 1.2; }
+
+  .nav-search input,
   .nav-search-btn { display: none; }
 
-  .nav-search:focus-within {
-    flex: 1 1 auto;
+  /* The open field: a white strip under the bar, the field inside it.
+     Positioned against the sticky .navbar, so it rides along with it. */
+  .navbar.search-open::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    height: 60px;
+    background: var(--white);
+    border-bottom: 1px solid var(--border);
+    box-shadow: 0 10px 20px -14px rgba(0, 0, 0, 0.25);
+  }
+  .navbar.search-open .nav-search input {
+    display: block;
+    position: absolute;
+    z-index: 1;
+    top: calc(100% + 8px);
+    left: 16px;
+    right: 16px;
     width: auto;
-    padding: 0 6px 0 12px;
-    border-radius: 8px;
+    height: 44px;
+    padding: 0 48px 0 14px;
+    background: var(--white);
+    border: 1.5px solid var(--primary-text);
+    border-radius: 10px;
+    font-size: 16px;   /* under 16px iOS zooms the page on focus */
+    cursor: text;
   }
-  .nav-search:focus-within input {
-    width: 100%;
-    opacity: 1;
-    padding: 0 8px;
+  .navbar.search-open .nav-search-btn {
+    display: flex;
+    position: absolute;
+    z-index: 2;
+    top: calc(100% + 16px);
+    right: 24px;
   }
-  /* Everything to its right stands down while the field is open. */
-  .nav-search:focus-within ~ .nav-actions { display: none; }
-  .nav-search:focus-within ~ .nav-logo,
-  .nav-logo:has(~ .nav-search:focus-within) .nav-logo-text { display: none; }
   .nav-actions { gap: 4px; }
   /* Name off, avatar stays: the button is still recognisably the
      account control at a fraction of the width. */
@@ -1811,7 +1836,10 @@ html.nav-hidden .sticky-top-no-sub { top: 20px; }
 
   .navbar-inner { padding: 0 12px; gap: 8px; }
   .nav-actions { gap: 0; }
-  .nav-icon-btn { width: 34px; height: 34px; }
+  .nav-icon-btn,
+  .navbar .nav-search { width: 34px; height: 34px; }
+  .navbar.search-open .nav-search input { left: 12px; right: 12px; }
+  .navbar.search-open .nav-search-btn { right: 20px; }
   .nav-user-btn { padding: 5px; }
 }
 
