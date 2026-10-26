@@ -1875,3 +1875,27 @@ html.nav-hidden .sticky-top-no-sub { top: 20px; }
 .country-suggest-flag { font-size: 16px; line-height: 1; }
 .country-suggest-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .country-suggest-dial { font-size: 12px; color: var(--subtle); }
+
+/* ── Admin browsing the shop ───────────────────────────────────
+   navbar.js sets html.is-staff for an admin session. The cart,
+   wishlist, checkout and orders are customer-only on the server, so
+   every control that leads into them comes off, and the product page
+   says why its buy buttons are missing. */
+html.is-staff .nav-icon-btn[data-nav="wishlist"],
+html.is-staff .nav-icon-btn[data-nav="notifications"],
+html.is-staff .nav-icon-btn[data-nav="cart"],
+html.is-staff .product-card-wish,
+html.is-staff .product-card-quick,
+html.is-staff .pd-qty-row,
+html.is-staff .pd-add-cart,
+html.is-staff .pd-wish-btn { display: none !important; }
+html.is-staff .pd-cta-row::before {
+  content: "You're signed in as an admin. The cart and checkout are for customer accounts.";
+  flex: 1;
+  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+  background: var(--input-bg);
+  color: var(--subtle);
+  font-size: 13px;
+  line-height: 1.45;
+}

@@ -284,9 +284,9 @@ async function loadAddresses() {
 /* ── Delivery ─────────────────────────────────────────────────  */
 
 const ICONS = {
-  truck: '<path d="M2 5.5h10v7H2v-7ZM12 8h3.2l2.8 2.6v1.9h-6V8Z" stroke="var(--warn)" stroke-width="1.4" stroke-linejoin="round"/><circle cx="5.5" cy="14.5" r="1.6" stroke="var(--warn)" stroke-width="1.4"/><circle cx="14.5" cy="14.5" r="1.6" stroke="var(--warn)" stroke-width="1.4"/>',
-  bolt: '<path d="M11 2 4 11h4.5l-1 7 7.5-9.5h-4.6L11 2Z" stroke="var(--warn)" stroke-width="1.4" stroke-linejoin="round"/>',
-  clock: '<circle cx="10" cy="10" r="7.5" stroke="var(--warn)" stroke-width="1.4"/><path d="M10 5.5V10l3 2" stroke="var(--warn)" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>',
+  truck: '<path d="M2 5.5h10v7H2v-7ZM12 8h3.2l2.8 2.6v1.9h-6V8Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><circle cx="5.5" cy="14.5" r="1.6" stroke="currentColor" stroke-width="1.4"/><circle cx="14.5" cy="14.5" r="1.6" stroke="currentColor" stroke-width="1.4"/>',
+  bolt: '<path d="M11 2 4 11h4.5l-1 7 7.5-9.5h-4.6L11 2Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>',
+  clock: '<circle cx="10" cy="10" r="7.5" stroke="currentColor" stroke-width="1.4"/><path d="M10 5.5V10l3 2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>',
 };
 
 /* Fastest first gets the bolt, the timed one the clock — picked from

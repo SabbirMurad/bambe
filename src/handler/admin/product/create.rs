@@ -37,7 +37,6 @@ pub struct ReqBody {
     tags: Vec<String>,
     #[serde(default)]
     status: ProductStatus,
-    compare_at_price: Option<Cents>,
     #[serde(default)]
     variants: Vec<VariantInput>,
 }
@@ -63,6 +62,11 @@ pub async fn task(req: HttpRequest, body: web::Json<ReqBody>) -> Result<HttpResp
 
     if body.title.trim().is_empty() || body.category_id.trim().is_empty() {
         return Ok(Response::bad_request("Title and category are required"));
+    }
+    for v in &body.variants {
+        if let Err(message) = super::check_compare_at(v.price, v.compare_at_price) {
+            return Ok(Response::bad_request(message));
+        }
     }
 
     let slug = body.slug.clone().unwrap_or_else(|| slugify(&body.title));
@@ -97,7 +101,9 @@ pub async fn task(req: HttpRequest, body: web::Json<ReqBody>) -> Result<HttpResp
         price_min: body.variants.iter().map(|v| v.price).min().unwrap_or(0),
         price_max: body.variants.iter().map(|v| v.price).max().unwrap_or(0),
         in_stock: body.variants.iter().any(|v| v.stock > 0),
-        compare_at_price: body.compare_at_price,
+        compare_at_price: super::product_compare_at(
+            &body.variants.iter().map(|v| (v.price, v.compare_at_price)).collect::<Vec<_>>(),
+        ),
         rating_average: 0.0,
         rating_count: 0,
         sold_count: 0,

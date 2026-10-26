@@ -18,8 +18,6 @@ pub struct Category {
     // None for a top-level category.
     pub parent_id: Option<String>,
 
-    // The colour chip in the admin list and on category cards.
-    pub swatch: Option<String>,
     pub image_id: Option<String>,
     // Hidden categories stay in the tree and keep their products; they just
     // don't render in storefront navigation.

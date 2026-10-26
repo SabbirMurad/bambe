@@ -18,7 +18,6 @@ fn build_tree(parent_id: Option<&str>, categories: &[Category]) -> Vec<Value> {
                 "name": c.name,
                 "slug": c.slug,
                 "description": c.description,
-                "swatch": c.swatch,
                 "image_id": c.image_id,
                 "product_count": c.product_count,
                 "children": build_tree(Some(c.uuid.as_str()), categories),

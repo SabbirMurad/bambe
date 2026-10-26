@@ -1,9 +1,11 @@
 use serde_json::json;
 use actix_web::{Error, HttpResponse, HttpRequest};
+use crate::Middleware::Auth::refuse_staff;
 use crate::BuiltIns::mongo::MongoDB;
 use super::{resolve_owner, find_cart, build_response};
 
 pub async fn task(req: HttpRequest) -> Result<HttpResponse, Error> {
+    refuse_staff(&req)?;
     let db = MongoDB.connect();
 
     let cart = match resolve_owner(&req) {

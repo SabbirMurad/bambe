@@ -83,6 +83,7 @@
   margin-bottom: 14px;
 }
 .admin-brand-mark {
+  color: var(--primary-text);   /* the icon inside is drawn in currentColor */
   width: 34px;
   height: 34px;
   border-radius: var(--radius-sm);
@@ -235,6 +236,7 @@
   color: var(--subtle);
 }
 .stat-tile-icon {
+  color: var(--primary-text);   /* the icon inside is drawn in currentColor */
   width: 30px;
   height: 30px;
   border-radius: var(--radius-sm);
@@ -605,8 +607,8 @@
 ══════════════════════════════════════════════════════ ── */
 .cat-cell { display: flex; align-items: center; gap: 10px; }
 
-/* Subcategories indent by the width of the parent's chevron plus its
-   swatch, so a child's name lines up under its parent's name. */
+/* Subcategories indent one step, so a child's chevron slot starts past
+   its parent's and the tree reads at a glance. */
 .admin-table tr[data-level="1"] .cat-cell { padding-left: 40px; }
 
 .cat-toggle {
@@ -625,17 +627,8 @@
 .cat-toggle:hover { background: var(--input-bg); color: var(--dark); }
 .cat-toggle[aria-expanded="true"] { transform: rotate(90deg); }
 
-/* Leaf rows keep the slot so their swatch lines up with a parent's. */
+/* Leaf rows keep the slot so their name lines up with a parent's. */
 .cat-toggle-spacer { width: 20px; flex-shrink: 0; }
-
-.cat-swatch {
-  width: 28px;
-  height: 28px;
-  border-radius: var(--radius-sm);
-  flex-shrink: 0;
-  background: var(--input-bg);
-}
-.cat-swatch.sub { width: 10px; height: 10px; border-radius: 3px; margin: 0 9px; }
 
 .cat-hidden { display: none; }
 

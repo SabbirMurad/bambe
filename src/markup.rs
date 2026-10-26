@@ -20,10 +20,13 @@ async fn render(template: &web::Data<Tera>, name: &str) -> Result<HttpResponse, 
 /*
   Every page is stamped with the store's colour theme on its <html> element
   (data-store-theme), so the right palette applies on the first frame — no
-  flash of the default colours before a script could switch them.
+  flash of the default colours before a script could switch them. The
+  currency rides along (data-currency) so prices are drawn with the store's
+  symbol, not one written into the scripts.
 */
 struct StoreChrome {
   theme: String,
+  currency: String,
   whatsapp: Option<String>,
   facebook: Option<String>,
   instagram: Option<String>,
@@ -45,8 +48,13 @@ async fn store_chrome() -> StoreChrome {
     .map(|phone| phone.chars().filter(|c| c.is_ascii_digit()).collect::<String>())
     .filter(|digits| digits.len() >= 8);
   let link = |value: Option<String>| value.map(|v| v.trim().to_string()).filter(|v| v.starts_with("http"));
+  let currency = settings.as_ref()
+    .map(|settings| settings.default_currency.trim().to_uppercase())
+    .filter(|code| code.len() == 3 && code.chars().all(|c| c.is_ascii_alphabetic()))
+    .unwrap_or_else(|| "BDT".to_string());
   StoreChrome {
     theme,
+    currency,
     whatsapp,
     facebook: link(settings.as_ref().and_then(|s| s.facebook_url.clone())),
     instagram: link(settings.as_ref().and_then(|s| s.instagram_url.clone())),
@@ -60,6 +68,7 @@ async fn render_with(template: &web::Data<Tera>, name: &str, context: Context) -
 async fn render_status(template: &web::Data<Tera>, name: &str, mut context: Context, status: StatusCode) -> Result<HttpResponse, Error> {
   let chrome = store_chrome().await;
   context.insert("store_theme", &chrome.theme);
+  context.insert("store_currency", &chrome.currency);
   if let Some(number) = &chrome.whatsapp { context.insert("whatsapp_number", number); }
   if let Some(url) = &chrome.facebook { context.insert("facebook_url", url); }
   if let Some(url) = &chrome.instagram { context.insert("instagram_url", url); }

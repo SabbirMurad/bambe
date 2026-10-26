@@ -15,6 +15,7 @@ use serde::Deserialize;
 use serde_json::json;
 use mongodb::bson::doc;
 use actix_web::{web, Error, HttpResponse, HttpRequest};
+use crate::Middleware::Auth::refuse_staff;
 use crate::BuiltIns::mongo::MongoDB;
 use crate::model::Order::{DeliveryMethod, PackagingOption};
 use crate::model::Store::StoreSettings;
@@ -28,6 +29,7 @@ pub struct ReqQuery {
 }
 
 pub async fn task(req: HttpRequest, query: web::Query<ReqQuery>) -> Result<HttpResponse, Error> {
+    refuse_staff(&req)?;
     let db = MongoDB.connect();
 
     let cart = match resolve_owner(&req) {
@@ -38,7 +40,7 @@ pub async fn task(req: HttpRequest, query: web::Query<ReqQuery>) -> Result<HttpR
     let store = crate::Handler::Admin::Settings::load(&db).await;
     let tax_rate_bps = store.as_ref().map(|s| s.tax_rate_bps as i64).unwrap_or(0);
     let prices_include_tax = store.as_ref().map(|s| s.prices_include_tax).unwrap_or(false);
-    let currency = store.as_ref().map(|s| s.default_currency.clone()).unwrap_or_else(|| "USD".to_string());
+    let currency = store.as_ref().map(|s| s.default_currency.clone()).unwrap_or_else(|| "BDT".to_string());
 
     let delivery = match &query.delivery_method_id {
         Some(id) if !id.is_empty() => db

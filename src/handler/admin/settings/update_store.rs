@@ -60,7 +60,7 @@ pub async fn task(req: HttpRequest, body: web::Json<ReqBody>) -> Result<HttpResp
     field!("store_name", &body.store_name, "My Store");
     field!("support_email", &body.support_email, "");
     field!("business_address", &body.business_address, "");
-    field!("default_currency", &body.default_currency, "USD");
+    field!("default_currency", &body.default_currency, "BDT");
     field!("timezone", &body.timezone, "UTC");
     field!("order_number_prefix", &body.order_number_prefix, "OR");
     field!("ticket_number_prefix", &body.ticket_number_prefix, "TK");

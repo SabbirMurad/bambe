@@ -363,6 +363,20 @@ async function mountDeliver() {
   onActivate(() => (menu ? close() : open()));
 }
 
+/*
+  An admin browsing the shop sees it as a catalogue. The cart, wishlist,
+  checkout and orders are customer-only on the server (require_shopper),
+  so their buttons come off rather than failing on click. `is-staff` on
+  <html> hides them (common.css), and the pages that are nothing but a
+  cart or a checkout send the admin back to the shop.
+*/
+function standDownForStaff() {
+  if (!session.isAdmin()) return;
+  document.documentElement.classList.add('is-staff');
+  if (/^\/(cart|checkout|wishlist)(\/|$)/.test(location.pathname)) location.replace('/');
+}
+
+standDownForStaff();
 mountUser();
 paintBadges();
 mountDeliver();

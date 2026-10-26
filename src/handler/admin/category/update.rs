@@ -15,7 +15,6 @@ pub struct ReqBody {
     slug: Option<String>,
     description: Option<String>,
     parent_id: Option<String>,
-    swatch: Option<String>,
     image_id: Option<String>,
     visible: Option<bool>,
     position: Option<u16>,
@@ -40,7 +39,6 @@ pub async fn task(req: HttpRequest, path: web::Path<String>, body: web::Json<Req
     if let Some(v) = &body.slug { set_doc.insert("slug", v); }
     if let Some(v) = &body.description { set_doc.insert("description", v); }
     if let Some(v) = &body.parent_id { set_doc.insert("parent_id", v); }
-    if let Some(v) = &body.swatch { set_doc.insert("swatch", v); }
     // An empty image_id removes the picture (absent means "unchanged").
     if let Some(v) = &body.image_id {
         if v.trim().is_empty() { set_doc.insert("image_id", Bson::Null); }

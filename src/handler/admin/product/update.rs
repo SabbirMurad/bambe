@@ -6,7 +6,6 @@ use crate::BuiltIns::mongo::MongoDB;
 use crate::util::response::Response;
 use crate::Middleware::Auth::{require_access, AccessRequirement};
 use crate::model::Account::AccountRole;
-use crate::model::Cents;
 use crate::model::Product::{Product, ProductStatus};
 
 #[derive(Debug, Deserialize)]
@@ -18,7 +17,6 @@ pub struct ReqBody {
     category_id: Option<String>,
     tags: Option<Vec<String>>,
     status: Option<ProductStatus>,
-    compare_at_price: Option<Cents>,
 }
 
 pub async fn task(req: HttpRequest, path: web::Path<String>, body: web::Json<ReqBody>) -> Result<HttpResponse, Error> {
@@ -41,7 +39,6 @@ pub async fn task(req: HttpRequest, path: web::Path<String>, body: web::Json<Req
     // No `images` here: images belong to the variants. The cover is
     // denormalised from them by recompute_aggregates, never set directly.
     if let Some(v) = &body.status { set_doc.insert("status", mongodb::bson::to_bson(v).unwrap()); }
-    if let Some(v) = body.compare_at_price { set_doc.insert("compare_at_price", v); }
     set_doc.insert("modified_at", Utc::now().timestamp_millis());
 
     let result = col.update_one(doc! { "uuid": &product_id }, doc! { "$set": set_doc }).await;

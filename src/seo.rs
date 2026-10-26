@@ -83,7 +83,7 @@ pub async fn currency(db: &Database) -> String {
     crate::Handler::Admin::Settings::load(db)
         .await
         .map(|s| s.default_currency)
-        .unwrap_or_else(|| "USD".to_string())
+        .unwrap_or_else(|| "BDT".to_string())
 }
 
 /// The `seo` object every public template's head reads (common/seo.html).

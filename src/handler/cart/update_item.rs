@@ -1,6 +1,7 @@
 use serde::Deserialize;
 use mongodb::bson::doc;
 use actix_web::{web, Error, HttpResponse, HttpRequest};
+use crate::Middleware::Auth::refuse_staff;
 use crate::BuiltIns::mongo::MongoDB;
 use crate::util::response::Response;
 use crate::model::Cart::{Cart, CartItem};
@@ -12,6 +13,7 @@ pub struct ReqBody {
 }
 
 pub async fn task(req: HttpRequest, path: web::Path<String>, body: web::Json<ReqBody>) -> Result<HttpResponse, Error> {
+    refuse_staff(&req)?;
     let owner = match resolve_owner(&req) {
         Some(owner) => owner,
         None => return Ok(Response::unauthorized("No cart identity")),

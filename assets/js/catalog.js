@@ -14,18 +14,17 @@ import { Fetcher } from './fetcher.js';
 import { toast } from './toast.js';
 import { session } from './session.js';
 import { toDataURL as blurhashToDataURL } from './utils/blurhash.js';
+import { formatMoney } from './currency.js';
 
 /* ── Money ────────────────────────────────────────────────────
    Prices cross the wire as `Cents` (i64) — never as floats — so
    they are integers here too until the last moment.            */
 export function money(cents) {
   if (cents === null || cents === undefined) return '';
-  const sign = cents < 0 ? '-' : '';
-  const abs = Math.abs(cents);
-  return sign + '$' + Math.floor(abs / 100).toLocaleString() + '.' + String(abs % 100).padStart(2, '0');
+  return formatMoney(cents);
 }
 
-/** "$29.99", or "$29.99 – $54.99" when the variants disagree. */
+/** "৳1,200", or "৳1,200 – ৳1,850" when the variants disagree. */
 export function priceRange(item) {
   if (item.price_min === item.price_max) return money(item.price_min);
   return money(item.price_min) + ' – ' + money(item.price_max);
@@ -256,7 +255,8 @@ const wishlistRows = new Map(); // product_id -> wishlist row uuid
 let wishlistLoaded = false;
 
 export async function loadWishlist({ force = false } = {}) {
-  if (!session.isSignedIn()) {
+  // An admin has no wishlist (require_shopper on the server).
+  if (!session.isSignedIn() || session.isAdmin()) {
     wishlistRows.clear();
     wishlistLoaded = true;
     return wishlistRows;

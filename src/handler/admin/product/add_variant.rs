@@ -36,6 +36,10 @@ pub async fn task(req: HttpRequest, path: web::Path<String>, body: web::Json<Req
         return Ok(Response::not_found("Product not found"));
     }
 
+    if let Err(message) = super::check_compare_at(body.price, body.compare_at_price) {
+        return Ok(Response::bad_request(message));
+    }
+
     let now = Utc::now().timestamp_millis();
     let variant = ProductVariant {
         uuid: Uuid::now_v7().to_string(),

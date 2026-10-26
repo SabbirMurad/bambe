@@ -28,7 +28,7 @@ pub async fn task(req: HttpRequest) -> Result<HttpResponse, Error> {
         facebook_url: None,
         instagram_url: None,
         business_address: String::new(),
-        default_currency: "USD".to_string(),
+        default_currency: "BDT".to_string(),
         timezone: "UTC".to_string(),
         logo_image_id: None,
         order_number_prefix: "OR".to_string(),

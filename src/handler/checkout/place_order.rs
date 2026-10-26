@@ -9,7 +9,7 @@ use mongodb::options::ReturnDocument;
 use actix_web::{web, Error, HttpResponse, HttpRequest};
 use crate::BuiltIns::mongo::MongoDB;
 use crate::util::response::Response;
-use crate::Middleware::Auth::{require_access, AccessRequirement};
+use crate::Middleware::Auth::require_shopper;
 use crate::model::Cart::{Cart, CartItem};
 use crate::model::Product::{Product, ProductVariant, Brand, StockMovement, StockReason};
 use crate::model::Address::{Address, AddressSnapshot};
@@ -68,7 +68,7 @@ async fn release_stock(db: &mongodb::Database, items: &[CartItem], now: i64) {
 }
 
 pub async fn task(req: HttpRequest, body: web::Json<ReqBody>) -> Result<HttpResponse, Error> {
-    let user = require_access(&req, AccessRequirement::AnyToken)?;
+    let user = require_shopper(&req)?;
     let db = MongoDB.connect();
     let now = Utc::now().timestamp_millis();
 
@@ -235,7 +235,7 @@ pub async fn task(req: HttpRequest, body: web::Json<ReqBody>) -> Result<HttpResp
     let free_shipping = applied_discount.as_ref().map(|a| a.free_shipping).unwrap_or(false);
 
     let store_settings = crate::Handler::Admin::Settings::load(&db).await;
-    let currency = store_settings.as_ref().map(|s| s.default_currency.clone()).unwrap_or_else(|| "USD".to_string());
+    let currency = store_settings.as_ref().map(|s| s.default_currency.clone()).unwrap_or_else(|| "BDT".to_string());
     let order_number_prefix = store_settings.as_ref().map(|s| s.order_number_prefix.clone()).unwrap_or_else(|| "OR".to_string());
     let tax_rate_bps = store_settings.as_ref().map(|s| s.tax_rate_bps as i64).unwrap_or(0);
     let prices_include_tax = store_settings.as_ref().map(|s| s.prices_include_tax).unwrap_or(false);

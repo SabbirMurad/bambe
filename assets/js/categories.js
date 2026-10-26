@@ -152,11 +152,6 @@ function categoryRow(category, depth) {
     treeCell.appendChild(spacer);
   }
 
-  const swatch = document.createElement('div');
-  swatch.className = 'cat-swatch' + (depth ? ' sub' : '');
-  swatch.style.background = category.swatch || 'var(--border)';
-  treeCell.appendChild(swatch);
-
   const text = document.createElement('div');
   const name = document.createElement('div');
   name.className = 'cell-strong';
@@ -427,12 +422,6 @@ function edit(category) {
   const image = imagePicker(category.image_id);
   form.appendChild(field('Image', image.el, 'Shown on the category’s tile on the home page.'));
 
-  const swatch = document.createElement('input');
-  swatch.type = 'color';
-  swatch.className = 'color-swatch';
-  swatch.value = category.swatch || '#C8A772';
-  form.appendChild(field('Swatch', swatch));
-
   const position = textInput({ value: String(category.position || 0) });
   form.appendChild(field('Menu position', position, 'Lower numbers come first.'));
 
@@ -464,7 +453,6 @@ function edit(category) {
               slug: slugify(slug.value.trim()),
               description: description.value.trim() || null,
               parent_id: parent.value || null,
-              swatch: swatch.value,
               // '' removes the picture; update.rs reads an absent field as "unchanged".
               image_id: image.value() || '',
               position: Number(position.value) || 0,
@@ -595,7 +583,6 @@ function wireCreatePanel() {
   const slug = $('#c-slug');
   const parent = $('#c-parent');
   const description = $('#c-desc');
-  const swatch = $('#c-swatch');
   const visible = $('#c-visible');
   const create = $('#c-create');
   const message = $('#c-msg');
@@ -650,7 +637,6 @@ function wireCreatePanel() {
         slug: slugify(slug.value.trim()),
         description: description && description.value.trim() ? description.value.trim() : null,
         parent_id: parent && parent.value ? parent.value : null,
-        swatch: swatch ? swatch.value : null,
         image_id: image ? image.value() : null,
         visible: visible ? visible.classList.contains('on') : true,
         position: all.filter((c) => !c.parent_id).length,

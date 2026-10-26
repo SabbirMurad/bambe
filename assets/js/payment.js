@@ -24,6 +24,7 @@
    `place_order` does when `billing_address_id` is left out.
 ═══════════════════════════════════════════════════════════════ */
 import { Fetcher } from './fetcher.js';
+import { formatMoney } from './currency.js';
 import { toast } from './toast.js';
 import { draft, guard, paintSummary, selectIn, wireKeyboardActivation } from './checkout.js';
 
@@ -305,6 +306,6 @@ function paintDeliveryNote(quote) {
     const days = method.min_days === method.max_days
       ? method.max_days + ' days'
       : method.min_days + '–' + method.max_days + ' days';
-    how.textContent = method.name + ' · ' + (quote.shipping ? '$' + (quote.shipping / 100).toFixed(2) : 'Free') + ' · ' + days;
+    how.textContent = method.name + ' · ' + (quote.shipping ? formatMoney(quote.shipping) : 'Free') + ' · ' + days;
   }
 }
