@@ -75,6 +75,15 @@ pub async fn task(form_data: web::Json<ReqBody>, actix_session: Session) -> Resu
         Verified::Ok => {}
     }
 
+    let suspended = db
+        .collection::<crate::model::Store::StaffMember>("staff_member")
+        .count_documents(doc!{ "admin_id": &admin.uuid, "status": "Suspended" })
+        .await
+        .unwrap_or(0) > 0;
+    if suspended {
+        return Ok(Response::forbidden("Your staff access has been suspended."));
+    }
+
     let (access_token, valid_time) = match jwt::access_token::generate_default(&admin.uuid, Account::AccountRole::Administrator) {
         Ok(pair) => pair,
         Err(error) => return Ok(Response::internal_server_error(&format!("could not mint an access token: {:?}", error))),

@@ -1,10 +1,9 @@
 use serde::Deserialize;
 use mongodb::bson::{doc, Document};
 use actix_web::{web, Error, HttpResponse, HttpRequest};
+use crate::Handler::Admin::Access::{require_staff, Permission};
 use crate::BuiltIns::mongo::MongoDB;
 use crate::util::response::Response;
-use crate::Middleware::Auth::{require_access, AccessRequirement};
-use crate::model::Account::AccountRole;
 use crate::model::Store::{StaffMember, StaffRole, StaffStatus};
 
 #[derive(Debug, Deserialize)]
@@ -14,10 +13,29 @@ pub struct ReqBody {
 }
 
 pub async fn task(req: HttpRequest, path: web::Path<String>, body: web::Json<ReqBody>) -> Result<HttpResponse, Error> {
-    require_access(&req, AccessRequirement::Role(AccountRole::Administrator))?;
+    require_staff(&req, Permission::Staff).await?;
     let db = MongoDB.connect();
     let col = db.collection::<StaffMember>("staff_member");
     let staff_id = path.into_inner();
+
+    let member = match col.find_one(doc! { "uuid": &staff_id }).await.ok().flatten() {
+        Some(m) => m,
+        None => return Ok(Response::not_found("Staff member not found")),
+    };
+    /* The last active Owner can't be demoted or suspended: nobody would be
+       left able to manage staff. (access.rs would hand the role to the
+       next admin to sign in, but that should be a choice, not an accident.) */
+    let stays_owner = body.role.as_ref().map(|r| *r == StaffRole::Owner).unwrap_or(member.role == StaffRole::Owner)
+        && body.status.as_ref().map(|s| *s != StaffStatus::Suspended).unwrap_or(member.status != StaffStatus::Suspended);
+    if member.role == StaffRole::Owner && member.status != StaffStatus::Suspended && !stays_owner {
+        let other_owners = col
+            .count_documents(doc! { "role": "Owner", "status": { "$ne": "Suspended" }, "uuid": { "$ne": &staff_id } })
+            .await
+            .unwrap_or(0);
+        if other_owners == 0 {
+            return Ok(Response::bad_request("This is the only Owner. Make someone else an Owner first."));
+        }
+    }
 
     let mut set_doc = Document::new();
     if let Some(v) = &body.role { set_doc.insert("role", mongodb::bson::to_bson(v).unwrap()); }

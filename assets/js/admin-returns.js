@@ -197,7 +197,7 @@ async function openReturn(id) {
 
   if (options.length) {
     actions.push({
-      label: 'Update status',
+      label: 'Update status', needs: 'returns',
       className: 'btn-primary',
       onClick: (close) => { close(); resolveDialog(request, order, response.data, options); },
     });

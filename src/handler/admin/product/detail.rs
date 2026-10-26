@@ -2,10 +2,9 @@ use futures::StreamExt;
 use serde_json::json;
 use mongodb::bson::doc;
 use actix_web::{web, Error, HttpResponse, HttpRequest};
+use crate::Handler::Admin::Access::{require_staff, Permission};
 use crate::BuiltIns::mongo::MongoDB;
 use crate::util::response::Response;
-use crate::Middleware::Auth::{require_access, AccessRequirement};
-use crate::model::Account::AccountRole;
 use crate::model::Product::{Product, ProductVariant, Brand};
 use crate::model::Category::Category;
 
@@ -21,7 +20,7 @@ use crate::model::Category::Category;
   can list them, and a row you can see but not open is a dead end.
 */
 pub async fn task(req: HttpRequest, path: web::Path<String>) -> Result<HttpResponse, Error> {
-    require_access(&req, AccessRequirement::Role(AccountRole::Administrator))?;
+    require_staff(&req, Permission::View).await?;
     let db = MongoDB.connect();
     let product_id = path.into_inner();
 

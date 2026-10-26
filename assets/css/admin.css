@@ -1395,3 +1395,42 @@
   cursor: pointer;
 }
 .sku-photo-add:hover { border-color: var(--faint); color: var(--dark); }
+
+/* ── Packaging pictures (admin-settings.js) ─────────────────────
+   The small picture at the start of each packaging option's row. */
+.pack-thumb {
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--input-bg) center / cover no-repeat;
+}
+
+/* ── Staff roles (admin-core.js) ────────────────────────────────
+   A control marked data-needs="<permission>" shows only once the
+   signed-in role grants it (html.can-<permission>). Until /admin/me
+   answers there are no can- classes, so these start hidden. */
+html:not(.can-catalogue) [data-needs~="catalogue"],
+html:not(.can-fulfilment) [data-needs~="fulfilment"],
+html:not(.can-refunds) [data-needs~="refunds"],
+html:not(.can-returns) [data-needs~="returns"],
+html:not(.can-reviews) [data-needs~="reviews"],
+html:not(.can-coupons) [data-needs~="coupons"],
+html:not(.can-customers) [data-needs~="customers"],
+html:not(.can-support) [data-needs~="support"],
+html:not(.can-shipping) [data-needs~="shipping"],
+html:not(.can-store_settings) [data-needs~="store_settings"],
+html:not(.can-staff) [data-needs~="staff"],
+html:not(.can-account_deletion) [data-needs~="account_deletion"] { display: none !important; }
+
+.role-note {
+  margin: -8px 0 18px;
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  background: var(--input-bg);
+  border: 1px solid var(--border);
+  color: var(--mid);
+  font-size: 13px;
+  line-height: 1.5;
+}

@@ -2,10 +2,9 @@ use futures::StreamExt;
 use serde_json::json;
 use mongodb::bson::doc;
 use actix_web::{Error, HttpResponse, HttpRequest};
+use crate::Handler::Admin::Access::{require_staff, Permission};
 use crate::BuiltIns::mongo::MongoDB;
 use crate::util::response::Response;
-use crate::Middleware::Auth::{require_access, AccessRequirement};
-use crate::model::Account::AccountRole;
 use crate::model::Product::Brand;
 
 /*
@@ -13,7 +12,7 @@ use crate::model::Product::Brand;
   a shop has tens of brands, and the product form's dropdown needs them all.
 */
 pub async fn task(req: HttpRequest) -> Result<HttpResponse, Error> {
-    require_access(&req, AccessRequirement::Role(AccountRole::Administrator))?;
+    require_staff(&req, Permission::View).await?;
     let db = MongoDB.connect();
 
     let result = db.collection::<Brand>("brand").find(doc! {}).sort(doc! { "name": 1 }).await;

@@ -28,8 +28,9 @@
 import {
   Fetcher, toast, $, $$, money, ago, fullDate, dateTime, spaced,
   cell, stacked, fillTable, paintPager, rowButton, tag, mountAdminChrome,
-  openModal, confirmModal, field, textInput, selectInput,
+  openModal, confirmModal, field, textInput, selectInput, uploadImage,
 } from './admin-core.js';
+import { paintImage, clearImage } from './catalog.js';
 
 const TABS = ['Store', 'Payments', 'Shipping', 'Staff', 'Activity'];
 
@@ -387,10 +388,10 @@ function methodRow(method) {
   if (method.free_above) row.appendChild(tag('Free over ' + money(method.free_above), 'tag-green'));
   if (!method.enabled) row.appendChild(tag('Disabled', 'tag-red'));
 
-  row.appendChild(rowButton('Edit', () => editMethod(method)));
+  row.appendChild(rowButton('Edit', () => editMethod(method), { needs: 'shipping' }));
   row.appendChild(rowButton(method.enabled ? 'Disable' : 'Enable',
     () => toggleMethod(method)));
-  row.appendChild(rowButton('Delete', () => removeMethod(method), { danger: true }));
+  row.appendChild(rowButton('Delete', () => removeMethod(method), { danger: true, needs: 'shipping' }));
 
   return row;
 }
@@ -522,6 +523,12 @@ function packagingRow(option) {
   row.className = 'zone-row';
   if (!option.enabled) row.style.opacity = '.55';
 
+  const thumb = document.createElement('div');
+  thumb.className = 'pack-thumb';
+  thumb.title = option.image ? '' : 'No picture';
+  paintPicture(thumb, option.image);
+  row.appendChild(thumb);
+
   const text = document.createElement('div');
   text.style.flex = '1';
   const name = document.createElement('div');
@@ -538,10 +545,93 @@ function packagingRow(option) {
   if (option.multi_item_only) row.appendChild(tag('2+ items', 'tag-blue'));
   if (!option.enabled) row.appendChild(tag('Disabled', 'tag-red'));
 
-  row.appendChild(rowButton('Edit', () => editPackaging(option)));
-  row.appendChild(rowButton('Delete', () => removePackaging(option), { danger: true }));
+  row.appendChild(rowButton('Edit', () => editPackaging(option), { needs: 'shipping' }));
+  row.appendChild(rowButton('Delete', () => removePackaging(option), { danger: true, needs: 'shipping' }));
 
   return row;
+}
+
+/* ── Packaging picture ────────────────────────────────────────
+   Uploaded the moment a file is picked (as a PackagingImage) and kept
+   on the option as its served path, "/image/webp/<id>" — the cart
+   puts that straight into an <img>. Saved with the form, like every
+   other field. A path from before uploads (/assets/...) still shows. */
+const UPLOAD_PREFIX = '/image/webp/';
+const MAX_PICTURE_BYTES = 8 * 1024 * 1024;
+
+function paintPicture(el, path) {
+  if (path && path.startsWith(UPLOAD_PREFIX)) {
+    paintImage(el, path.slice(UPLOAD_PREFIX.length));
+  } else if (path) {
+    el.style.background = "url('" + path.replace(/'/g, '%27') + "') center / cover no-repeat";
+  } else {
+    clearImage(el);
+    el.style.background = '';
+  }
+}
+
+function packagingPicture(initial) {
+  let path = initial || '';
+
+  const el = document.createElement('div');
+  el.className = 'cat-image-picker';
+
+  const preview = document.createElement('div');
+  preview.className = 'cat-image-preview';
+  preview.setAttribute('role', 'button');
+  preview.tabIndex = 0;
+  preview.setAttribute('aria-label', 'Choose a picture');
+
+  const actions = document.createElement('div');
+  actions.className = 'cat-image-actions';
+  const choose = document.createElement('button');
+  choose.type = 'button';
+  choose.className = 'btn btn-ghost btn-sm';
+  const remove = document.createElement('button');
+  remove.type = 'button';
+  remove.className = 'btn btn-ghost btn-sm';
+  remove.textContent = 'Remove';
+  actions.append(choose, remove);
+
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'image/*';
+  input.hidden = true;
+
+  const paint = () => {
+    preview.textContent = path ? '' : 'No picture';
+    preview.classList.toggle('has-image', !!path);
+    paintPicture(preview, path);
+    choose.textContent = path ? 'Replace' : 'Upload picture';
+    remove.style.display = path ? '' : 'none';
+  };
+
+  const open = () => input.click();
+  choose.addEventListener('click', open);
+  preview.addEventListener('click', open);
+  preview.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); }
+  });
+  remove.addEventListener('click', () => { path = ''; paint(); });
+
+  input.addEventListener('change', async () => {
+    const file = input.files && input.files[0];
+    input.value = '';
+    if (!file) return;
+    if (!file.type.startsWith('image/')) { toast.error('That file isn’t an image.'); return; }
+    if (file.size > MAX_PICTURE_BYTES) { toast.error('That image is over 8 MB — please pick a smaller one.'); return; }
+
+    choose.disabled = true;
+    choose.textContent = 'Uploading…';
+    const id = await uploadImage(file, 'PackagingImage');
+    choose.disabled = false;
+    if (id) path = UPLOAD_PREFIX + id;
+    paint();
+  });
+
+  el.append(preview, actions, input);
+  paint();
+  return { el, value: () => path };
 }
 
 function editPackaging(option) {
@@ -559,11 +649,8 @@ function editPackaging(option) {
   const price = textInput({ value: option ? (option.price / 100).toFixed(2) : '0.00' });
   form.appendChild(field('Price', price));
 
-  const image = textInput({
-    value: option ? (option.image || '') : '',
-    placeholder: '/assets/images/packaging/premium.webp',
-  });
-  form.appendChild(field('Image', image, 'Path to a picture shipped with the site, shown on the cart page.'));
+  const image = packagingPicture(option ? option.image : '');
+  form.appendChild(field('Picture', image.el, 'Shown to shoppers beside this option on the cart page.'));
 
   const multiItem = document.createElement('input');
   multiItem.type = 'checkbox';
@@ -589,7 +676,7 @@ function editPackaging(option) {
             name: name.value.trim(),
             description: description.value.trim(),
             price: Math.round(Number(price.value || 0) * 100),
-            image: image.value.trim(),
+            image: image.value(),
             multi_item_only: multiItem.checked,
             enabled: option ? option.enabled : true,
             position: option ? option.position : packagingOptions.length,
@@ -639,6 +726,7 @@ function buildPanel(title, addLabel, onAdd, blurb) {
 
   const link = document.createElement('span');
   link.className = 'admin-panel-link';
+  link.dataset.needs = 'shipping';   // both panels built here are shipping's
   link.tabIndex = 0;
   link.textContent = addLabel;
   link.addEventListener('click', onAdd);
@@ -731,8 +819,8 @@ function zoneRow(zone) {
 
   if (!zone.enabled) row.appendChild(tag('Disabled', 'tag-red'));
 
-  row.appendChild(rowButton('Edit', () => editZone(zone)));
-  row.appendChild(rowButton('Delete', () => removeZone(zone), { danger: true }));
+  row.appendChild(rowButton('Edit', () => editZone(zone), { needs: 'shipping' }));
+  row.appendChild(rowButton('Delete', () => removeZone(zone), { danger: true, needs: 'shipping' }));
 
   return row;
 }
@@ -889,7 +977,7 @@ function staffRow(member) {
 
   const actions = document.createElement('div');
   actions.style.cssText = 'display:flex;gap:10px;justify-content:flex-end;';
-  actions.appendChild(rowButton('Edit', () => editStaff(member)));
+  actions.appendChild(rowButton('Edit', () => editStaff(member), { needs: 'staff' }));
   tr.appendChild(cell(actions, 'col-actions'));
 
   return tr;
@@ -1073,7 +1161,7 @@ async function loadDeletions() {
       if (!response2.ok) return;
       toast.success('Request dismissed');
       loadDeletions();
-    }));
+    }, { needs: 'account_deletion' }));
 
     actions.appendChild(rowButton('Delete account', async () => {
       const confirmed = await confirmModal({
@@ -1091,7 +1179,7 @@ async function loadDeletions() {
       if (!response2.ok) return;
       toast.success('Account deleted');
       loadDeletions();
-    }, { danger: true }));
+    }, { danger: true, needs: 'account_deletion' }));
 
     tr.appendChild(cell(actions, 'col-actions'));
     return tr;

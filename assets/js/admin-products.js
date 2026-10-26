@@ -150,11 +150,11 @@ function productRow(product) {
   actions.style.cssText = 'display:flex;gap:10px;justify-content:flex-end;';
   actions.appendChild(rowButton('Edit', () => {
     location.href = '/admin/products/new?id=' + encodeURIComponent(product.uuid);
-  }));
+  }, { needs: 'catalogue' }));
   actions.appendChild(rowButton('View', () => {
     window.open('/product/' + encodeURIComponent(product.slug), '_blank');
   }));
-  actions.appendChild(rowButton('Delete', () => remove(product), { danger: true }));
+  actions.appendChild(rowButton('Delete', () => remove(product), { danger: true, needs: 'catalogue' }));
   tr.appendChild(cell(actions, 'col-actions'));
 
   return tr;

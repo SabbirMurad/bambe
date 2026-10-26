@@ -6,10 +6,9 @@ use serde_json::json;
 use mongodb::bson::doc;
 use mongodb::options::ReturnDocument;
 use actix_web::{web, Error, HttpResponse, HttpRequest};
+use crate::Handler::Admin::Access::{require_staff, Permission};
 use crate::BuiltIns::mongo::MongoDB;
 use crate::util::response::Response;
-use crate::Middleware::Auth::{require_access, AccessRequirement};
-use crate::model::Account::AccountRole;
 use crate::model::Cents;
 use crate::model::Order::{
     Order, OrderItem, ReturnRequest, ReturnItem, ReturnStatus, PaymentStatus, FulfilmentStatus,
@@ -33,7 +32,7 @@ pub struct ReqBody {
 fn default_restock() -> bool { true }
 
 pub async fn task(req: HttpRequest, path: web::Path<String>, body: web::Json<ReqBody>) -> Result<HttpResponse, Error> {
-    let admin = require_access(&req, AccessRequirement::Role(AccountRole::Administrator))?;
+    let admin = require_staff(&req, Permission::Returns).await?;
     let db = MongoDB.connect();
     let request_id = path.into_inner();
 

@@ -204,14 +204,14 @@ function brandRow(brand) {
 
   const actions = document.createElement('td');
   actions.className = 'col-actions';
-  actions.appendChild(rowButton('Edit', async () => { if (await brandForm(brand)) load(); }));
+  actions.appendChild(rowButton('Edit', async () => { if (await brandForm(brand)) load(); }, { needs: 'catalogue' }));
   /* The server refuses a brand that is still on a product; saying so
      here beats a button that only ever answers with an error. */
   actions.appendChild(count
     ? rowButton('Delete', () => toast.error(
       count + (count === 1 ? ' product uses' : ' products use') + ' this brand. Change their brand first.'),
-    { danger: true, title: 'In use by ' + count + (count === 1 ? ' product' : ' products') })
-    : rowButton('Delete', () => remove(brand), { danger: true }));
+    { danger: true, needs: 'catalogue', title: 'In use by ' + count + (count === 1 ? ' product' : ' products') })
+    : rowButton('Delete', () => remove(brand), { danger: true, needs: 'catalogue' }));
   tr.appendChild(actions);
 
   return tr;

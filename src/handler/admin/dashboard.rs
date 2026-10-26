@@ -4,10 +4,9 @@ use serde::Deserialize;
 use serde_json::json;
 use mongodb::bson::{doc, Document};
 use actix_web::{web, Error, HttpResponse, HttpRequest};
+use crate::Handler::Admin::Access::{require_staff, Permission};
 use crate::BuiltIns::mongo::MongoDB;
 use crate::util::response::Response;
-use crate::Middleware::Auth::{require_access, AccessRequirement};
-use crate::model::Account::AccountRole;
 use crate::model::Order::Order;
 use crate::model::Product::{Product, ProductVariant};
 
@@ -32,7 +31,7 @@ fn period_start(period: &str, now: i64) -> i64 {
 }
 
 pub async fn task(req: HttpRequest, query: web::Query<ReqQuery>) -> Result<HttpResponse, Error> {
-    require_access(&req, AccessRequirement::Role(AccountRole::Administrator))?;
+    require_staff(&req, Permission::View).await?;
     let db = MongoDB.connect();
     let now = Utc::now().timestamp_millis();
     let from = period_start(query.period.as_deref().unwrap_or("30d"), now);

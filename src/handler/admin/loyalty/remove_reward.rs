@@ -1,16 +1,15 @@
 use chrono::Utc;
 use mongodb::bson::{doc, Bson};
 use actix_web::{web, Error, HttpResponse, HttpRequest};
+use crate::Handler::Admin::Access::{require_staff, Permission};
 use crate::BuiltIns::mongo::MongoDB;
 use crate::util::response::Response;
-use crate::Middleware::Auth::{require_access, AccessRequirement};
-use crate::model::Account::AccountRole;
 use crate::model::Coupon::Coupon;
 use crate::model::Loyalty::LoyaltyCard;
 
 /* Takes the reward back off a card that hasn't been redeemed yet. */
 pub async fn task(req: HttpRequest, path: web::Path<String>) -> Result<HttpResponse, Error> {
-    let admin = require_access(&req, AccessRequirement::Role(AccountRole::Administrator))?;
+    let admin = require_staff(&req, Permission::Customers).await?;
     let db = MongoDB.connect();
     let user_id = path.into_inner();
 

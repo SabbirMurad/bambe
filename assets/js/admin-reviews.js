@@ -206,7 +206,7 @@ function openReview(review) {
     width: 640,
     actions: [
       {
-        label: 'Delete',
+        label: 'Delete', needs: 'reviews',
         className: 'btn-ghost',
         onClick: async (close) => {
           const confirmed = await confirmModal({
@@ -246,7 +246,7 @@ function openReview(review) {
         },
       },
       {
-        label: 'Save reply',
+        label: 'Save reply', needs: 'reviews',
         className: 'btn-primary',
         onClick: async (close) => {
           const next = reply.value.trim();
@@ -278,7 +278,7 @@ function hideDialog(review) {
     body,
     width: 480,
     actions: [{
-      label: 'Hide review',
+      label: 'Hide review', needs: 'reviews',
       className: 'btn-primary',
       onClick: async (close) => {
         const response = await Fetcher.patch({

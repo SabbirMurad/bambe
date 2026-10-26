@@ -56,7 +56,7 @@
           </div>
           <div class="admin-head-actions">
             <button class="btn btn-outline btn-sm" id="cp-export">Export codes</button>
-            <button class="btn btn-primary btn-sm" id="cp-jump-new">Create coupon</button>
+            <button class="btn btn-primary btn-sm" id="cp-jump-new" data-needs="coupons">Create coupon</button>
           </div>
         </div>
 
@@ -91,7 +91,7 @@
 
           <div class="admin-bulk" data-bulk>
             <span data-bulk-count>0 selected</span>
-            <div class="admin-bulk-actions">
+            <div class="admin-bulk-actions" data-needs="coupons">
               <button class="btn btn-outline btn-sm">Enable</button>
               <button class="btn btn-outline btn-sm">Disable</button>
               <button class="btn btn-outline btn-sm">Duplicate</button>
@@ -346,7 +346,7 @@
         </div>
 
         <!-- ── Create ────────────────────────────────────────── -->
-        <div class="admin-panel" id="cp-new" style="margin-top:20px;">
+        <div class="admin-panel" id="cp-new" data-needs="coupons" style="margin-top:20px;">
           <div class="admin-panel-head">
             <div>
               <div class="admin-panel-title">Create coupon</div>
