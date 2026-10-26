@@ -784,7 +784,14 @@ import { renderGrid, showSkeleton, hideSkeleton, emptyState } from './catalog.js
   var searchInput = document.querySelector('.nav-search input');
   var searchBtn = document.querySelector('.nav-search-btn');
   if (searchInput) {
-    searchInput.addEventListener('keydown', function(e) { if (e.key === 'Enter') refresh(); });
+    searchInput.addEventListener('keydown', function(e) { if (e.key === 'Enter') { clearTimeout(typingTimer); refresh(); } });
+    // Live: the grid follows the field a moment after typing stops,
+    // the same pause the navbar's dropdown uses on other pages.
+    var typingTimer = null;
+    searchInput.addEventListener('input', function() {
+      clearTimeout(typingTimer);
+      typingTimer = setTimeout(refresh, 300);
+    });
   }
   if (searchBtn) searchBtn.onclick = refresh;
 

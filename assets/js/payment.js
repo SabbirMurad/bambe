@@ -139,9 +139,8 @@ function render() {
       ? '<span><strong style="color:var(--dark);">No card number is typed into Bambee.</strong> '
         + 'You’ll finish paying on SSLCommerz’s own page and come back here. '
         + 'Cards aren’t saved for next time yet.</span>'
-      : '<span><strong style="color:var(--dark);">Card payment is unavailable right now.</strong> '
-        + 'The payment gateway isn’t reachable, so cash on delivery is the only option '
-        + 'at the moment. Nothing is charged until the courier arrives.</span>');
+      : '<span><strong style="color:var(--dark);">We take cash on delivery.</strong> '
+        + 'Pay the courier when your order arrives — nothing is charged before then.</span>');
   host.appendChild(notice);
 
   const rows = Array.prototype.slice.call(host.querySelectorAll('.payment-method'));

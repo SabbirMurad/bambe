@@ -314,6 +314,10 @@ body::-webkit-scrollbar-corner {
   max-width: 520px;
   transition: border-color 0.15s;
   margin-right: auto;
+  /* The button sits as far from the right edge as from the top and
+     bottom: (40 - 2×1.5 border - 28 button) / 2 = 4.5px. */
+  padding-right: 4.5px;
+  position: relative;   /* the dropdown hangs from it */
 }
 .nav-search:focus-within {
   border-color: var(--primary-text);
@@ -339,6 +343,105 @@ body::-webkit-scrollbar-corner {
   justify-content: center;
   cursor: pointer;
 }
+
+/* Live search dropdown (nav-search.js): products as you type, or the
+   shopper's recent searches when the field is empty. */
+.nav-search-drop {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  z-index: calc(var(--z-nav) + 2);
+  max-height: min(70vh, 460px);
+  overflow-y: auto;
+  padding: 6px;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+}
+.nav-search-drop[hidden] { display: none; }
+.nav-search-drop-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px 6px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--subtle);
+}
+.nav-search-drop-clear {
+  border: 0;
+  background: none;
+  padding: 0;
+  font: inherit;
+  letter-spacing: 0;
+  text-transform: none;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--primary-text);
+  cursor: pointer;
+}
+.nav-search-drop-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  color: var(--dark);
+  font-size: 13.5px;
+  text-decoration: none;
+  cursor: pointer;
+}
+.nav-search-drop-item:hover,
+.nav-search-drop-item.active { background: var(--input-bg); }
+.nav-search-drop-item.is-history { color: var(--mid); }
+.nav-search-drop-item.is-history svg { flex-shrink: 0; color: var(--subtle); }
+.nav-search-drop-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.nav-search-drop-text,
+.nav-search-drop-title {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.nav-search-drop-sub { font-size: 12px; color: var(--subtle); }
+.nav-search-drop-thumb {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border-radius: var(--radius-sm);
+  background: var(--input-bg) center / cover no-repeat;
+}
+.nav-search-drop-price { font-weight: 700; font-size: 13px; color: var(--black); white-space: nowrap; }
+.nav-search-drop-remove {
+  border: 0;
+  background: none;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  font-size: 16px;
+  line-height: 1;
+  color: var(--subtle);
+  cursor: pointer;
+}
+.nav-search-drop-remove:hover { background: var(--border); color: var(--dark); }
+.nav-search-drop-item.is-all {
+  justify-content: center;
+  margin-top: 4px;
+  border-top: 1px solid var(--border);
+  border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+  font-weight: 600;
+  color: var(--primary-text);
+}
+.nav-search-drop-empty { padding: 14px 10px 8px; font-size: 13px; color: var(--subtle); }
 
 /* Deliver to */
 .nav-deliver {
@@ -1783,6 +1886,15 @@ html.nav-hidden .sticky-top-no-sub { top: 20px; }
     z-index: 2;
     top: calc(100% + 16px);
     right: 24px;
+  }
+  /* Positioned against the bar, not the icon, so it spans the screen. */
+  .navbar .nav-search { position: static; }
+  .navbar .nav-search-drop { display: none; }
+  .navbar.search-open .nav-search-drop:not([hidden]) {
+    display: block;
+    top: calc(100% + 60px);
+    left: 8px;
+    right: 8px;
   }
   .nav-actions { gap: 4px; }
   /* Name off, avatar stays: the button is still recognisably the
