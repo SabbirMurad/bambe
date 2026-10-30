@@ -1269,6 +1269,19 @@ button.select-btn:disabled { cursor: not-allowed; opacity: 0.55; }
 .badge-sale { background: var(--error); color: white; }
 .badge-new { background: var(--success); color: white; }
 .badge-hot { background: var(--gold); color: var(--on-primary); }
+/* A draft an Owner or Manager is previewing in the shop (catalog.js). */
+.badge-draft { background: var(--warn); color: white; }
+.nav-search-drop-draft {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 6px;
+  border-radius: 10px;
+  background: var(--gold-lt);
+  color: var(--warn);
+  font-size: 10px;
+  font-weight: 700;
+  vertical-align: 1px;
+}
 
 .product-card-wish {
   position: absolute;

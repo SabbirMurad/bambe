@@ -5,7 +5,7 @@ use mongodb::bson::doc;
 use mongodb::Database;
 use actix_web::{Error, HttpRequest};
 use crate::BuiltIns::mongo::MongoDB;
-use crate::Middleware::Auth::{require_access, AccessRequirement, User};
+use crate::Middleware::Auth::{optional_access, require_access, AccessRequirement, User};
 use crate::model::Account::{AccountRole, AdminAccount};
 use crate::model::Store::{StaffMember, StaffRole, StaffStatus};
 
@@ -188,6 +188,32 @@ pub async fn require_staff(req: &HttpRequest, permission: Permission) -> Result<
         )));
     }
     Ok(admin)
+}
+
+/*
+  Whether the shop's own pages should show this caller draft products as
+  well as live ones: an admin whose staff role can change the catalogue
+  (Owner, Manager), so they can see a product as shoppers will before
+  publishing it. Read-only, unlike `staff_member` — browsing the shop
+  never creates or promotes a staff record — and false for anyone else,
+  guests included.
+*/
+pub async fn previews_drafts(req: &HttpRequest) -> bool {
+    let Some(user) = optional_access(req) else { return false };
+    if user.role != AccountRole::Administrator {
+        return false;
+    }
+    let member = MongoDB
+        .connect()
+        .collection::<StaffMember>("staff_member")
+        .find_one(doc! { "admin_id": &user.user_id })
+        .await
+        .ok()
+        .flatten();
+    match member {
+        Some(m) => !matches!(m.status, StaffStatus::Suspended) && allows(&m.role, Permission::Catalogue),
+        None => false,
+    }
 }
 
 pub fn role_label(role: &StaffRole) -> &'static str {

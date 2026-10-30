@@ -253,6 +253,12 @@ async function renderResults(term) {
       const title = document.createElement('span');
       title.className = 'nav-search-drop-title';
       title.textContent = p.title;
+      if (p.status === 'Draft') {
+        const tag = document.createElement('span');
+        tag.className = 'nav-search-drop-draft';
+        tag.textContent = 'Draft';
+        title.appendChild(tag);
+      }
       text.appendChild(title);
       if (p.brand && p.brand.name) {
         const brand = document.createElement('span');

@@ -3,7 +3,7 @@ use futures::StreamExt;
 use serde::Deserialize;
 use serde_json::json;
 use mongodb::bson::doc;
-use actix_web::{web, Error, HttpResponse};
+use actix_web::{web, Error, HttpRequest, HttpResponse};
 use crate::BuiltIns::mongo::MongoDB;
 use crate::util::response::Response;
 use crate::model::Product::{Product, ProductVariant, Brand};
@@ -97,9 +97,16 @@ fn csv(raw: &str) -> Vec<String> {
         .collect()
 }
 
-pub async fn task(query: web::Query<ReqQuery>) -> Result<HttpResponse, Error> {
+pub async fn task(req: HttpRequest, query: web::Query<ReqQuery>) -> Result<HttpResponse, Error> {
     let db = MongoDB.connect();
-    let mut filter = doc! { "status": "Active", "deleted_at": null };
+    // Owners and Managers see drafts among live products, tagged as such
+    // by the page from `status` (access::previews_drafts).
+    let statuses = if crate::Handler::Admin::Access::previews_drafts(&req).await {
+        vec!["Active", "Draft"]
+    } else {
+        vec!["Active"]
+    };
+    let mut filter = doc! { "status": { "$in": statuses }, "deleted_at": null };
 
     if let Some(category) = &query.category {
         let ids = resolve_category_ids(&db, category).await;
@@ -287,6 +294,7 @@ pub async fn task(query: web::Query<ReqQuery>) -> Result<HttpResponse, Error> {
                 "rating_count": p.rating_count,
                 "sold_count": p.sold_count,
                 "created_at": p.created_at,
+                "status": p.status,
             })
         })
         .collect();

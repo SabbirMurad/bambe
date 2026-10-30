@@ -187,8 +187,12 @@ export function productCard(item, options = {}) {
   card.dataset.productId = item.uuid;
   card.dataset.slug = item.slug;
 
+  // A draft only reaches the shop for an Owner or Manager previewing
+  // it (GET /v1/product/list); the badge says customers can't see it.
+  const draft = item.status === 'Draft';
   const off = discountPercent(item);
-  const badge = off ? '<span class="product-card-badge badge-sale">–' + off + '%</span>'
+  const badge = draft ? '<span class="product-card-badge badge-draft" title="Only staff can see this product">Draft</span>'
+              : off ? '<span class="product-card-badge badge-sale">–' + off + '%</span>'
               : (!item.in_stock ? '<span class="product-card-badge">Sold out</span>' : '');
 
   /* Per item, not per grid — `options.wished` would paint every card
