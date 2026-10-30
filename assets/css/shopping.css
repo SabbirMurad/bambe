@@ -650,7 +650,7 @@
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, rgba(12,8,10,0.30) 0%, rgba(12,8,10,0.55) 100%);
+  background: linear-gradient(180deg, rgba(12,8,10,0.20) 0%, rgba(12,8,10,0.55) 100%);
 }
 .door-body {
   position: relative;
@@ -1169,12 +1169,21 @@
 
 /* Image gallery */
 .pd-gallery { display: flex; gap: 14px; }
+/* The strip holds every variant's photos, so it can outgrow the main
+   image. `contain: size` stops its photos sizing it: it stretches to
+   the main image's height and scrolls past that. */
 .pd-thumbnails {
   display: flex;
   flex-direction: column;
   gap: 10px;
   flex-shrink: 0;
+  width: 72px;
+  contain: size;
+  overflow-y: auto;
+  scrollbar-width: none;
 }
+.pd-thumbnails::-webkit-scrollbar { display: none; }
+.pd-thumb { flex-shrink: 0; }
 .pd-thumb {
   width: 72px;
   height: 80px;
@@ -1364,6 +1373,9 @@
   transition: filter 0.15s;
 }
 .pd-add-cart:hover { filter: brightness(0.90); }
+/* The selected option is out of stock (product.js renderStock). */
+.pd-add-cart:disabled,
+.pd-buy-now:disabled { opacity: 0.45; cursor: not-allowed; filter: none; }
 .pd-wish-btn {
   width: 52px;
   height: 52px;
@@ -1378,20 +1390,6 @@
 }
 .pd-wish-btn:hover { border-color: var(--error); background: var(--error-lt); }
 .pd-wish-btn.active { background: var(--error-lt); border-color: var(--error); }
-
-/* Delivery info */
-.pd-delivery-info {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  padding: 14px 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin-bottom: 20px;
-}
-.pd-delivery-row { display: flex; align-items: center; gap: 10px; font-size: 12.5px; color: var(--dark); }
-.pd-delivery-icon { color: var(--primary-text); flex-shrink: 0; }
 
 /* Product tabs */
 .pd-tabs {
@@ -1590,8 +1588,8 @@
   /* The right-pinned column has nothing to pin against once stacked. */
   .rating-summary > :last-child { margin-left: 0; }
 
-  /* The tab row scrolls rather than wrapping — Description / Reviews /
-     Size Guide / Shipping will not fit on one phone line. */
+  /* The tab row scrolls rather than wrapping, should it ever outgrow
+     one phone line. */
   .pd-tabs {
     overflow-x: auto;
     scrollbar-width: none;

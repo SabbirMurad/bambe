@@ -114,7 +114,6 @@ function wireTags() {
    card, cart line and order. The cell shows that one with a count of
    the rest, and opens the photo manager below on click.          */
 const MAX_PHOTOS = 10;
-const MAX_PHOTO_BYTES = 8 * 1024 * 1024;
 
 function imageCell(sku) {
   const wrap = document.createElement('div');
@@ -254,7 +253,6 @@ function managePhotos(sku, onChange) {
     if (files.length > room) toast.error('Only ' + room + ' more ' + (room === 1 ? 'photo fits' : 'photos fit') + ' on this SKU.');
     for (const file of files.slice(0, room)) {
       if (!file.type.startsWith('image/')) { toast.error(file.name + ' isn’t an image.'); continue; }
-      if (file.size > MAX_PHOTO_BYTES) { toast.error(file.name + ' is over 8 MB.'); continue; }
       note.textContent = 'Uploading ' + file.name + '…';
       // One at a time, so they land in the order they were picked.
       const id = await uploadImage(file, 'ProductImage');

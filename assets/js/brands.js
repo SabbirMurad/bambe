@@ -19,7 +19,6 @@ let all = [];
 let query = '';
 let tbody = null;
 
-const MAX_LOGO_BYTES = 8 * 1024 * 1024;
 
 /* ── Logo ─────────────────────────────────────────────────────
    Uploaded the moment a file is picked (as a BrandLogo), saved onto
@@ -81,7 +80,6 @@ function logoPicker(initialId) {
     input.value = '';
     if (!file) return;
     if (!file.type.startsWith('image/')) { toast.error('That file isn’t an image.'); return; }
-    if (file.size > MAX_LOGO_BYTES) { toast.error('That image is over 8 MB — please pick a smaller one.'); return; }
 
     choose.disabled = true;
     choose.textContent = 'Uploading…';

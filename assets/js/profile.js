@@ -132,7 +132,8 @@ function renderPersonal(profile) {
 
 /* ── Avatar ───────────────────────────────────────────────────  */
 
-const MAX_AVATAR_BYTES = 5 * 1024 * 1024;
+// nginx takes request bodies up to 1 MB; a little under, for the multipart wrapping.
+const MAX_AVATAR_BYTES = 1024 * 1024 - 8 * 1024;
 
 /** Show the stored picture, or leave the placeholder silhouette. */
 function paintAvatar(imageId) {
@@ -185,7 +186,7 @@ function wireAvatar() {
       return;
     }
     if (file.size > MAX_AVATAR_BYTES) {
-      toast.error('That image is over 5 MB — please pick a smaller one.');
+      toast.error('That image is over 1 MB — please pick a smaller one.');
       return;
     }
 
@@ -206,7 +207,9 @@ function wireAvatar() {
       });
 
       if (!response.ok) {
-        toast.error('That image couldn’t be uploaded.');
+        toast.error(response.status === 413
+          ? 'That photo is too large to upload. Try a smaller copy.'
+          : 'That image couldn’t be uploaded.');
         return;
       }
 
