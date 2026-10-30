@@ -554,8 +554,24 @@ function wireConsoleSearch() {
 
    Field names are indexed (`image_0`, `used_at_0`): the handler
    reads the digits after the last underscore, and `used_at_N` is
-   the only metadata it insists on.                              */
+   the only metadata it insists on.
+
+   nginx in front of the app takes request bodies up to 1 MB. The
+   file is checked here, a little under that to leave room for the
+   multipart wrapping, so an oversized photo is named straight away
+   instead of failing at the server.                             */
+export const MAX_UPLOAD_BYTES = 1024 * 1024 - 8 * 1024;
+
+function tooLarge(file) {
+  const kb = (bytes) => Math.round(bytes / 1024).toLocaleString() + ' KB';
+  return `“${file.name}” is ${kb(file.size)}, over the ${kb(MAX_UPLOAD_BYTES)} upload limit. Use a smaller copy of the photo.`;
+}
 export async function uploadImage(file, usedAt = 'ProductImage') {
+  if (file.size > MAX_UPLOAD_BYTES) {
+    toast.error(tooLarge(file));
+    return null;
+  }
+
   const form = new FormData();
   form.append('image_0', file);
   form.append('used_at_0', usedAt);
@@ -577,7 +593,10 @@ export async function uploadImage(file, usedAt = 'ProductImage') {
   }
 
   if (!response.ok) {
-    let message = 'Upload failed';
+    let message = 'Upload failed (' + response.status + ')';
+    // nginx refuses an oversized body itself, with an HTML page, before
+    // the app sees it — so there is no JSON to read the reason from.
+    if (response.status === 413) message = tooLarge(file);
     try {
       const body = await response.json();
       message = body.message || body.error || message;

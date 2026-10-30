@@ -557,7 +557,6 @@ function packagingRow(option) {
    puts that straight into an <img>. Saved with the form, like every
    other field. A path from before uploads (/assets/...) still shows. */
 const UPLOAD_PREFIX = '/image/webp/';
-const MAX_PICTURE_BYTES = 8 * 1024 * 1024;
 
 function paintPicture(el, path) {
   if (path && path.startsWith(UPLOAD_PREFIX)) {
@@ -619,7 +618,6 @@ function packagingPicture(initial) {
     input.value = '';
     if (!file) return;
     if (!file.type.startsWith('image/')) { toast.error('That file isn’t an image.'); return; }
-    if (file.size > MAX_PICTURE_BYTES) { toast.error('That image is over 8 MB — please pick a smaller one.'); return; }
 
     choose.disabled = true;
     choose.textContent = 'Uploading…';

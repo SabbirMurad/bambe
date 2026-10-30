@@ -40,16 +40,21 @@ function slugFromUrl() {
   return new URLSearchParams(location.search).get('slug') || '';
 }
 
-/* ── Gallery ──────────────────────────────────────────────────  */
-/* The photos on show: the selected variant's own, main photo first,
-   in the order the admin set. The image objects (with blur hashes)
-   come from `product.gallery`, which holds every variant's. */
+/* ── Gallery ──────────────────────────────────────────────────
+   Every photo of every variant, in the order `product.gallery` holds
+   them (variant by variant, main photo first). Picking an option
+   brings the chosen variant's main photo up; picking a photo that
+   belongs to other variants switches the options to one of them. A
+   photo the selected variant already has, or one shared by several
+   variants, leaves the options alone.                           */
 function photos() {
-  const all = product.gallery || [];
-  if (!selected) return all;
-  const ids = [selected.image_id, ...(selected.extra_image_ids || [])].filter(Boolean);
-  const own = ids.map((id) => all.find((g) => g.image_id === id) || { image_id: id });
-  return own.length ? own : all;
+  return product.gallery || [];
+}
+
+// The variants a photo belongs to: as its main photo or as an extra.
+function ownersOf(imageId) {
+  return (product.variants || []).filter((v) =>
+    v.image_id === imageId || (v.extra_image_ids || []).includes(imageId));
 }
 
 function renderGallery() {
@@ -72,16 +77,16 @@ function renderGallery() {
     thumb.setAttribute('tabindex', '0');
     thumb.setAttribute('aria-label', 'View image ' + (index + 1));
     paintImage(thumb, entry.image || entry.image_id);
-    thumb.addEventListener('click', () => showImage(index));
+    thumb.addEventListener('click', () => pickImage(index));
     thumb.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); showImage(index); }
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pickImage(index); }
     });
     thumbs.appendChild(thumb);
 
     if (dots) {
       const dot = document.createElement('div');
       dot.className = 'pd-dot' + (index === galleryIndex ? ' active' : '');
-      dot.addEventListener('click', () => showImage(index));
+      dot.addEventListener('click', () => pickImage(index));
       dots.appendChild(dot);
     }
   });
@@ -98,14 +103,43 @@ function showImage(index) {
 
   $$('.pd-thumb').forEach((el, i) => el.classList.toggle('active', i === galleryIndex));
   $$('.pd-dot').forEach((el, i) => el.classList.toggle('active', i === galleryIndex));
+  // Keep the active photo in view inside the strip, without moving the page.
+  const strip = $('.pd-thumbnails');
+  const active = $$('.pd-thumb')[galleryIndex];
+  if (strip && active) {
+    const top = active.offsetTop - strip.offsetTop;
+    if (top < strip.scrollTop) strip.scrollTop = top;
+    else if (top + active.offsetHeight > strip.scrollTop + strip.clientHeight) {
+      strip.scrollTop = top + active.offsetHeight - strip.clientHeight;
+    }
+  }
 }
 
-/* Picking a shade swaps the gallery to that variant's photos, opening
-   on its main one, rather than leaving the previous shade's up. */
+/* A photo picked by the shopper. If the selected variant isn't in it,
+   switch to one that is: the one agreeing with the most current
+   choices, in stock if any is. The photo picked stays on show. */
+function pickImage(index) {
+  showImage(index);
+  const entry = photos()[galleryIndex];
+  if (!entry || !selected) return;
+
+  const owners = ownersOf(entry.image_id);
+  if (!owners.length || owners.includes(selected)) return;
+
+  const agreement = (v) => productOptions()
+    .filter((o) => valueOf(v, o.name) === valueOf(selected, o.name)).length;
+  const best = owners
+    .map((v, i) => ({ v, i, score: agreement(v) * 2 + (v.stock > 0 ? 1 : 0) }))
+    .sort((x, y) => y.score - x.score || x.i - y.i)[0].v;
+  pickVariant(best, { keepImage: true });
+}
+
+/* Picking an option brings up the chosen variant's main photo. */
 function jumpGalleryToVariant() {
   if (!selected) return;
-  galleryIndex = 0;
-  renderGallery();
+  const ids = [selected.image_id, ...(selected.extra_image_ids || [])];
+  const index = photos().findIndex((g) => ids.includes(g.image_id));
+  if (index >= 0) showImage(index);
 }
 
 /* ── Header block ─────────────────────────────────────────────  */
@@ -144,15 +178,6 @@ function renderHeader() {
       brand.style.cursor = 'pointer';
       brand.onclick = () => { location.href = '/listing?brand=' + encodeURIComponent(product.brand.uuid); };
     }
-  }
-
-  const stockTag = $('.pd-stock-tag');
-  if (stockTag) {
-    const on = !!product.in_stock;
-    stockTag.classList.toggle('tag-green', on);
-    stockTag.classList.toggle('tag-grey', !on);
-    stockTag.querySelector('.pd-stock-label').textContent = on ? 'In Stock' : 'Sold out';
-    stockTag.style.display = '';
   }
 
   const title = $('.pd-title');
@@ -303,14 +328,15 @@ function renderOptions() {
   });
 }
 
-function pickVariant(variant) {
+function pickVariant(variant, { keepImage = false } = {}) {
   if (!variant) return;
   selected = variant;
   quantity = Math.min(quantity, Math.max(1, variant.stock));
   renderOptions();
   renderPrice();
   renderQuantity();
-  jumpGalleryToVariant();
+  renderStock();
+  if (!keepImage) jumpGalleryToVariant();
 }
 
 /* ── Price, stock, quantity ───────────────────────────────────  */
@@ -349,7 +375,36 @@ function renderQuantity() {
     const text = document.createTextNode(stockText());
     stockLine.appendChild(text);
     stockLine.style.color = selected.stock <= 0 ? 'var(--error)' : '';
+    if (icon) icon.style.display = selected.stock <= 0 ? 'none' : '';
   }
+}
+
+/* The badge by the brand and the buy buttons follow the option picked,
+   not the product as a whole: a sold-out size reads "Out of stock" and
+   can't be added, while its in-stock siblings still can. "Sold out"
+   is kept for when no option has any left. */
+function renderStock() {
+  if (!selected) return;
+  const available = selected.stock > 0;
+
+  const tag = $('.pd-stock-tag');
+  if (tag) {
+    const anyLeft = (product.variants || []).some((v) => v.stock > 0);
+    tag.classList.toggle('tag-green', available);
+    tag.classList.toggle('tag-gray', !available);
+    tag.querySelector('.pd-stock-label').textContent =
+      available ? 'In Stock' : anyLeft ? 'Out of stock' : 'Sold out';
+    const tick = tag.querySelector('svg');
+    if (tick) tick.style.display = available ? '' : 'none';
+    tag.style.display = '';
+  }
+
+  ['.pd-add-cart', '.pd-buy-now'].forEach((sel) => {
+    const button = $(sel);
+    if (!button) return;
+    button.disabled = !available;
+    button.title = available ? '' : 'This option is out of stock';
+  });
 }
 
 /*
@@ -411,7 +466,7 @@ function wireCta() {
   const add = $('.pd-add-cart');
   if (add) add.onclick = addToCart;
 
-  const buy = $('.btn-secondary');
+  const buy = $('.pd-buy-now');
   if (buy) {
     buy.onclick = async () => {
       // Buy Now is Add to Cart plus a redirect. It must not jump to
@@ -708,51 +763,6 @@ function loadRelated() {
   renderGrid(grid, items);
 }
 
-/* ── Delivery estimate ────────────────────────────────────────
-   Drawn from the store's own delivery methods: the lowest
-   free-delivery threshold, and a date window from the first
-   method's min/max days. With no methods configured there is
-   nothing true to say, so the row stays hidden.                */
-async function loadDeliveryEstimate() {
-  const row = $('.pd-delivery-eta');
-  if (!row) return;
-
-  const response = await Fetcher.get({ endpoint: '/v1/checkout/delivery-methods', showError: false });
-  const methods = response.ok ? response.data || [] : [];
-  if (!methods.length) return;
-
-  const text = row.querySelector('div');
-  text.textContent = '';
-  const strong = (value) => {
-    const el = document.createElement('strong');
-    el.textContent = value;
-    return el;
-  };
-
-  const thresholds = methods.map((m) => m.free_above).filter((v) => v != null);
-  if (thresholds.length) {
-    text.append(strong('Free delivery'), ' on orders over ' + money(Math.min(...thresholds)));
-  }
-
-  const first = methods[0];
-  if (first.min_days != null && first.max_days != null) {
-    const day = (offset) => {
-      const d = new Date();
-      d.setDate(d.getDate() + offset);
-      return d;
-    };
-    const from = day(first.min_days);
-    const to = day(first.max_days);
-    const month = (d) => d.toLocaleDateString(undefined, { month: 'short' });
-    const span = from.getMonth() === to.getMonth()
-      ? month(from) + ' ' + from.getDate() + (from.getDate() === to.getDate() ? '' : '–' + to.getDate())
-      : month(from) + ' ' + from.getDate() + ' – ' + month(to) + ' ' + to.getDate();
-    text.append(thresholds.length ? ' · Estimated ' : 'Estimated delivery ', strong(span));
-  }
-
-  if (text.childNodes.length) row.style.display = '';
-}
-
 /* Everything below the product itself. When there is no product to
    show, these would sit there as loading placeholders for good. */
 function hideDetailSections() {
@@ -765,18 +775,15 @@ function hideDetailSections() {
 
 /* ── Tabs ─────────────────────────────────────────────────────
    Description and Reviews each have a section on the page, so the
-   tabs move between them. Size Guide and Shipping & Returns have no
-   content behind them and no endpoint to fill them from, so they
-   are left inert rather than given invented copy.               */
+   tabs move between them.                                       */
 function wireTabs() {
   const tabs = $$('.pd-tab');
   const description = $('.body-lg') ? $('.body-lg').closest('div') : null;
   const reviews = $('.rating-summary');
 
   tabs.forEach((tab, index) => {
-    tab.style.cursor = index < 2 ? 'pointer' : 'default';
+    tab.style.cursor = 'pointer';
     tab.onclick = () => {
-      if (index > 1) return;
       tabs.forEach((t) => t.classList.toggle('active', t === tab));
       const target = index === 0 ? description : reviews;
       if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -827,16 +834,17 @@ function wireTabs() {
 
   renderHeader();
   renderGallery();
+  jumpGalleryToVariant();
   renderOptions();
   renderPrice();
   renderQuantity();
+  renderStock();
   wireQuantity();
   wireCta();
   wireTabs();
   wireWriteReview();
   loadRelated();
   loadReviews();
-  loadDeliveryEstimate();
   syncWishState();
 
   // Fire-and-forget: a signed-out visitor has nowhere to record this,

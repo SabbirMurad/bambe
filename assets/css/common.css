@@ -2000,6 +2000,7 @@ html.is-staff .product-card-wish,
 html.is-staff .product-card-quick,
 html.is-staff .pd-qty-row,
 html.is-staff .pd-add-cart,
+html.is-staff .pd-buy-now,
 html.is-staff .pd-wish-btn { display: none !important; }
 html.is-staff .pd-cta-row::before {
   content: "You're signed in as an admin. The cart and checkout are for customer accounts.";

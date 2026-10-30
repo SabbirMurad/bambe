@@ -323,7 +323,6 @@ function parentOptions(exclude) {
    the category when the form is saved — the same split the product
    form uses for SKU pictures. `value()` is the image id to save, or
    null once it has been removed. */
-const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
 
 function imagePicker(initialId) {
   let imageId = initialId || null;
@@ -380,7 +379,6 @@ function imagePicker(initialId) {
     input.value = '';
     if (!file) return;
     if (!file.type.startsWith('image/')) { toast.error('That file isn’t an image.'); return; }
-    if (file.size > MAX_IMAGE_BYTES) { toast.error('That image is over 8 MB — please pick a smaller one.'); return; }
 
     choose.disabled = true;
     choose.textContent = 'Uploading…';
