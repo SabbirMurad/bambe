@@ -142,6 +142,65 @@ function jumpGalleryToVariant() {
   if (index >= 0) showImage(index);
 }
 
+/* ── Full-screen viewer ───────────────────────────────────────
+   Clicking the main photo opens every photo full screen, at the one
+   on show (PhotoSwipe, vendored in ./vendor/photoswipe.mjs — MIT):
+   swipe or arrow keys to move, pinch, double-tap or click to zoom,
+   Esc to close. It is fetched on first use, not with the page.
+   Moving between photos in the viewer picks them on the page too,
+   so the options under it are right when it closes.            */
+async function openViewer() {
+  const images = photos();
+  if (!images.length) return;
+
+  const { default: PhotoSwipe } = await import('./vendor/photoswipe.mjs');
+  const viewer = new PhotoSwipe({
+    dataSource: images.map((entry) => {
+      const image = entry.image || {};
+      const src = '/image/webp/' + entry.image_id;
+      return {
+        src,
+        msrc: src,
+        // Uploads record their size; a missing one is guessed square,
+        // which PhotoSwipe corrects once the photo has loaded.
+        width: image.width || 1200,
+        height: image.height || 1200,
+        alt: product.title,
+      };
+    }),
+    index: galleryIndex,
+    bgOpacity: 0.92,
+    showHideAnimationType: 'fade',
+    wheelToZoom: true,
+    closeTitle: 'Close',
+    zoomTitle: 'Zoom',
+    arrowPrevTitle: 'Previous photo',
+    arrowNextTitle: 'Next photo',
+  });
+
+  // The page's smooth scrolling would otherwise take the wheel.
+  viewer.on('openingAnimationStart', () => window.lenis && window.lenis.stop());
+  viewer.on('destroy', () => window.lenis && window.lenis.start());
+  viewer.on('change', () => pickImage(viewer.currIndex));
+  viewer.init();
+}
+
+function wireViewer() {
+  const main = $('.pd-main-img');
+  if (!main) return;
+  main.setAttribute('role', 'button');
+  main.setAttribute('tabindex', '0');
+  main.setAttribute('aria-label', 'View photos full screen');
+  main.addEventListener('click', (e) => {
+    // The dots under the photo pick a photo; they don't open the viewer.
+    if (e.target.closest('.pd-img-dots')) return;
+    openViewer();
+  });
+  main.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openViewer(); }
+  });
+}
+
 /* ── Header block ─────────────────────────────────────────────  */
 function renderHeader() {
   const crumb = $('.breadcrumb');
@@ -179,6 +238,10 @@ function renderHeader() {
       brand.onclick = () => { location.href = '/listing?brand=' + encodeURIComponent(product.brand.uuid); };
     }
   }
+
+  // Shown only to an Owner or Manager previewing an unpublished product.
+  const draftTag = $('.pd-draft-tag');
+  if (draftTag) draftTag.style.display = product.status === 'Draft' ? '' : 'none';
 
   const title = $('.pd-title');
   if (title) title.textContent = product.title;
@@ -839,6 +902,7 @@ function wireTabs() {
   renderPrice();
   renderQuantity();
   renderStock();
+  wireViewer();
   wireQuantity();
   wireCta();
   wireTabs();

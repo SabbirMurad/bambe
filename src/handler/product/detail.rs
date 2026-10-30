@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use futures::StreamExt;
 use serde_json::json;
 use mongodb::bson::doc;
-use actix_web::{web, Error, HttpResponse};
+use actix_web::{web, Error, HttpRequest, HttpResponse};
 use crate::BuiltIns::mongo::MongoDB;
 use crate::util::response::Response;
 use crate::model::Product::{Product, ProductVariant, Brand};
@@ -57,13 +57,21 @@ async fn load_images(db: &mongodb::Database, ids: &[String]) -> HashMap<String, 
     map
 }
 
-pub async fn task(path: web::Path<String>) -> Result<HttpResponse, Error> {
+pub async fn task(req: HttpRequest, path: web::Path<String>) -> Result<HttpResponse, Error> {
     let slug = path.into_inner();
     let db = MongoDB.connect();
 
+    // A draft is found only for an Owner or Manager previewing it. Its
+    // server-rendered page still 404s (seo::product_page has no caller to
+    // check), so a draft is never indexed; product.js draws it from here.
+    let statuses = if crate::Handler::Admin::Access::previews_drafts(&req).await {
+        vec!["Active", "Draft"]
+    } else {
+        vec!["Active"]
+    };
     let product = db
         .collection::<Product>("product")
-        .find_one(doc! { "slug": &slug, "status": "Active", "deleted_at": null })
+        .find_one(doc! { "slug": &slug, "status": { "$in": statuses }, "deleted_at": null })
         .await;
 
     let product = match product {
@@ -192,6 +200,7 @@ pub async fn task(path: web::Path<String>) -> Result<HttpResponse, Error> {
         "rating_average": product.rating_average,
         "rating_count": product.rating_count,
         "sold_count": product.sold_count,
+        "status": product.status,
         "related": related,
     })))
 }
